@@ -71,6 +71,9 @@ select{background:var(--panel2);color:var(--text);border:1px solid var(--line);b
 .switch{display:flex;align-items:center;justify-content:space-between}
 .glow{animation:glow 1.2s ease-in-out infinite alternate}
 @keyframes glow{from{box-shadow:0 0 10px var(--accent)}to{box-shadow:0 0 30px var(--accent2)}}
+.water{position:absolute;left:0;right:0;bottom:0;height:22%;background:linear-gradient(#7fe0e8aa,#1f6c80dd);border-top:2px solid #ffffff55;pointer-events:none}
+.gcard.R{border-color:#7fbf8a}.gcard.SR{border-color:#5aa8f0}.gcard.SSR{border-color:#ffcf5a;box-shadow:0 0 10px #ffcf5a55}.gcard.UR{border-color:#ff7ab6;box-shadow:0 0 14px #b28bff88}
+.gcard .info{background:linear-gradient(#00000000,#00000066)}
 </style>
 </head>
 <body>
@@ -179,32 +182,41 @@ const POSES=[
 function hairBack(g){
   const h=g.hair,d=shade(h,-.25);
   switch(g.style){
-    case 'long':return`<path d="M70,52 Q64,18 100,22 Q136,18 130,52 Q138,100 142,152 Q120,140 100,146 Q80,140 58,152 Q62,100 70,52Z" fill="${d}"/>`;
-    case 'bob':return`<path d="M71,52 Q66,20 100,22 Q134,20 129,52 L133,94 Q100,104 67,94Z" fill="${d}"/>`;
-    case 'ponytail':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="${d}"/><path d="M116,28 Q156,26 150,82 Q146,124 128,150 Q138,96 118,52Z" fill="${h}"/>`;
-    case 'twin':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="${d}"/><path d="M76,38 Q42,58 48,122 Q52,146 62,158 Q64,104 80,60Z" fill="${h}"/><path d="M124,38 Q158,58 152,122 Q148,146 138,158 Q136,104 120,60Z" fill="${h}"/><circle cx="76" cy="40" r="5" fill="${g.color}"/><circle cx="124" cy="40" r="5" fill="${g.color}"/>`;
+    case 'long':return`<path d="M70,52 Q64,18 100,22 Q136,18 130,52 Q138,100 142,152 Q120,140 100,146 Q80,140 58,152 Q62,100 70,52Z" fill="url(#${C}d)"/>`;
+    case 'bob':return`<path d="M71,52 Q66,20 100,22 Q134,20 129,52 L133,94 Q100,104 67,94Z" fill="url(#${C}d)"/>`;
+    case 'ponytail':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="url(#${C}d)"/><path d="M116,28 Q156,26 150,82 Q146,124 128,150 Q138,96 118,52Z" fill="url(#${C}h)"/>`;
+    case 'twin':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="url(#${C}d)"/><path d="M76,38 Q42,58 48,122 Q52,146 62,158 Q64,104 80,60Z" fill="url(#${C}h)"/><path d="M124,38 Q158,58 152,122 Q148,146 138,158 Q136,104 120,60Z" fill="url(#${C}h)"/><circle cx="76" cy="40" r="5" fill="${g.color}"/><circle cx="124" cy="40" r="5" fill="${g.color}"/>`;
   }
 }
 function hairFront(g){
   const h=g.hair,l=shade(h,.25);
-  let s=`<path d="M71,62 Q66,22 100,26 Q134,22 129,62 Q124,46 116,50 Q110,38 101,48 Q92,38 85,50 Q77,46 71,62Z" fill="${h}"/>
+  let s=`<path d="M71,62 Q66,22 100,26 Q134,22 129,62 Q124,46 116,50 Q110,38 101,48 Q92,38 85,50 Q77,46 71,62Z" fill="url(#${C}h)"/>
   <path d="M84,32 Q96,26 110,30" stroke="${l}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`;
-  if(g.style==='long'||g.style==='bob')s+=`<path d="M72,52 Q65,82 70,110 L78,106 Q74,82 79,58Z" fill="${h}"/><path d="M128,52 Q135,82 130,110 L122,106 Q126,82 121,58Z" fill="${h}"/>`;
+  if(g.style==='long'||g.style==='bob')s+=`<path d="M72,52 Q65,82 70,110 L78,106 Q74,82 79,58Z" fill="url(#${C}h)"/><path d="M128,52 Q135,82 130,110 L122,106 Q126,82 121,58Z" fill="url(#${C}h)"/>`;
+  s+=`<g stroke="${shade(h,-.35)}" stroke-width="1" fill="none" opacity=".55"><path d="M86,50 Q88,40 96,34"/><path d="M101,48 Q100,38 104,30"/><path d="M116,50 Q114,40 108,33"/></g>
+  <path d="M80,38 Q100,24 120,38" stroke="#fff" stroke-width="3.5" fill="none" opacity=".35" stroke-linecap="round" stroke-dasharray="6 4"/>`;
   return s;
 }
 function face(g,wink){
   const lash='#2a1a22';
-  const eye=(x)=>`<ellipse cx="${x}" cy="64" rx="6" ry="7.5" fill="#fff"/><ellipse cx="${x}" cy="65" rx="4.6" ry="6.2" fill="${g.eye}"/><ellipse cx="${x}" cy="66" rx="2.2" ry="3.2" fill="#1a0f14"/><circle cx="${x-1.8}" cy="62" r="1.8" fill="#fff"/><path d="M${x-7},59 Q${x},54 ${x+7},59" stroke="${lash}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
-  const closed=(x)=>`<path d="M${x-6},65 Q${x},70 ${x+6},65" stroke="${lash}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
-  return`${wink?closed(89):eye(89)}${eye(111)}
-  <path d="M83,53 Q89,50 94,52" stroke="${shade(g.hair,-.3)}" stroke-width="1.6" fill="none"/><path d="M106,52 Q111,50 117,53" stroke="${shade(g.hair,-.3)}" stroke-width="1.6" fill="none"/>
-  <ellipse cx="83" cy="75" rx="5" ry="2.6" fill="#ff7a9a" opacity=".45"/><ellipse cx="117" cy="75" rx="5" ry="2.6" fill="#ff7a9a" opacity=".45"/>
-  <path d="M95.5,78 Q100,82.5 104.5,78" stroke="#b0425a" stroke-width="2" fill="#e8768f" stroke-linecap="round"/>`;
+  const eye=(x,dir)=>`<path d="M${x-8},63 Q${x},53 ${x+8},62 Q${x+7},74 ${x},75 Q${x-7},74 ${x-8},63Z" fill="#fff"/>
+    <ellipse cx="${x}" cy="66" rx="5.4" ry="7.4" fill="url(#${C}i)"/><ellipse cx="${x}" cy="67" rx="2.6" ry="3.8" fill="#1a0f14"/>
+    <path d="M${x-5},62 Q${x},60 ${x+5},62" stroke="#000" stroke-width="2" opacity=".25" fill="none"/>
+    <circle cx="${x-2}" cy="63" r="2.3" fill="#fff"/><circle cx="${x+2.4}" cy="70" r="1.2" fill="#fff" opacity=".85"/>
+    <path d="M${x-9},62.5 Q${x},51 ${x+9},61.5 L${x+9},59.5 Q${x},49 ${x-9},60.5Z" fill="${lash}"/>
+    <path d="M${x+dir*9},61 L${x+dir*12},58" stroke="${lash}" stroke-width="1.6" stroke-linecap="round"/>`;
+  const closed=(x)=>`<path d="M${x-8},66 Q${x},72 ${x+8},66" stroke="${lash}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M${x-8},66 L${x-11},64" stroke="${lash}" stroke-width="1.6"/>`;
+  return`${wink?closed(88):eye(88,-1)}${eye(112,1)}
+  <path d="M81,52 Q88,48 94,51" stroke="${shade(g.hair,-.35)}" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M106,51 Q112,48 119,52" stroke="${shade(g.hair,-.35)}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  <ellipse cx="82" cy="77" rx="5.5" ry="2.8" fill="#ff7a9a" opacity=".4"/><ellipse cx="118" cy="77" rx="5.5" ry="2.8" fill="#ff7a9a" opacity=".4"/>
+  <g stroke="#ff7a9a" stroke-width=".8" opacity=".6"><path d="M79,77 L80,75"/><path d="M82,77 L83,75"/><path d="M117,77 L118,75"/><path d="M120,77 L121,75"/></g>
+  <path d="M99,72 L100,74" stroke="${shade(g.skin,-.25)}" stroke-width="1" stroke-linecap="round"/>
+  <path d="M95,80 Q100,84 105,80 Q100,82 95,80Z" fill="#e8768f" stroke="#b0425a" stroke-width="1.2" stroke-linejoin="round"/>`;
 }
 function legs(g,p){
-  const sk=g.skin;
-  if(p.legs==='crossed')return`<path d="M74,204 Q66,262 84,338 L96,338 Q94,272 101,214Z" fill="${sk}"/><path d="M126,204 Q128,250 106,286 Q108,312 106,338 L94,338 Q92,306 96,284 Q100,240 99,214Z" fill="${shade(sk,-.06)}"/>`;
-  return`<path d="M74,204 Q68,262 82,338 L94,338 Q96,270 100,216Z" fill="${sk}"/><path d="M126,204 Q132,262 118,338 L106,338 Q104,270 100,216Z" fill="${sk}"/>`;
+  const sk=`url(#${C}s)`,ol=`stroke="${shade(g.skin,-.3)}" stroke-width="1.2"`;
+  if(p.legs==='crossed')return`<path d="M74,204 Q66,262 84,338 L96,338 Q94,272 101,214Z" fill="${sk}" ${ol}/><path d="M126,204 Q128,250 106,286 Q108,312 106,338 L94,338 Q92,306 96,284 Q100,240 99,214Z" fill="${sk}" ${ol}/>`;
+  return`<path d="M74,204 Q68,262 82,338 L94,338 Q96,270 100,216Z" fill="${sk}" ${ol}/><path d="M126,204 Q132,262 118,338 L106,338 Q104,270 100,216Z" fill="${sk}" ${ol}/>`;
 }
 const TORSO='M78,100 Q100,93 122,100 Q128,104 126,118 Q122,140 117,165 Q116,172 120,182 Q130,198 127,214 L73,214 Q70,198 80,182 Q84,172 83,165 Q78,140 74,118 Q72,104 78,100Z';
 function outfit(g,st){
@@ -242,7 +254,7 @@ function arms(g,p,st,which){
   const sk=g.skin,c=g.color;let s='';
   for(const k of which){
     const d=p['arm'+k],h=p['h'+k];
-    s+=`<path d="${d}" stroke="${sk}" stroke-width="11" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="6" fill="${sk}"/>`;
+    s+=`<path d="${d}" stroke="${shade(sk,-.3)}" stroke-width="13.4" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="7.2" fill="${shade(sk,-.3)}"/><path d="${d}" stroke="${sk}" stroke-width="11" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="6" fill="${sk}"/>`;
     if(st===0)s+=`<path d="${d}" stroke="${c}" stroke-width="14" fill="none" stroke-dasharray="24 999" stroke-linecap="round"/>`;
     if(st===1)s+=`<path d="${d}" stroke="${shade(c,.35)}" stroke-width="20" fill="none" stroke-dasharray="48 999"/>`;
   }
@@ -253,26 +265,63 @@ function feet(g,st,p){
   if(p.legs==='crossed')return`<ellipse cx="90" cy="340" rx="10" ry="5" fill="${col}"/><ellipse cx="100" cy="340" rx="10" ry="5" fill="${col}"/>`;
   return`<ellipse cx="88" cy="340" rx="10" ry="5" fill="${col}"/><ellipse cx="112" cy="340" rx="10" ry="5" fill="${col}"/>`;
 }
+let C='',UID=0;
 function girlSVG(g,st,o={}){
-  const p=POSES[g.pose];
+  const p=POSES[g.pose];C='q'+(++UID);
   const back=p.front?[]:['L','R'],front=p.front?['L','R']:[];
+  const ol=`stroke="${shade(g.skin,-.3)}" stroke-width="1.2"`;
   return`<svg class="${o.cls||''}" viewBox="${o.vb||'30 10 140 345'}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+  <defs>
+    <linearGradient id="${C}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.hair,.3)}"/><stop offset=".55" stop-color="${g.hair}"/><stop offset="1" stop-color="${shade(g.hair,-.2)}"/></linearGradient>
+    <linearGradient id="${C}d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.hair,-.15)}"/><stop offset="1" stop-color="${shade(g.hair,-.4)}"/></linearGradient>
+    <radialGradient id="${C}s" cx=".45" cy=".35" r=".85"><stop offset="0" stop-color="${shade(g.skin,.14)}"/><stop offset=".7" stop-color="${g.skin}"/><stop offset="1" stop-color="${shade(g.skin,-.1)}"/></radialGradient>
+    <linearGradient id="${C}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.eye,-.55)}"/><stop offset=".55" stop-color="${g.eye}"/><stop offset="1" stop-color="${shade(g.eye,.55)}"/></linearGradient>
+  </defs>
+  <ellipse cx="100" cy="344" rx="40" ry="6" fill="#000" opacity=".25"/>
   <g transform="rotate(${p.rot} 100 220)">
     ${hairBack(g)}
     ${arms(g,p,st,back)}
     ${legs(g,p)}${feet(g,st,p)}
-    <path d="${TORSO}" fill="${g.skin}"/>
+    <path d="${TORSO}" fill="url(#${C}s)" ${ol}/>
     ${skinDetail(g,st)}
     ${outfit(g,st)}
     ${arms(g,p,st,front)}
-    <rect x="93" y="80" width="14" height="22" rx="5" fill="${g.skin}"/>
-    <ellipse cx="100" cy="60" rx="26" ry="29" fill="${g.skin}"/>
+    <rect x="93" y="80" width="14" height="22" rx="5" fill="url(#${C}s)"/><path d="M93,88 Q100,94 107,88" stroke="${shade(g.skin,-.2)}" stroke-width="1" fill="none"/>
+    <path d="M74,58 Q74,90 100,90 Q126,90 126,58 Q126,30 100,31 Q74,30 74,58Z" fill="url(#${C}s)" ${ol}/>
     ${face(g,p.wink)}
     ${hairFront(g)}
-    ${st===4?`<path d="M80,30 Q100,18 120,30 Q112,24 100,26 Q88,24 80,30Z" fill="#fff"/><path d="M78,32 Q100,16 122,32 L118,36 Q100,24 82,36Z" fill="#fff"/>`:''}
+    ${st===4?`<path d="M78,32 Q100,14 122,32 L118,38 Q100,24 82,38Z" fill="#fff" stroke="#dfe7ee"/><path d="M80,30 Q100,18 120,30" stroke="#e8eef4" stroke-width="2" fill="none"/>`:''}
   </g></svg>`;
 }
 function headSVG(g){const st=S.girls[g.id]?stageFor(S.girls[g.id].lvl):0;return girlSVG(g,st,{vb:'62 18 76 76'})}
+
+/* ================= Onsen-Kulisse ================= */
+function onsenBG(){
+  let stars='';for(let i=0;i<40;i++)stars+=`<circle cx="${(i*97)%400}" cy="${(i*53)%170}" r="${i%3?0.8:1.4}" fill="#fff" opacity="${.3+(i%5)/8}"/>`;
+  let fence='';for(let x=-6;x<410;x+=22)fence+=`<rect x="${x}" y="190" width="20" height="170" rx="6" fill="url(#bb)"/><path d="M${x+2},240 h16 M${x+2},300 h16" stroke="#3d4a22" stroke-width="2"/>`;
+  let petals='';for(let i=0;i<18;i++)petals+=`<ellipse cx="${(i*71)%400}" cy="${40+(i*37)%300}" rx="3" ry="1.8" fill="#ffc0d8" opacity=".85" transform="rotate(${i*40} ${(i*71)%400} ${40+(i*37)%300})"/>`;
+  const rock=(x,y,w,h,c)=>`<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="${c}"/><ellipse cx="${x-w*.25}" cy="${y-h*.35}" rx="${w*.5}" ry="${h*.35}" fill="#fff" opacity=".08"/>`;
+  const lantern=(x)=>`<g transform="translate(${x},300)"><circle cx="0" cy="-18" r="28" fill="#ffcf7a" opacity=".18"/><rect x="-5" y="0" width="10" height="40" fill="#8a8a96"/><path d="M-18,-26 L18,-26 L12,-34 L-12,-34Z" fill="#9a9aa8"/><rect x="-11" y="-26" width="22" height="18" fill="#ffd98a"/><rect x="-11" y="-26" width="22" height="18" fill="none" stroke="#7a7a86" stroke-width="3"/><rect x="-14" y="-8" width="28" height="8" fill="#9a9aa8"/></g>`;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice">
+  <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140f35"/><stop offset=".6" stop-color="#4a2a6e"/><stop offset="1" stop-color="#b0567a"/></linearGradient>
+  <linearGradient id="bb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b7a3a"/><stop offset=".5" stop-color="#9aab5a"/><stop offset="1" stop-color="#5a6830"/></linearGradient>
+  <linearGradient id="wa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fd0d8"/><stop offset="1" stop-color="#1f6c80"/></linearGradient>
+  <radialGradient id="mo"><stop offset="0" stop-color="#fffbe6"/><stop offset=".6" stop-color="#ffeeb0"/><stop offset="1" stop-color="#ffeeb0" stop-opacity="0"/></radialGradient></defs>
+  <rect width="400" height="600" fill="url(#sky)"/>${stars}
+  <circle cx="310" cy="80" r="70" fill="url(#mo)" opacity=".5"/><circle cx="310" cy="80" r="30" fill="#fff8dc"/>
+  <path d="M0,200 Q60,150 130,185 Q200,140 270,180 Q340,150 400,190 L400,260 L0,260Z" fill="#2a1e48"/>
+  ${fence}
+  <path d="M-10,60 Q80,90 150,70" stroke="#3a2230" stroke-width="7" fill="none"/><g fill="#ff9ec4">${[20,50,80,110,140,35,95,125].map((x,i)=>`<circle cx="${x}" cy="${68+(i%3)*8}" r="${9+(i%3)*2}" opacity=".85"/>`).join('')}</g>
+  ${lantern(40)}${lantern(360)}
+  ${rock(30,375,60,26,'#5a5266')}${rock(120,380,50,20,'#6a6276')}${rock(370,372,62,28,'#5a5266')}${rock(280,382,48,18,'#6a6276')}${rock(200,384,40,14,'#4e4860')}
+  <rect x="0" y="385" width="400" height="215" fill="url(#wa)"/>
+  <g fill="none" stroke="#fff" opacity=".3">${[0,1,2,3,4,5].map(i=>`<ellipse cx="${60+i*60}" cy="${420+(i%3)*50}" rx="${30+i*4}" ry="5"/>`).join('')}</g>
+  <path d="M290,390 L330,390 L320,600 L300,600Z" fill="#fff8dc" opacity=".12"/>
+  ${petals}</svg>`;
+  return`url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+const BG=onsenBG();
+document.head.insertAdjacentHTML('beforeend',`<style>.scene,.big,.gcard svg{background:${BG} center/cover}</style>`);
 
 /* ================= UI ================= */
 let tab='onsen';
@@ -292,6 +341,7 @@ function renderOnsen(){
   let h=`<div class="scene">
     ${[0,1,2,3,4].map(i=>`<div class="steam" style="left:${10+i*18}%;bottom:${10+(i%2)*20}px;width:${80+i*10}px;height:${80+i*10}px;animation-delay:${i*1.3}s"></div>`).join('')}
     ${girlSVG(fav,st,{cls:'girl'})}
+    <div class="water"></div>
     <div style="position:absolute;left:10px;top:10px;background:#0006;padding:4px 8px;border-radius:8px;font-size:12px">${fav.name} · Lv ${S.girls[fav.id].lvl} · ${STAGES[st].name}</div>
     <button class="btn gold tapbtn" id="tap">♨️ Gäste empfangen</button>
   </div>`;
@@ -321,7 +371,7 @@ function renderGirls(){
   let h=`<h2>Mädchen (${owned}/${GIRLS.length})</h2><div class="muted" style="margin-bottom:8px">Sammelbonus: +${owned*10}% auf alle Einnahmen. Tippe ein Mädchen an für Level-Up, Outfits & Zuweisung.</div><div class="grid">`;
   for(const g of GIRLS){
     const o=S.girls[g.id];
-    h+=`<div class="gcard ${o?'':'locked'}" data-g="${g.id}">${girlSVG(g,o?stageFor(o.lvl):0)}
+    h+=`<div class="gcard ${g.rarity} ${o?'':'locked'}" data-g="${g.id}">${girlSVG(g,o?stageFor(o.lvl):0)}
       <div class="info"><span class="rar ${g.rarity}">${g.rarity}</span> <b>${o?g.name:'???'}</b>
       <div class="muted">${o?`Lv ${o.lvl} · ${STAGES[stageFor(o.lvl)].name}`:'Nicht freigeschaltet'}</div>
       ${o?`<div class="stars">${'★'.repeat(o.stars)}${'☆'.repeat(5-o.stars)}</div>`:''}</div></div>`;
@@ -354,7 +404,7 @@ function summon(n){
     res.push({g,note});
   }
   save();
-  modal(`<h2 style="text-align:center">Beschwörung!</h2><div class="grid">${res.map(r=>`<div class="gcard ${r.g.rarity==='UR'||r.g.rarity==='SSR'?'glow':''}">${girlSVG(r.g,stageFor(S.girls[r.g.id].lvl))}<div class="info"><span class="rar ${r.g.rarity}">${r.g.rarity}</span> <b>${r.g.name}</b><div class="muted">${r.note}</div></div></div>`).join('')}</div>
+  modal(`<h2 style="text-align:center">Beschwörung!</h2><div class="grid">${res.map(r=>`<div class="gcard ${r.g.rarity} ${r.g.rarity==='UR'||r.g.rarity==='SSR'?'glow':''}">${girlSVG(r.g,stageFor(S.girls[r.g.id].lvl))}<div class="info"><span class="rar ${r.g.rarity}">${r.g.rarity}</span> <b>${r.g.name}</b><div class="muted">${r.note}</div></div></div>`).join('')}</div>
     <button class="btn" style="width:100%;margin-top:12px" data-close>OK</button>`);
   updateDyn();
 }
