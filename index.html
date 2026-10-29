@@ -174,126 +174,133 @@ function bathOffer(b){const l=S.baths[b.id]||0;const n=buyN(b.cost,BATH_R,l);ret
 function girlOffer(g){const o=S.girls[g.id];const n=buyN(RAR[g.rarity].cost,GIRL_R,o.lvl-1,GIRL_MAX-1);return{n,cost:geo(RAR[g.rarity].cost,GIRL_R,o.lvl-1,n)}}
 
 /* ================= Figur (SVG) ================= */
-const POSES=[
-  {armL:'M77,106 Q56,140 66,166 Q74,176 86,170',armR:'M123,106 Q150,86 140,56 Q134,44 124,40',hL:[86,170],hR:[124,40],front:false,rot:0,legs:'crossed'},
-  {armL:'M77,106 Q56,72 80,30',armR:'M123,106 Q144,72 120,30',hL:[80,28],hR:[120,28],front:false,rot:0,legs:'stand'},
-  {armL:'M77,106 Q62,150 95,180',armR:'M123,106 Q138,150 105,180',hL:[95,180],hR:[105,180],front:true,rot:-5,legs:'stand',wink:true}
-];
-function hairBack(g){
-  const h=g.hair,d=shade(h,-.25);
-  switch(g.style){
-    case 'long':return`<path d="M70,52 Q64,18 100,22 Q136,18 130,52 Q138,100 142,152 Q120,140 100,146 Q80,140 58,152 Q62,100 70,52Z" fill="url(#${C}d)"/>`;
-    case 'bob':return`<path d="M71,52 Q66,20 100,22 Q134,20 129,52 L133,94 Q100,104 67,94Z" fill="url(#${C}d)"/>`;
-    case 'ponytail':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="url(#${C}d)"/><path d="M116,28 Q156,26 150,82 Q146,124 128,150 Q138,96 118,52Z" fill="url(#${C}h)"/>`;
-    case 'twin':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="url(#${C}d)"/><path d="M76,38 Q42,58 48,122 Q52,146 62,158 Q64,104 80,60Z" fill="url(#${C}h)"/><path d="M124,38 Q158,58 152,122 Q148,146 138,158 Q136,104 120,60Z" fill="url(#${C}h)"/><circle cx="76" cy="40" r="5" fill="${g.color}"/><circle cx="124" cy="40" r="5" fill="${g.color}"/>`;
-  }
-}
-function hairFront(g){
-  const h=g.hair,l=shade(h,.25);
-  let s=`<path d="M71,62 Q66,22 100,26 Q134,22 129,62 Q124,46 116,50 Q110,38 101,48 Q92,38 85,50 Q77,46 71,62Z" fill="url(#${C}h)"/>
-  <path d="M84,32 Q96,26 110,30" stroke="${l}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`;
-  if(g.style==='long'||g.style==='bob')s+=`<path d="M72,52 Q65,82 70,110 L78,106 Q74,82 79,58Z" fill="url(#${C}h)"/><path d="M128,52 Q135,82 130,110 L122,106 Q126,82 121,58Z" fill="url(#${C}h)"/>`;
-  s+=`<g stroke="${shade(h,-.35)}" stroke-width="1" fill="none" opacity=".55"><path d="M86,50 Q88,40 96,34"/><path d="M101,48 Q100,38 104,30"/><path d="M116,50 Q114,40 108,33"/></g>
-  <path d="M80,38 Q100,24 120,38" stroke="#fff" stroke-width="3.5" fill="none" opacity=".35" stroke-linecap="round" stroke-dasharray="6 4"/>`;
-  return s;
-}
-function face(g,wink){
-  const lash='#2a1a22';
-  const eye=(x,dir)=>`<path d="M${x-8},63 Q${x},53 ${x+8},62 Q${x+7},74 ${x},75 Q${x-7},74 ${x-8},63Z" fill="#fff"/>
-    <ellipse cx="${x}" cy="66" rx="5.4" ry="7.4" fill="url(#${C}i)"/><ellipse cx="${x}" cy="67" rx="2.6" ry="3.8" fill="#1a0f14"/>
-    <path d="M${x-5},62 Q${x},60 ${x+5},62" stroke="#000" stroke-width="2" opacity=".25" fill="none"/>
-    <circle cx="${x-2}" cy="63" r="2.3" fill="#fff"/><circle cx="${x+2.4}" cy="70" r="1.2" fill="#fff" opacity=".85"/>
-    <path d="M${x-9},62.5 Q${x},51 ${x+9},61.5 L${x+9},59.5 Q${x},49 ${x-9},60.5Z" fill="${lash}"/>
-    <path d="M${x+dir*9},61 L${x+dir*12},58" stroke="${lash}" stroke-width="1.6" stroke-linecap="round"/>`;
-  const closed=(x)=>`<path d="M${x-8},66 Q${x},72 ${x+8},66" stroke="${lash}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M${x-8},66 L${x-11},64" stroke="${lash}" stroke-width="1.6"/>`;
-  return`${wink?closed(88):eye(88,-1)}${eye(112,1)}
-  <path d="M81,52 Q88,48 94,51" stroke="${shade(g.hair,-.35)}" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M106,51 Q112,48 119,52" stroke="${shade(g.hair,-.35)}" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-  <ellipse cx="82" cy="77" rx="5.5" ry="2.8" fill="#ff7a9a" opacity=".4"/><ellipse cx="118" cy="77" rx="5.5" ry="2.8" fill="#ff7a9a" opacity=".4"/>
-  <g stroke="#ff7a9a" stroke-width=".8" opacity=".6"><path d="M79,77 L80,75"/><path d="M82,77 L83,75"/><path d="M117,77 L118,75"/><path d="M120,77 L121,75"/></g>
-  <path d="M99,72 L100,74" stroke="${shade(g.skin,-.25)}" stroke-width="1" stroke-linecap="round"/>
-  <path d="M95,80 Q100,84 105,80 Q100,82 95,80Z" fill="#e8768f" stroke="#b0425a" stroke-width="1.2" stroke-linejoin="round"/>`;
-}
-function legs(g,p){
-  const sk=`url(#${C}s)`,ol=`stroke="${shade(g.skin,-.3)}" stroke-width="1.2"`;
-  if(p.legs==='crossed')return`<path d="M74,204 Q66,262 84,338 L96,338 Q94,272 101,214Z" fill="${sk}" ${ol}/><path d="M126,204 Q128,250 106,286 Q108,312 106,338 L94,338 Q92,306 96,284 Q100,240 99,214Z" fill="${sk}" ${ol}/>`;
-  return`<path d="M74,204 Q68,262 82,338 L94,338 Q96,270 100,216Z" fill="${sk}" ${ol}/><path d="M126,204 Q132,262 118,338 L106,338 Q104,270 100,216Z" fill="${sk}" ${ol}/>`;
-}
-const TORSO='M78,100 Q100,93 122,100 Q128,104 126,118 Q122,140 117,165 Q116,172 120,182 Q130,198 127,214 L73,214 Q70,198 80,182 Q84,172 83,165 Q78,140 74,118 Q72,104 78,100Z';
-function outfit(g,st){
-  const c=g.color,d=shade(c,-.3),l=shade(c,.35);
-  switch(st){
-    case 0:return`<path d="M76,99 Q100,93 124,99 Q129,104 126,118 Q122,140 118,165 Q118,176 122,190 L78,190 Q82,176 82,165 Q78,140 74,118 Q71,104 76,99Z" fill="${c}"/>
-      <path d="M90,98 L100,112 L110,98" fill="${l}"/><path d="M80,124 Q100,132 120,124" stroke="${d}" stroke-width="1.5" fill="none" opacity=".4"/>
-      <path d="M77,186 L123,186 L133,244 Q100,250 67,244Z" fill="#33467a"/><path d="M78,192 L122,192" stroke="#26355e" stroke-width="3"/>`;
-    case 1:return`<path d="M76,99 Q100,93 124,99 Q131,106 127,130 Q122,165 128,212 L134,316 Q100,322 66,316 L72,212 Q78,165 73,130 Q69,106 76,99Z" fill="${l}"/>
-      <g fill="${c}" opacity=".7"><circle cx="86" cy="230" r="5"/><circle cx="114" cy="262" r="5"/><circle cx="92" cy="290" r="5"/><circle cx="116" cy="200" r="4"/><circle cx="84" cy="140" r="4"/><circle cx="117" cy="128" r="4"/></g>
-      <path d="M86,98 L100,148 L114,98" stroke="${d}" stroke-width="5" fill="none"/><path d="M100,148 L106,316" stroke="${d}" stroke-width="2" opacity=".5"/>
-      <rect x="75" y="158" width="50" height="20" rx="3" fill="${d}"/><path d="M118,160 Q132,176 124,194 L116,178Z" fill="${d}"/>`;
-    case 2:return`<path d="M78,104 L86,104 Q100,134 114,104 L122,104 Q126,110 125,120 Q122,140 117,165 Q116,172 120,182 Q128,196 126,206 L110,214 Q100,226 90,214 L74,206 Q72,196 80,182 Q84,172 83,165 Q78,140 75,120 Q74,110 78,104Z" fill="${c}"/>
-      <path d="M78,104 Q76,98 82,96" stroke="${c}" stroke-width="4" fill="none"/><path d="M122,104 Q124,98 118,96" stroke="${c}" stroke-width="4" fill="none"/>
-      <path d="M82,150 Q100,160 118,150" stroke="${l}" stroke-width="2" fill="none" opacity=".6"/><path d="M80,182 Q100,190 120,182" stroke="${l}" stroke-width="2" fill="none" opacity=".6"/>`;
-    case 3:return`<path d="M76,118 Q86,110 98,124 Q97,138 88,141 Q79,139 76,129Z" fill="${c}"/><path d="M124,118 Q114,110 102,124 Q103,138 112,141 Q121,139 124,129Z" fill="${c}"/>
-      <path d="M98,125 L102,125" stroke="${d}" stroke-width="2"/><path d="M83,114 L91,92" stroke="${d}" stroke-width="1.6"/><path d="M117,114 L109,92" stroke="${d}" stroke-width="1.6"/>
-      <path d="M76,132 L72,136 M124,132 L128,136" stroke="${d}" stroke-width="1.6"/>
-      <g fill="${l}"><circle cx="84" cy="126" r="1.8"/><circle cx="91" cy="133" r="1.8"/><circle cx="109" cy="133" r="1.8"/><circle cx="116" cy="126" r="1.8"/></g>
-      <path d="M77,196 Q100,204 123,196 L119,208 Q107,212 100,222 Q93,212 81,208Z" fill="${c}"/><path d="M77,196 L73,192 M123,196 L127,192" stroke="${d}" stroke-width="1.6"/>
-      <g fill="${l}"><circle cx="92" cy="205" r="1.8"/><circle cx="108" cy="205" r="1.8"/></g>`;
-    case 4:return`<path d="M73,118 Q100,111 127,118 Q125,140 118,166 Q120,180 128,200 L131,238 Q100,245 69,238 L72,200 Q80,180 82,166 Q75,140 73,118Z" fill="#fbfbfb"/>
-      <g stroke="#dfe7ee" stroke-width="2"><path d="M76,130 Q100,124 124,130"/><path d="M75,226 Q100,232 125,226"/></g>
-      <path d="M73,118 Q100,111 127,118 L126,124 Q100,117 74,124Z" fill="${l}"/><path d="M96,118 L104,138 L108,120Z" fill="#eef2f6"/>
-      <path d="M100,126 Q101,170 104,238" stroke="#e3e8ee" stroke-width="1.5" fill="none"/>`;
-  }
-}
-function skinDetail(g,st){
-  const ln=shade(g.skin,-.2);let s='';
-  if(st>=2)s+=`<path d="M97,${st===4?112:116} Q100,${st===4?118:122} 103,${st===4?112:116}" stroke="${ln}" stroke-width="1.3" fill="none" opacity=".7"/>`;
-  if(st===3)s+=`<ellipse cx="100" cy="176" rx="1.6" ry="2.6" fill="${ln}" opacity=".7"/><path d="M84,160 Q100,168 116,160" stroke="${ln}" stroke-width="1" fill="none" opacity=".35"/>`;
-  return s;
-}
-function arms(g,p,st,which){
-  const sk=g.skin,c=g.color;let s='';
-  for(const k of which){
-    const d=p['arm'+k],h=p['h'+k];
-    s+=`<path d="${d}" stroke="${shade(sk,-.3)}" stroke-width="13.4" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="7.2" fill="${shade(sk,-.3)}"/><path d="${d}" stroke="${sk}" stroke-width="11" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="6" fill="${sk}"/>`;
-    if(st===0)s+=`<path d="${d}" stroke="${c}" stroke-width="14" fill="none" stroke-dasharray="24 999" stroke-linecap="round"/>`;
-    if(st===1)s+=`<path d="${d}" stroke="${shade(c,.35)}" stroke-width="20" fill="none" stroke-dasharray="48 999"/>`;
-  }
-  return s;
-}
-function feet(g,st,p){
-  const col=st===0?'#fff':st===1?'#8a5a3a':g.skin;
-  if(p.legs==='crossed')return`<ellipse cx="90" cy="340" rx="10" ry="5" fill="${col}"/><ellipse cx="100" cy="340" rx="10" ry="5" fill="${col}"/>`;
-  return`<ellipse cx="88" cy="340" rx="10" ry="5" fill="${col}"/><ellipse cx="112" cy="340" rx="10" ry="5" fill="${col}"/>`;
-}
 let C='',UID=0;
+/* Halbrealistischer Anime-Stil: weiche, geblurrte Schattierung innerhalb von Clip-Formen,
+   Glanzlichter, 7-Kopf-Proportionen. Alle Koordinaten als x,y-Paare, damit mir() spiegeln kann. */
+const mir=d=>d.replace(/(-?\d+\.?\d*),(-?\d+\.?\d*)/g,(m,x,y)=>`${+(200-x).toFixed(1)},${y}`);
+const POSES=[
+  {armL:'M76,110 Q60,148 70,174 Q78,188 90,186',armR:'M124,110 Q146,90 138,58 Q133,44 118,40',hL:[90,186],hR:[118,40],front:false,rot:-2,legs:'crossed'},
+  {armL:'M76,110 Q58,74 84,32',armR:'M124,110 Q142,74 116,32',hL:[84,30],hR:[116,30],front:false,rot:0,legs:'stand'},
+  {armL:'M76,110 Q62,160 96,198',armR:'M124,110 Q138,160 104,198',hL:[96,198],hR:[104,198],front:true,rot:-4,legs:'stand',wink:true}
+];
+const HEAD='M81,56 Q81,34 100,34 Q119,34 119,56 Q119,71 111,80 Q105,87 100,88 Q95,87 89,80 Q81,71 81,56Z';
+const NECK='M94.5,80 L94,104 L106,104 L105.5,80Z';
+const TORSO='M93,100 Q84,104 74,108 Q67,113 70,126 Q72,140 76,152 Q81,166 86,178 Q84,192 76,206 Q72,216 74,232 L126,232 Q128,216 124,206 Q116,192 114,178 Q119,166 124,152 Q128,140 130,126 Q133,113 126,108 Q116,104 107,100Z';
+const LEGS={
+  stand:['M74,226 Q69,262 77,300 Q80,334 84,374 L95,375 Q96,334 97,300 Q101,262 100,236Z','M126,226 Q131,262 123,300 Q120,334 116,374 L105,375 Q104,334 103,300 Q99,262 100,236Z'],
+  crossed:['M74,226 Q69,262 79,300 Q84,334 90,374 L101,375 Q99,334 98,300 Q101,262 100,236Z','M126,226 Q128,264 112,300 Q102,334 96,374 L85,375 Q90,334 98,298 Q103,262 100,236Z']
+};
+function hairShapes(g){
+  const s=g.style,base='M79,56 Q75,25 100,23 Q125,25 121,56 L122,84 Q100,88 78,84Z';
+  const back={
+    long:['M79,56 Q74,24 100,22 Q126,24 121,56 Q132,110 137,182 Q118,172 100,176 Q82,172 63,182 Q68,110 79,56Z'],
+    bob:['M79,56 Q74,24 100,22 Q126,24 121,56 L126,98 Q100,106 74,98Z'],
+    ponytail:[base,'M114,28 Q150,30 144,96 Q140,142 124,172 Q133,104 116,50Z'],
+    twin:[base,'M82,40 Q52,62 58,132 Q62,162 70,178 Q70,110 85,60Z',mir('M82,40 Q52,62 58,132 Q62,162 70,178 Q70,110 85,60Z')]
+  }[s];
+  const front=['M78,64 Q72,21 100,20 Q128,21 122,64 Q118,48 112,53 Q108,40 100,51 Q93,40 88,53 Q82,48 78,64Z'];
+  if(s==='long'||s==='bob')front.push('M80,54 Q73,86 77,116 L84,110 Q80,86 85,58Z',mir('M80,54 Q73,86 77,116 L84,110 Q80,86 85,58Z'));
+  return{back,front};
+}
+function outfitDef(g,st){
+  const c=g.color,d=shade(c,-.35),l=shade(c,.4);
+  switch(st){
+    case 0:return{
+      shapes:[['M93,100 Q84,104 74,108 Q67,113 70,126 Q72,140 76,152 Q81,166 86,178 Q84,190 80,202 L120,202 Q116,190 114,178 Q119,166 124,152 Q128,140 130,126 Q133,113 126,108 Q116,104 107,100 Q100,108 93,100Z',c],
+              ['M79,196 L121,196 Q129,224 135,254 Q100,262 65,254 Q71,224 79,196Z','#2f3f6e']],
+      extra:`<path d="M93,100 Q100,110 107,100" stroke="${d}" stroke-width="2" fill="none"/><g stroke="#1f2b50" stroke-width="1.2" opacity=".7"><path d="M90,200 L84,256"/><path d="M100,200 L100,258"/><path d="M110,200 L116,256"/></g><path d="M79,198 L121,198" stroke="#1f2b50" stroke-width="3"/>`};
+    case 1:return{
+      shapes:[['M93,100 Q84,104 74,108 Q67,113 70,126 Q72,150 80,178 Q76,206 74,240 Q74,300 72,354 Q100,360 128,354 Q126,300 126,240 Q124,206 120,178 Q128,150 130,126 Q133,113 126,108 Q116,104 107,100Z',l]],
+      extra:`<g fill="${c}" opacity=".75">${[[84,236],[114,266],[90,300],[116,214],[84,140],[118,130],[104,330]].map(([x,y])=>`<path d="M${x},${y-5} Q${x+2},${y-2} ${x+5},${y} Q${x+2},${y+2} ${x},${y+5} Q${x-2},${y+2} ${x-5},${y} Q${x-2},${y-2} ${x},${y-5}Z"/>`).join('')}</g>
+        <path d="M88,100 L100,150 L112,100" stroke="${d}" stroke-width="5" fill="none"/><path d="M100,150 L108,354" stroke="${d}" stroke-width="1.5" opacity=".5"/>
+        <rect x="76" y="166" width="48" height="22" rx="3" fill="${d}"/><path d="M76,174 L124,174" stroke="${l}" stroke-width="2"/><path d="M116,170 Q134,186 126,206 L116,188Z" fill="${d}"/>`};
+    case 2:return{
+      shapes:[['M80,108 L86,108 Q100,142 114,108 L120,108 Q128,116 128,126 Q126,142 122,154 Q116,166 114,178 Q116,192 124,206 Q126,214 126,220 L110,228 Q100,242 90,228 L74,220 Q74,214 76,206 Q84,192 86,178 Q84,166 78,154 Q74,142 72,126 Q72,116 80,108Z',c]],
+      extra:`<path d="M80,108 Q79,102 85,100" stroke="${c}" stroke-width="4" fill="none"/><path d="M120,108 Q121,102 115,100" stroke="${c}" stroke-width="4" fill="none"/><path d="M76,206 Q100,214 124,206" stroke="${l}" stroke-width="2" fill="none" opacity=".6"/>`};
+    case 3:{const top='M71,126 Q84,116 99,131 Q97,149 86,151 Q74,149 71,137Z';return{
+      shapes:[[top,c],[mir(top),c],['M76,214 Q100,222 124,214 L120,226 Q108,230 100,240 Q92,230 80,226Z',c]],
+      extra:`<path d="M99,131 L101,131" stroke="${d}" stroke-width="2.4"/><path d="M80,120 L90,96" stroke="${d}" stroke-width="1.6"/><path d="M120,120 L110,96" stroke="${d}" stroke-width="1.6"/><path d="M71,134 L67,138 M129,134 L133,138 M76,214 L72,210 M124,214 L128,210" stroke="${d}" stroke-width="1.6"/>`};}
+    case 4:return{
+      shapes:[['M70,126 Q100,118 130,126 Q128,146 122,160 Q116,170 114,180 Q118,196 126,212 L130,260 Q100,268 70,260 L74,212 Q82,196 86,180 Q84,170 78,160 Q72,146 70,126Z','#f8fafc']],
+      extra:`<path d="M70,126 Q100,118 130,126 L129,132 Q100,124 71,132Z" fill="${l}"/><path d="M71,252 Q100,260 129,252 L130,260 Q100,268 70,260Z" fill="${l}"/><path d="M94,124 L104,146 L108,126Z" fill="#e9eef3"/><g stroke="#d5dde6" stroke-width="1.2" fill="none"><path d="M100,132 Q102,190 106,262"/><path d="M84,190 Q86,220 82,256"/><path d="M118,170 Q114,210 120,258"/></g>`};
+  }
+}
+function shadeLayer(id,inner){return`<g clip-path="url(#${C}${id})"><g filter="url(#${C}f)">${inner}</g></g>`}
 function girlSVG(g,st,o={}){
   const p=POSES[g.pose];C='q'+(++UID);
+  const sk=g.skin,sh=shade(sk,-.28),hl=shade(sk,.35),ol=shade(sk,-.42);
+  const hs=hairShapes(g),of=outfitDef(g,st);
+  const legs=LEGS[p.legs];
+  const bodyPaths=[TORSO,...legs,NECK,HEAD];
   const back=p.front?[]:['L','R'],front=p.front?['L','R']:[];
-  const ol=`stroke="${shade(g.skin,-.3)}" stroke-width="1.2"`;
-  return`<svg class="${o.cls||''}" viewBox="${o.vb||'30 10 140 345'}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+  const arm=k=>{const d=p['arm'+k],h=p['h'+k];let s=`<path d="${d}" stroke="${ol}" stroke-width="10.6" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="5.6" fill="${ol}"/>
+      <path d="${d}" stroke="${sk}" stroke-width="8.8" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="4.7" fill="${sk}"/>
+      <path d="${d}" stroke="${sh}" stroke-width="3.2" fill="none" stroke-linecap="round" transform="translate(2,1)" opacity=".45" filter="url(#${C}g)"/>
+      <path d="${d}" stroke="#fff" stroke-width="1.3" fill="none" stroke-linecap="round" transform="translate(-2,-1)" opacity=".4"/>`;
+    if(st===0)s+=`<path d="${d}" stroke="${g.color}" stroke-width="14" fill="none" stroke-dasharray="26 999" stroke-linecap="round"/>`;
+    if(st===1)s+=`<path d="${d}" stroke="${shade(g.color,.4)}" stroke-width="20" fill="none" stroke-dasharray="52 999"/><path d="${d}" stroke="${shade(g.color,-.1)}" stroke-width="6" fill="none" stroke-dasharray="52 999" transform="translate(3,1)" opacity=".35" filter="url(#${C}g)"/>`;
+    return s};
+  const feetCol=st===0?'#f4f4f6':st===1?'#7a4a2c':sk;
+  const fx=p.legs==='crossed'?[95,91]:[89,111];
+  const eye=(x,dir)=>{const inX=x-dir*7,outX=x+dir*8.5,sc=`M${inX},65 Q${x-dir*1},53 ${outX},60.5 Q${x+dir*2},71.5 ${inX},65Z`,id=C+'e'+dir;
+    return`<clipPath id="${id}"><path d="${sc}"/></clipPath><path d="${sc}" fill="#f7f0f2"/>
+      <g clip-path="url(#${id})"><ellipse cx="${x}" cy="63" rx="5.6" ry="6.6" fill="url(#${C}i)"/><ellipse cx="${x}" cy="63.6" rx="2.3" ry="3" fill="#120a10"/><circle cx="${x}" cy="63" r="4.2" fill="none" stroke="${shade(g.eye,.3)}" stroke-width=".5" opacity=".6"/>
+      <path d="M${x-9},58 Q${x},62 ${x+9},58 L${x+9},52 L${x-9},52Z" fill="#000" opacity=".3"/><ellipse cx="${x-2}" cy="60.4" rx="1.9" ry="1.6" fill="#fff"/><circle cx="${x+2.2}" cy="66.4" r=".9" fill="#fff" opacity=".85"/></g>
+      <path d="M${inX},65 Q${x-dir*1},52.6 ${outX},60.5" stroke="#1d1218" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+      <path d="M${outX},60.5 L${outX+dir*3},58" stroke="#1d1218" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M${inX+dir*1.5},66.5 Q${x},71 ${outX-dir*1},63.5" stroke="${shade(sk,-.35)}" stroke-width=".7" fill="none"/>
+      <path d="M${inX+dir*1},57.2 Q${x},51.6 ${outX},56.6" stroke="${shade(sk,-.3)}" stroke-width=".6" fill="none"/>`};
+  const closed=(x,dir)=>`<path d="M${x-dir*5.5},63 Q${x},66.5 ${x+dir*6.5},62.5" stroke="#1d1218" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M${x+dir*6.5},62.5 L${x+dir*8.5},60.8" stroke="#1d1218" stroke-width="1.2"/>`;
+  const hairClip=`<clipPath id="${C}hc">${hs.front.map(d=>`<path d="${d}"/>`).join('')}</clipPath>`;
+  return`<svg class="${o.cls||''}" viewBox="${o.vb||'22 14 156 372'}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
   <defs>
-    <linearGradient id="${C}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.hair,.3)}"/><stop offset=".55" stop-color="${g.hair}"/><stop offset="1" stop-color="${shade(g.hair,-.2)}"/></linearGradient>
-    <linearGradient id="${C}d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.hair,-.15)}"/><stop offset="1" stop-color="${shade(g.hair,-.4)}"/></linearGradient>
-    <radialGradient id="${C}s" cx=".45" cy=".35" r=".85"><stop offset="0" stop-color="${shade(g.skin,.14)}"/><stop offset=".7" stop-color="${g.skin}"/><stop offset="1" stop-color="${shade(g.skin,-.1)}"/></radialGradient>
-    <linearGradient id="${C}i" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.eye,-.55)}"/><stop offset=".55" stop-color="${g.eye}"/><stop offset="1" stop-color="${shade(g.eye,.55)}"/></linearGradient>
+    <filter id="${C}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.2"/></filter>
+    <filter id="${C}g"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <linearGradient id="${C}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.hair,.18)}"/><stop offset=".5" stop-color="${g.hair}"/><stop offset="1" stop-color="${shade(g.hair,-.28)}"/></linearGradient>
+    <linearGradient id="${C}d" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${shade(g.hair,-.2)}"/><stop offset="1" stop-color="${shade(g.hair,-.45)}"/></linearGradient>
+    <radialGradient id="${C}i" cx=".5" cy=".62" r=".6"><stop offset="0" stop-color="${shade(g.eye,.55)}"/><stop offset=".55" stop-color="${g.eye}"/><stop offset="1" stop-color="${shade(g.eye,-.6)}"/></radialGradient>
+    <clipPath id="${C}b">${bodyPaths.map(d=>`<path d="${d}"/>`).join('')}</clipPath>
+    <clipPath id="${C}o">${of.shapes.map(s=>`<path d="${s[0]}"/>`).join('')}</clipPath>
+    ${hairClip}
   </defs>
-  <ellipse cx="100" cy="344" rx="40" ry="6" fill="#000" opacity=".25"/>
-  <g transform="rotate(${p.rot} 100 220)">
-    ${hairBack(g)}
-    ${arms(g,p,st,back)}
-    ${legs(g,p)}${feet(g,st,p)}
-    <path d="${TORSO}" fill="url(#${C}s)" ${ol}/>
-    ${skinDetail(g,st)}
-    ${outfit(g,st)}
-    ${arms(g,p,st,front)}
-    <rect x="93" y="80" width="14" height="22" rx="5" fill="url(#${C}s)"/><path d="M93,88 Q100,94 107,88" stroke="${shade(g.skin,-.2)}" stroke-width="1" fill="none"/>
-    <path d="M74,58 Q74,90 100,90 Q126,90 126,58 Q126,30 100,31 Q74,30 74,58Z" fill="url(#${C}s)" ${ol}/>
-    ${face(g,p.wink)}
-    ${hairFront(g)}
-    ${st===4?`<path d="M78,32 Q100,14 122,32 L118,38 Q100,24 82,38Z" fill="#fff" stroke="#dfe7ee"/><path d="M80,30 Q100,18 120,30" stroke="#e8eef4" stroke-width="2" fill="none"/>`:''}
+  <ellipse cx="100" cy="378" rx="42" ry="6" fill="#000" opacity=".3" filter="url(#${C}g)"/>
+  <g transform="rotate(${p.rot} 100 230)">
+    ${hs.back.map(d=>`<path d="${d}" fill="url(#${C}d)"/>`).join('')}
+    ${back.map(arm).join('')}
+    ${bodyPaths.map(d=>`<path d="${d}" fill="${sk}" stroke="${ol}" stroke-width="1.1"/>`).join('')}
+    ${shadeLayer('b',`<g fill="${sh}" opacity=".55">
+        <ellipse cx="100" cy="94" rx="13" ry="7"/><ellipse cx="68" cy="160" rx="7" ry="55"/><ellipse cx="132" cy="160" rx="9" ry="55"/>
+        <ellipse cx="100" cy="153" rx="24" ry="3.5"/><ellipse cx="72" cy="240" rx="6" ry="40"/><ellipse cx="128" cy="240" rx="8" ry="40"/>
+        <ellipse cx="100" cy="290" rx="5" ry="70"/><ellipse cx="78" cy="320" rx="4" ry="60"/><ellipse cx="124" cy="320" rx="6" ry="60"/>
+        <ellipse cx="81" cy="64" rx="3.5" ry="18"/><ellipse cx="120" cy="64" rx="4.5" ry="18"/><ellipse cx="100" cy="42" rx="22" ry="7"/>
+        <ellipse cx="100" cy="196" rx="14" ry="3" opacity=".6"/></g>
+      <g fill="${hl}" opacity=".7"><ellipse cx="86" cy="112" rx="8" ry="4"/><ellipse cx="114" cy="112" rx="6" ry="3"/>
+        <ellipse cx="88" cy="134" rx="6" ry="6"/><ellipse cx="112" cy="134" rx="5" ry="5"/><ellipse cx="98" cy="186" rx="7" ry="14"/>
+        <ellipse cx="86" cy="266" rx="5" ry="26"/><ellipse cx="114" cy="266" rx="4" ry="24"/><ellipse cx="86" cy="340" rx="3" ry="22"/><ellipse cx="114" cy="340" rx="3" ry="22"/>
+        <ellipse cx="92" cy="72" rx="5" ry="3"/><ellipse cx="108" cy="72" rx="5" ry="3"/><ellipse cx="100" cy="52" rx="10" ry="4"/></g>`)}
+    <g stroke="#fff" stroke-width="1.3" fill="none" opacity=".45" stroke-linecap="round"><path d="M84,250 Q83,268 85,286"/><path d="M116,252 Q117,266 115,280"/><path d="M84,326 Q85,342 86,356"/><path d="M80,110 Q85,108 90,109"/></g>
+    <g stroke="${ol}" stroke-width=".8" fill="none" opacity=".6"><path d="M86,106 Q92,110 98,108"/><path d="${mir('M86,106 Q92,110 98,108')}"/></g>
+    ${st===3?`<ellipse cx="100" cy="196" rx="1.4" ry="2.4" fill="${ol}" opacity=".6"/><path d="M100,160 L100,186" stroke="${sh}" stroke-width="1" opacity=".35"/>`:''}
+    <ellipse cx="${fx[0]}" cy="377" rx="8" ry="4.5" fill="${feetCol}" stroke="${ol}" stroke-width=".8"/><ellipse cx="${fx[1]}" cy="377" rx="8" ry="4.5" fill="${feetCol}" stroke="${ol}" stroke-width=".8"/>
+    ${of.shapes.map(s=>`<path d="${s[0]}" fill="${s[1]}" stroke="${shade(s[1],-.45)}" stroke-width="1"/>`).join('')}
+    ${shadeLayer('o',`<g fill="#000" opacity=".3"><ellipse cx="66" cy="200" rx="12" ry="200"/><ellipse cx="136" cy="200" rx="16" ry="200"/><ellipse cx="100" cy="156" rx="26" ry="5"/><ellipse cx="100" cy="232" rx="30" ry="4"/></g>
+      <g fill="#fff" opacity=".35"><ellipse cx="88" cy="132" rx="7" ry="8"/><ellipse cx="112" cy="134" rx="5" ry="6"/><ellipse cx="90" cy="230" rx="6" ry="30"/></g>`)}
+    ${of.extra}
+    ${front.map(arm).join('')}
+    <g stroke="#e8768f" fill="#e8768f" opacity=".35" filter="url(#${C}g)"><ellipse cx="88" cy="72" rx="5" ry="2.6"/><ellipse cx="112" cy="72" rx="5" ry="2.6"/></g>
+    ${p.wink?closed(90,-1):eye(90,-1)}${eye(110,1)}
+    <path d="M83,50.5 Q89,48 96,49.5" stroke="${shade(g.hair,-.4)}" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="${mir('M83,50.5 Q89,48 96,49.5')}" stroke="${shade(g.hair,-.4)}" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <path d="M100.5,67 Q101.5,72 99.5,74" stroke="${shade(sk,-.3)}" stroke-width=".9" fill="none" stroke-linecap="round"/><circle cx="99.6" cy="72.4" r=".9" fill="#fff" opacity=".7"/>
+    <path d="M96,79.5 Q100,80.6 104,79.5" stroke="#9a3c50" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    <path d="M96.8,80.4 Q100,83.4 103.2,80.4 Q100,81.4 96.8,80.4Z" fill="#d9707f"/><ellipse cx="100.5" cy="81.6" rx="1.4" ry=".5" fill="#fff" opacity=".6"/>
+    ${hs.front.map(d=>`<path d="${d}" fill="url(#${C}h)" stroke="${shade(g.hair,-.5)}" stroke-width=".8"/>`).join('')}
+    ${shadeLayer('hc',`<ellipse cx="100" cy="60" rx="30" ry="6" fill="${shade(g.hair,-.5)}" opacity=".6"/><ellipse cx="100" cy="38" rx="20" ry="3.5" fill="#fff" opacity=".7"/><ellipse cx="88" cy="40" rx="5" ry="10" fill="#fff" opacity=".25"/>`)}
+    <g stroke="${shade(g.hair,-.45)}" stroke-width=".8" fill="none" opacity=".6"><path d="M88,52 Q90,40 97,33"/><path d="M100,50 Q100,40 103,31"/><path d="M112,52 Q110,40 106,33"/><path d="M82,58 Q82,44 90,36"/><path d="M118,58 Q118,44 110,36"/></g>
+    <g stroke="#fff" stroke-width=".9" fill="none" opacity=".55" stroke-linecap="round"><path d="M86,38 Q92,35 96,36"/><path d="M104,35 Q109,35 114,38"/></g>
+    ${st===4?`<path d="M78,34 Q100,14 122,34 L119,41 Q100,26 81,41Z" fill="#fbfcfd" stroke="#cfd8e2"/><path d="M82,33 Q100,20 118,33" stroke="#dde5ec" stroke-width="1.5" fill="none"/>`:''}
   </g></svg>`;
 }
-function headSVG(g){const st=S.girls[g.id]?stageFor(S.girls[g.id].lvl):0;return girlSVG(g,st,{vb:'62 18 76 76'})}
+function headSVG(g){const st=S.girls[g.id]?stageFor(S.girls[g.id].lvl):0;return girlSVG(g,st,{vb:'72 26 56 56'})}
 
 /* ================= Onsen-Kulisse ================= */
 function onsenBG(){
@@ -307,7 +314,7 @@ function onsenBG(){
   <linearGradient id="bb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b7a3a"/><stop offset=".5" stop-color="#9aab5a"/><stop offset="1" stop-color="#5a6830"/></linearGradient>
   <linearGradient id="wa" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fd0d8"/><stop offset="1" stop-color="#1f6c80"/></linearGradient>
   <radialGradient id="mo"><stop offset="0" stop-color="#fffbe6"/><stop offset=".6" stop-color="#ffeeb0"/><stop offset="1" stop-color="#ffeeb0" stop-opacity="0"/></radialGradient></defs>
-  <rect width="400" height="600" fill="url(#sky)"/>${stars}
+  <filter id="dof"><feGaussianBlur stdDeviation="2.4"/></filter><g filter="url(#dof)"><rect width="400" height="600" fill="url(#sky)"/>${stars}
   <circle cx="310" cy="80" r="70" fill="url(#mo)" opacity=".5"/><circle cx="310" cy="80" r="30" fill="#fff8dc"/>
   <path d="M0,200 Q60,150 130,185 Q200,140 270,180 Q340,150 400,190 L400,260 L0,260Z" fill="#2a1e48"/>
   ${fence}
@@ -317,7 +324,7 @@ function onsenBG(){
   <rect x="0" y="385" width="400" height="215" fill="url(#wa)"/>
   <g fill="none" stroke="#fff" opacity=".3">${[0,1,2,3,4,5].map(i=>`<ellipse cx="${60+i*60}" cy="${420+(i%3)*50}" rx="${30+i*4}" ry="5"/>`).join('')}</g>
   <path d="M290,390 L330,390 L320,600 L300,600Z" fill="#fff8dc" opacity=".12"/>
-  ${petals}</svg>`;
+  </g>${petals}</svg>`;
   return`url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 const BG=onsenBG();
@@ -452,7 +459,7 @@ function openGirl(id){
     const of=girlOffer(g);
     modal(`<div class="row"><div class="grow"><span class="rar ${g.rarity}">${g.rarity}</span> <b style="font-size:18px">${g.name}</b>, ${g.age}
       <div class="stars">${'★'.repeat(o.stars)}${'☆'.repeat(5-o.stars)}</div></div><button class="btn alt" data-close style="min-width:0">✕</button></div>
-      <div class="big">${girlSVG(g,view,{cls:'',vb:'20 5 160 350'}).replace('<svg ','<svg style="width:100%;height:100%" ')}</div>
+      <div class="big">${girlSVG(g,view,{cls:'',vb:'12 10 176 378'}).replace('<svg ','<svg style="width:100%;height:100%" ')}</div>
       <div class="tabs">${STAGES.map((s,i)=>`<button data-st="${i}" class="${i===view?'on':''}" ${o.lvl>=s.lvl?'':'disabled'}>${o.lvl>=s.lvl?'':'🔒'}${s.name}<br><small>Lv ${s.lvl}</small></button>`).join('')}</div>
       <div class="muted">${g.bio}</div>
       <div class="card" style="margin-top:10px"><div class="row"><div class="grow"><b>Level ${o.lvl}/${GIRL_MAX}</b>
