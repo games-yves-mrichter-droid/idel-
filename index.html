@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2a1430">
+<title>Onsen Idle</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#1d0f22;--panel:#2e1834;--panel2:#3b2142;--line:#563260;
+  --text:#fbeef7;--muted:#c9a8c4;--accent:#ff6fa8;--accent2:#ffb347;
+  --good:#5fd38d;--gem:#6fd3ff;--ticket:#ffd36f;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:15px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;user-select:none}
+#app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header{position:sticky;top:0;z-index:5;background:linear-gradient(#2a1430,#24112aee);padding:8px 12px;border-bottom:1px solid var(--line)}
+.res{display:flex;gap:8px;justify-content:space-between}
+.res div{flex:1;background:var(--panel);border-radius:10px;padding:5px 8px;text-align:center;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.inc{text-align:center;color:var(--muted);font-size:12px;margin-top:4px}
+main{flex:1;padding:12px 12px 90px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;display:flex;justify-content:center;background:#24112a;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav .wrap{display:flex;max-width:560px;width:100%}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:10px 0 8px;font-size:12px;cursor:pointer}
+nav button b{display:block;font-size:22px}
+nav button.on{color:var(--accent)}
+h2{margin:6px 0 10px;font-size:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:10px}
+.grow{flex:1;min-width:0}
+.muted{color:var(--muted);font-size:12px}
+button.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:13px;min-width:92px}
+button.btn.alt{background:var(--panel2);border:1px solid var(--line)}
+button.btn.gold{background:linear-gradient(#ffb347,#e8892a)}
+button.btn.gem{background:linear-gradient(#5ac8f5,#2e8ec4)}
+button.btn:disabled{opacity:.4;cursor:default}
+.scene{position:relative;border-radius:16px;overflow:hidden;height:300px;background:linear-gradient(#3a2a5a,#6a3a6a 55%,#2e6f80 56%,#3b8a9a);margin-bottom:10px;border:1px solid var(--line)}
+.scene svg.girl{position:absolute;left:50%;bottom:-6px;height:290px;transform:translateX(-50%)}
+.steam{position:absolute;border-radius:50%;background:#fff;filter:blur(14px);opacity:.18;animation:steam 7s ease-in-out infinite}
+@keyframes steam{0%{transform:translateY(20px) scale(.8);opacity:0}40%{opacity:.25}100%{transform:translateY(-140px) scale(1.4);opacity:0}}
+.tapbtn{position:absolute;right:10px;bottom:10px;z-index:2}
+.float{position:fixed;pointer-events:none;font-weight:800;color:var(--accent2);text-shadow:0 1px 3px #000;animation:fl 1s ease-out forwards;z-index:50}
+@keyframes fl{to{transform:translateY(-60px);opacity:0}}
+.avatar{width:52px;height:52px;border-radius:12px;background:var(--panel2);overflow:hidden;flex:none;border:1px solid var(--line)}
+.avatar svg{width:100%;height:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.gcard{background:var(--panel);border:2px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;position:relative}
+.gcard svg{display:block;width:100%;height:220px;background:linear-gradient(#4a2a5a,#7a3f6e)}
+.gcard .info{padding:6px 8px}
+.gcard.locked svg{filter:brightness(0) opacity(.5)}
+.rar{display:inline-block;font-size:11px;font-weight:800;padding:1px 6px;border-radius:6px;color:#000}
+.rar.R{background:#9fd3a8}.rar.SR{background:#7fc3ff}.rar.SSR{background:#ffcf5a}.rar.UR{background:linear-gradient(90deg,#ff7ab6,#b28bff,#6fe1ff)}
+.stars{color:var(--ticket);font-size:12px}
+.modal{position:fixed;inset:0;background:#000b;z-index:40;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:18px;max-width:520px;width:100%;max-height:92vh;overflow:auto;padding:14px}
+.big{display:block;width:100%;height:420px;border-radius:14px;background:linear-gradient(#3a2a5a,#6a3a6a 60%,#2e6f80 61%,#3b8a9a)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{flex:1;min-width:70px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 4px;font-size:12px;cursor:pointer}
+.tabs button.on{background:var(--accent);border-color:var(--accent)}
+.tabs button:disabled{opacity:.45}
+.seg{display:flex;gap:4px;margin-bottom:10px}
+.seg button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:8px;padding:6px;cursor:pointer;font-weight:700}
+.seg button.on{background:var(--accent)}
+select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px;width:100%}
+.bar{height:6px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.switch{display:flex;align-items:center;justify-content:space-between}
+.glow{animation:glow 1.2s ease-in-out infinite alternate}
+@keyframes glow{from{box-shadow:0 0 10px var(--accent)}to{box-shadow:0 0 30px var(--accent2)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="res">
+      <div><small>💰 Gold</small><span id="rGold">0</span></div>
+      <div><small>💎 Juwelen</small><span id="rGems">0</span></div>
+      <div><small>🎟️ Tickets</small><span id="rTix">0</span></div>
+    </div>
+    <div class="inc" id="rInc"></div>
+  </header>
+  <main id="main"></main>
+</div>
+<nav><div class="wrap">
+  <button data-tab="onsen" class="on"><b>♨️</b>Onsen</button>
+  <button data-tab="girls"><b>💃</b>Mädchen</button>
+  <button data-tab="summon"><b>🌸</b>Beschwören</button>
+  <button data-tab="free"><b>🎁</b>Gratis</button>
+</div></nav>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+/* ================= Daten ================= */
+const STAGES=[
+  {lvl:1, name:'Freizeit'},
+  {lvl:10,name:'Yukata'},
+  {lvl:25,name:'Badeanzug'},
+  {lvl:50,name:'Bikini'},
+  {lvl:80,name:'Badetuch'}
+];
+const RAR={R:{m:1,cost:25,w:55},SR:{m:1.5,cost:60,w:30},SSR:{m:2.5,cost:150,w:12},UR:{m:4,cost:400,w:3}};
+const GIRLS=[
+  {id:'hana', name:'Hana', age:21,rarity:'R',  hair:'#5b3a29',style:'twin',     eye:'#a0602e',skin:'#f6d5bd',color:'#f2b134',pose:0,bio:'Studentin, jobbt am Empfang und kennt jeden Stammgast beim Namen.'},
+  {id:'sakura',name:'Sakura',age:23,rarity:'R',hair:'#f4a6c6',style:'long',     eye:'#d14d8b',skin:'#f8dccb',color:'#e85d9a',pose:1,bio:'Fröhliche Kirschblüten-Liebhaberin, schmückt jedes Becken mit Blüten.'},
+  {id:'yuki', name:'Yuki', age:25,rarity:'SR', hair:'#e6eeff',style:'bob',      eye:'#4a8fe0',skin:'#fbe4d6',color:'#6aa8f0',pose:2,bio:'Kühl auf den ersten Blick, liebt aber heiße Quellen über alles.'},
+  {id:'mei',  name:'Mei',  age:24,rarity:'SR', hair:'#f6d36b',style:'ponytail', eye:'#2e9e6b',skin:'#f8dccb',color:'#2fb57c',pose:0,bio:'Sportlich und energiegeladen – macht morgens Yoga am Becken.'},
+  {id:'akane',name:'Akane',age:27,rarity:'SR', hair:'#c0392b',style:'ponytail', eye:'#e67e22',skin:'#f1c9a8',color:'#d6453d',pose:1,bio:'Feurige Köchin, ihr Onsen-Ei ist legendär.'},
+  {id:'rin',  name:'Rin',  age:26,rarity:'SSR',hair:'#1f1b33',style:'long',     eye:'#9b59d0',skin:'#f3d2bd',color:'#7b4fc9',pose:2,bio:'Geheimnisvolle Wahrsagerin, die nur bei Mondschein badet.'},
+  {id:'nami', name:'Nami', age:28,rarity:'SSR',hair:'#ff8a3d',style:'bob',      eye:'#1f8a9c',skin:'#d9a07a',color:'#ff6f61',pose:0,bio:'Surferin von der Küste, bringt Sommerstimmung in jede Jahreszeit.'},
+  {id:'kaori',name:'Kaori',age:29,rarity:'UR', hair:'#3d2b56',style:'twin',     eye:'#e0405a',skin:'#a8714f',color:'#c0392b',pose:1,bio:'Die elegante Besitzerin der Kaiserlichen Quelle. Sehr anspruchsvoll.'}
+];
+const BATHS=[
+  {id:'foot', name:'Fußbad',              icon:'🦶',base:1,     cost:10},
+  {id:'rock', name:'Felsenquelle',        icon:'🪨',base:8,     cost:150},
+  {id:'wood', name:'Holzbottich',         icon:'🪵',base:50,    cost:2000},
+  {id:'milk', name:'Milchbad',            icon:'🥛',base:300,   cost:3e4},
+  {id:'rose', name:'Rosenbad',            icon:'🌹',base:2000,  cost:5e5},
+  {id:'sake', name:'Sakebad',             icon:'🍶',base:15000, cost:8e6},
+  {id:'moon', name:'Mondschein-Rotenburo',icon:'🌙',base:1.2e5, cost:1.5e8},
+  {id:'royal',name:'Kaiserliche Quelle',  icon:'👑',base:1e6,   cost:3e9}
+];
+const GIRL_MAX=100, BATH_R=1.13, GIRL_R=1.12, OFFLINE_CAP=12*3600;
+
+/* ================= Zustand ================= */
+const SAVE_KEY='onsenIdleSave_v1';
+function fresh(){return{gold:50,gems:300,tickets:3,baths:{foot:1},girls:{hana:{lvl:1,stars:1}},assign:{foot:'hana'},infinite:false,buyMode:1,favorite:'hana',last:Date.now(),gemTimer:0}}
+let S;
+try{S=Object.assign(fresh(),JSON.parse(localStorage.getItem(SAVE_KEY)||'null')||{})}catch(e){S=fresh()}
+function save(){S.last=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+
+/* ================= Hilfen ================= */
+const $=s=>document.querySelector(s);
+const G=id=>GIRLS.find(g=>g.id===id);
+const B=id=>BATHS.find(b=>b.id===id);
+function fmt(n){
+  if(!isFinite(n))return '∞';
+  if(n<1000)return n<10&&n%1?n.toFixed(1):Math.floor(n).toString();
+  const u=['','K','M','B','T','Qa','Qi','Sx','Sp','Oc','No','Dc'];let i=0;
+  while(n>=1000&&i<u.length-1){n/=1000;i++}
+  if(n>=1000)return n.toExponential(2);
+  return n.toFixed(n<10?2:n<100?1:0)+u[i];
+}
+function geo(c,r,l,n){return c*Math.pow(r,l)*(Math.pow(r,n)-1)/(r-1)}
+function maxAfford(c,r,l,money){const f=c*Math.pow(r,l);if(money<f)return 0;return Math.floor(Math.log(money*(r-1)/f+1)/Math.log(r))}
+function stageFor(l){let s=0;STAGES.forEach((st,i)=>{if(l>=st.lvl)s=i});return s}
+function shade(hex,a){let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.max(0,Math.min(255,Math.round(a<0?v*(1+a):v+(255-v)*a)));return'#'+((1<<24)+(f(r)<<16)+(f(g)<<8)+f(b)).toString(16).slice(1)}
+function canPay(kind,amt){return S.infinite||S[kind]>=amt}
+function pay(kind,amt){if(S.infinite)return true;if(S[kind]<amt)return false;S[kind]-=amt;return true}
+
+/* ================= Wirtschaft ================= */
+function hostMult(bathId){
+  const gid=S.assign[bathId];const o=gid&&S.girls[gid];if(!o)return 1;
+  return 1+o.lvl*0.05*RAR[G(gid).rarity].m*(1+0.2*(o.stars-1));
+}
+function bathIncome(b){const l=S.baths[b.id]||0;if(!l)return 0;return b.base*l*Math.pow(2,Math.floor(l/25))*hostMult(b.id)}
+function collectionBonus(){return 1+0.1*Object.keys(S.girls).length}
+function income(){return BATHS.reduce((a,b)=>a+bathIncome(b),0)*collectionBonus()}
+function buyN(c,r,l,cap){
+  let n;
+  if(S.buyMode==='max')n=S.infinite?(cap?cap-l:100):Math.max(1,maxAfford(c,r,l,S.gold));
+  else n=S.buyMode;
+  if(cap)n=Math.min(n,cap-l);
+  return Math.max(0,n);
+}
+function bathOffer(b){const l=S.baths[b.id]||0;const n=buyN(b.cost,BATH_R,l);return{n,cost:geo(b.cost,BATH_R,l,n)}}
+function girlOffer(g){const o=S.girls[g.id];const n=buyN(RAR[g.rarity].cost,GIRL_R,o.lvl-1,GIRL_MAX-1);return{n,cost:geo(RAR[g.rarity].cost,GIRL_R,o.lvl-1,n)}}
+
+/* ================= Figur (SVG) ================= */
+const POSES=[
+  {armL:'M77,106 Q56,140 66,166 Q74,176 86,170',armR:'M123,106 Q150,86 140,56 Q134,44 124,40',hL:[86,170],hR:[124,40],front:false,rot:0,legs:'crossed'},
+  {armL:'M77,106 Q56,72 80,30',armR:'M123,106 Q144,72 120,30',hL:[80,28],hR:[120,28],front:false,rot:0,legs:'stand'},
+  {armL:'M77,106 Q62,150 95,180',armR:'M123,106 Q138,150 105,180',hL:[95,180],hR:[105,180],front:true,rot:-5,legs:'stand',wink:true}
+];
+function hairBack(g){
+  const h=g.hair,d=shade(h,-.25);
+  switch(g.style){
+    case 'long':return`<path d="M70,52 Q64,18 100,22 Q136,18 130,52 Q138,100 142,152 Q120,140 100,146 Q80,140 58,152 Q62,100 70,52Z" fill="${d}"/>`;
+    case 'bob':return`<path d="M71,52 Q66,20 100,22 Q134,20 129,52 L133,94 Q100,104 67,94Z" fill="${d}"/>`;
+    case 'ponytail':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="${d}"/><path d="M116,28 Q156,26 150,82 Q146,124 128,150 Q138,96 118,52Z" fill="${h}"/>`;
+    case 'twin':return`<path d="M72,52 Q68,20 100,22 Q132,20 128,52 L128,84 Q100,90 72,84Z" fill="${d}"/><path d="M76,38 Q42,58 48,122 Q52,146 62,158 Q64,104 80,60Z" fill="${h}"/><path d="M124,38 Q158,58 152,122 Q148,146 138,158 Q136,104 120,60Z" fill="${h}"/><circle cx="76" cy="40" r="5" fill="${g.color}"/><circle cx="124" cy="40" r="5" fill="${g.color}"/>`;
+  }
+}
+function hairFront(g){
+  const h=g.hair,l=shade(h,.25);
+  let s=`<path d="M71,62 Q66,22 100,26 Q134,22 129,62 Q124,46 116,50 Q110,38 101,48 Q92,38 85,50 Q77,46 71,62Z" fill="${h}"/>
+  <path d="M84,32 Q96,26 110,30" stroke="${l}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`;
+  if(g.style==='long'||g.style==='bob')s+=`<path d="M72,52 Q65,82 70,110 L78,106 Q74,82 79,58Z" fill="${h}"/><path d="M128,52 Q135,82 130,110 L122,106 Q126,82 121,58Z" fill="${h}"/>`;
+  return s;
+}
+function face(g,wink){
+  const lash='#2a1a22';
+  const eye=(x)=>`<ellipse cx="${x}" cy="64" rx="6" ry="7.5" fill="#fff"/><ellipse cx="${x}" cy="65" rx="4.6" ry="6.2" fill="${g.eye}"/><ellipse cx="${x}" cy="66" rx="2.2" ry="3.2" fill="#1a0f14"/><circle cx="${x-1.8}" cy="62" r="1.8" fill="#fff"/><path d="M${x-7},59 Q${x},54 ${x+7},59" stroke="${lash}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  const closed=(x)=>`<path d="M${x-6},65 Q${x},70 ${x+6},65" stroke="${lash}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  return`${wink?closed(89):eye(89)}${eye(111)}
+  <path d="M83,53 Q89,50 94,52" stroke="${shade(g.hair,-.3)}" stroke-width="1.6" fill="none"/><path d="M106,52 Q111,50 117,53" stroke="${shade(g.hair,-.3)}" stroke-width="1.6" fill="none"/>
+  <ellipse cx="83" cy="75" rx="5" ry="2.6" fill="#ff7a9a" opacity=".45"/><ellipse cx="117" cy="75" rx="5" ry="2.6" fill="#ff7a9a" opacity=".45"/>
+  <path d="M95.5,78 Q100,82.5 104.5,78" stroke="#b0425a" stroke-width="2" fill="#e8768f" stroke-linecap="round"/>`;
+}
+function legs(g,p){
+  const sk=g.skin;
+  if(p.legs==='crossed')return`<path d="M74,204 Q66,262 84,338 L96,338 Q94,272 101,214Z" fill="${sk}"/><path d="M126,204 Q128,250 106,286 Q108,312 106,338 L94,338 Q92,306 96,284 Q100,240 99,214Z" fill="${shade(sk,-.06)}"/>`;
+  return`<path d="M74,204 Q68,262 82,338 L94,338 Q96,270 100,216Z" fill="${sk}"/><path d="M126,204 Q132,262 118,338 L106,338 Q104,270 100,216Z" fill="${sk}"/>`;
+}
+const TORSO='M78,100 Q100,93 122,100 Q128,104 126,118 Q122,140 117,165 Q116,172 120,182 Q130,198 127,214 L73,214 Q70,198 80,182 Q84,172 83,165 Q78,140 74,118 Q72,104 78,100Z';
+function outfit(g,st){
+  const c=g.color,d=shade(c,-.3),l=shade(c,.35);
+  switch(st){
+    case 0:return`<path d="M76,99 Q100,93 124,99 Q129,104 126,118 Q122,140 118,165 Q118,176 122,190 L78,190 Q82,176 82,165 Q78,140 74,118 Q71,104 76,99Z" fill="${c}"/>
+      <path d="M90,98 L100,112 L110,98" fill="${l}"/><path d="M80,124 Q100,132 120,124" stroke="${d}" stroke-width="1.5" fill="none" opacity=".4"/>
+      <path d="M77,186 L123,186 L133,244 Q100,250 67,244Z" fill="#33467a"/><path d="M78,192 L122,192" stroke="#26355e" stroke-width="3"/>`;
+    case 1:return`<path d="M76,99 Q100,93 124,99 Q131,106 127,130 Q122,165 128,212 L134,316 Q100,322 66,316 L72,212 Q78,165 73,130 Q69,106 76,99Z" fill="${l}"/>
+      <g fill="${c}" opacity=".7"><circle cx="86" cy="230" r="5"/><circle cx="114" cy="262" r="5"/><circle cx="92" cy="290" r="5"/><circle cx="116" cy="200" r="4"/><circle cx="84" cy="140" r="4"/><circle cx="117" cy="128" r="4"/></g>
+      <path d="M86,98 L100,148 L114,98" stroke="${d}" stroke-width="5" fill="none"/><path d="M100,148 L106,316" stroke="${d}" stroke-width="2" opacity=".5"/>
+      <rect x="75" y="158" width="50" height="20" rx="3" fill="${d}"/><path d="M118,160 Q132,176 124,194 L116,178Z" fill="${d}"/>`;
+    case 2:return`<path d="M78,104 L86,104 Q100,134 114,104 L122,104 Q126,110 125,120 Q122,140 117,165 Q116,172 120,182 Q128,196 126,206 L110,214 Q100,226 90,214 L74,206 Q72,196 80,182 Q84,172 83,165 Q78,140 75,120 Q74,110 78,104Z" fill="${c}"/>
+      <path d="M78,104 Q76,98 82,96" stroke="${c}" stroke-width="4" fill="none"/><path d="M122,104 Q124,98 118,96" stroke="${c}" stroke-width="4" fill="none"/>
+      <path d="M82,150 Q100,160 118,150" stroke="${l}" stroke-width="2" fill="none" opacity=".6"/><path d="M80,182 Q100,190 120,182" stroke="${l}" stroke-width="2" fill="none" opacity=".6"/>`;
+    case 3:return`<path d="M76,118 Q86,110 98,124 Q97,138 88,141 Q79,139 76,129Z" fill="${c}"/><path d="M124,118 Q114,110 102,124 Q103,138 112,141 Q121,139 124,129Z" fill="${c}"/>
+      <path d="M98,125 L102,125" stroke="${d}" stroke-width="2"/><path d="M83,114 L91,92" stroke="${d}" stroke-width="1.6"/><path d="M117,114 L109,92" stroke="${d}" stroke-width="1.6"/>
+      <path d="M76,132 L72,136 M124,132 L128,136" stroke="${d}" stroke-width="1.6"/>
+      <g fill="${l}"><circle cx="84" cy="126" r="1.8"/><circle cx="91" cy="133" r="1.8"/><circle cx="109" cy="133" r="1.8"/><circle cx="116" cy="126" r="1.8"/></g>
+      <path d="M77,196 Q100,204 123,196 L119,208 Q107,212 100,222 Q93,212 81,208Z" fill="${c}"/><path d="M77,196 L73,192 M123,196 L127,192" stroke="${d}" stroke-width="1.6"/>
+      <g fill="${l}"><circle cx="92" cy="205" r="1.8"/><circle cx="108" cy="205" r="1.8"/></g>`;
+    case 4:return`<path d="M73,118 Q100,111 127,118 Q125,140 118,166 Q120,180 128,200 L131,238 Q100,245 69,238 L72,200 Q80,180 82,166 Q75,140 73,118Z" fill="#fbfbfb"/>
+      <g stroke="#dfe7ee" stroke-width="2"><path d="M76,130 Q100,124 124,130"/><path d="M75,226 Q100,232 125,226"/></g>
+      <path d="M73,118 Q100,111 127,118 L126,124 Q100,117 74,124Z" fill="${l}"/><path d="M96,118 L104,138 L108,120Z" fill="#eef2f6"/>
+      <path d="M100,126 Q101,170 104,238" stroke="#e3e8ee" stroke-width="1.5" fill="none"/>`;
+  }
+}
+function skinDetail(g,st){
+  const ln=shade(g.skin,-.2);let s='';
+  if(st>=2)s+=`<path d="M97,${st===4?112:116} Q100,${st===4?118:122} 103,${st===4?112:116}" stroke="${ln}" stroke-width="1.3" fill="none" opacity=".7"/>`;
+  if(st===3)s+=`<ellipse cx="100" cy="176" rx="1.6" ry="2.6" fill="${ln}" opacity=".7"/><path d="M84,160 Q100,168 116,160" stroke="${ln}" stroke-width="1" fill="none" opacity=".35"/>`;
+  return s;
+}
+function arms(g,p,st,which){
+  const sk=g.skin,c=g.color;let s='';
+  for(const k of which){
+    const d=p['arm'+k],h=p['h'+k];
+    s+=`<path d="${d}" stroke="${sk}" stroke-width="11" fill="none" stroke-linecap="round"/><circle cx="${h[0]}" cy="${h[1]}" r="6" fill="${sk}"/>`;
+    if(st===0)s+=`<path d="${d}" stroke="${c}" stroke-width="14" fill="none" stroke-dasharray="24 999" stroke-linecap="round"/>`;
+    if(st===1)s+=`<path d="${d}" stroke="${shade(c,.35)}" stroke-width="20" fill="none" stroke-dasharray="48 999"/>`;
+  }
+  return s;
+}
+function feet(g,st,p){
+  const col=st===0?'#fff':st===1?'#8a5a3a':g.skin;
+  if(p.legs==='crossed')return`<ellipse cx="90" cy="340" rx="10" ry="5" fill="${col}"/><ellipse cx="100" cy="340" rx="10" ry="5" fill="${col}"/>`;
+  return`<ellipse cx="88" cy="340" rx="10" ry="5" fill="${col}"/><ellipse cx="112" cy="340" rx="10" ry="5" fill="${col}"/>`;
+}
+function girlSVG(g,st,o={}){
+  const p=POSES[g.pose];
+  const back=p.front?[]:['L','R'],front=p.front?['L','R']:[];
+  return`<svg class="${o.cls||''}" viewBox="${o.vb||'30 10 140 345'}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+  <g transform="rotate(${p.rot} 100 220)">
+    ${hairBack(g)}
+    ${arms(g,p,st,back)}
+    ${legs(g,p)}${feet(g,st,p)}
+    <path d="${TORSO}" fill="${g.skin}"/>
+    ${skinDetail(g,st)}
+    ${outfit(g,st)}
+    ${arms(g,p,st,front)}
+    <rect x="93" y="80" width="14" height="22" rx="5" fill="${g.skin}"/>
+    <ellipse cx="100" cy="60" rx="26" ry="29" fill="${g.skin}"/>
+    ${face(g,p.wink)}
+    ${hairFront(g)}
+    ${st===4?`<path d="M80,30 Q100,18 120,30 Q112,24 100,26 Q88,24 80,30Z" fill="#fff"/><path d="M78,32 Q100,16 122,32 L118,36 Q100,24 82,36Z" fill="#fff"/>`:''}
+  </g></svg>`;
+}
+function headSVG(g){const st=S.girls[g.id]?stageFor(S.girls[g.id].lvl):0;return girlSVG(g,st,{vb:'62 18 76 76'})}
+
+/* ================= UI ================= */
+let tab='onsen';
+const main=$('#main');
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{tab=b.dataset.tab;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));render()});
+
+function render(){({onsen:renderOnsen,girls:renderGirls,summon:renderSummon,free:renderFree})[tab]();updateDyn()}
+
+function buyModeSeg(){
+  return`<div class="seg">${[1,10,100,'max'].map(m=>`<button data-bm="${m}" class="${S.buyMode===m?'on':''}">${m==='max'?'Max':'x'+m}</button>`).join('')}</div>`;
+}
+function bindBuyMode(){main.querySelectorAll('[data-bm]').forEach(b=>b.onclick=()=>{const v=b.dataset.bm;S.buyMode=v==='max'?'max':+v;render()})}
+
+function renderOnsen(){
+  const fav=G(S.favorite)&&S.girls[S.favorite]?G(S.favorite):G(Object.keys(S.girls)[0]);
+  const st=stageFor(S.girls[fav.id].lvl);
+  let h=`<div class="scene">
+    ${[0,1,2,3,4].map(i=>`<div class="steam" style="left:${10+i*18}%;bottom:${10+(i%2)*20}px;width:${80+i*10}px;height:${80+i*10}px;animation-delay:${i*1.3}s"></div>`).join('')}
+    ${girlSVG(fav,st,{cls:'girl'})}
+    <div style="position:absolute;left:10px;top:10px;background:#0006;padding:4px 8px;border-radius:8px;font-size:12px">${fav.name} · Lv ${S.girls[fav.id].lvl} · ${STAGES[st].name}</div>
+    <button class="btn gold tapbtn" id="tap">♨️ Gäste empfangen</button>
+  </div>`;
+  h+=buyModeSeg();
+  for(const b of BATHS){
+    const l=S.baths[b.id]||0;const gid=S.assign[b.id];
+    h+=`<div class="card"><div class="row">
+      <div class="avatar" style="display:flex;align-items:center;justify-content:center;font-size:26px">${gid?headSVG(G(gid)):b.icon}</div>
+      <div class="grow"><b>${b.icon} ${b.name}</b> <span class="muted">Lv ${l}</span>
+        <div class="muted" data-binc="${b.id}"></div>
+        ${l?`<div class="muted">Gastgeberin: ${gid?G(gid).name+' ×'+hostMult(b.id).toFixed(2):'<i>keine</i>'}</div><div class="bar"><i style="width:${(l%25)/25*100}%"></i></div>`:''}
+      </div>
+      <button class="btn gold" data-bath="${b.id}"></button>
+    </div></div>`;
+  }
+  main.innerHTML=h;bindBuyMode();
+  main.querySelector('.scene svg').onclick=()=>openGirl(fav.id);
+  $('#tap').onclick=e=>{const v=Math.max(1,income()*0.5);S.gold+=v;floatText(e,'+'+fmt(v))};
+  main.querySelectorAll('[data-bath]').forEach(btn=>btn.onclick=()=>{
+    const b=B(btn.dataset.bath);const o=bathOffer(b);
+    if(o.n>0&&pay('gold',o.cost)){S.baths[b.id]=(S.baths[b.id]||0)+o.n;render()}
+  });
+}
+
+function renderGirls(){
+  const owned=Object.keys(S.girls).length;
+  let h=`<h2>Mädchen (${owned}/${GIRLS.length})</h2><div class="muted" style="margin-bottom:8px">Sammelbonus: +${owned*10}% auf alle Einnahmen. Tippe ein Mädchen an für Level-Up, Outfits & Zuweisung.</div><div class="grid">`;
+  for(const g of GIRLS){
+    const o=S.girls[g.id];
+    h+=`<div class="gcard ${o?'':'locked'}" data-g="${g.id}">${girlSVG(g,o?stageFor(o.lvl):0)}
+      <div class="info"><span class="rar ${g.rarity}">${g.rarity}</span> <b>${o?g.name:'???'}</b>
+      <div class="muted">${o?`Lv ${o.lvl} · ${STAGES[stageFor(o.lvl)].name}`:'Nicht freigeschaltet'}</div>
+      ${o?`<div class="stars">${'★'.repeat(o.stars)}${'☆'.repeat(5-o.stars)}</div>`:''}</div></div>`;
+  }
+  main.innerHTML=h+'</div>';
+  main.querySelectorAll('[data-g]').forEach(c=>c.onclick=()=>{if(S.girls[c.dataset.g])openGirl(c.dataset.g)});
+}
+
+function renderSummon(){
+  main.innerHTML=`<h2>🌸 Beschwören</h2>
+  <div class="card"><div class="muted">Chancen: R ${RAR.R.w}% · SR ${RAR.SR.w}% · SSR ${RAR.SSR.w}% · UR ${RAR.UR.w}%<br>Doppelte Mädchen erhalten einen Stern (max. 5★, je +20% Bonus). Bei 5★ gibt es stattdessen 200 💎.</div></div>
+  <div class="card row"><div class="grow"><b>Einzel-Beschwörung</b><div class="muted">1 🎟️ oder 100 💎</div></div>
+    <button class="btn" id="s1t">1 🎟️</button><button class="btn gem" id="s1g">100 💎</button></div>
+  <div class="card row"><div class="grow"><b>10er-Beschwörung</b><div class="muted">10 🎟️ oder 900 💎</div></div>
+    <button class="btn" id="s10t">10 🎟️</button><button class="btn gem" id="s10g">900 💎</button></div>`;
+  $('#s1t').onclick=()=>pay('tickets',1)&&summon(1);
+  $('#s1g').onclick=()=>pay('gems',100)&&summon(1);
+  $('#s10t').onclick=()=>pay('tickets',10)&&summon(10);
+  $('#s10g').onclick=()=>pay('gems',900)&&summon(10);
+}
+function rollRarity(){let r=Math.random()*100;for(const k of ['UR','SSR','SR','R']){if(r<RAR[k].w)return k;r-=RAR[k].w}return'R'}
+function summon(n){
+  const res=[];
+  for(let i=0;i<n;i++){
+    const rar=rollRarity();const pool=GIRLS.filter(g=>g.rarity===rar);const g=pool[Math.floor(Math.random()*pool.length)];
+    const o=S.girls[g.id];let note='NEU!';
+    if(!o)S.girls[g.id]={lvl:1,stars:1};
+    else if(o.stars<5){o.stars++;note='+1 ★'}
+    else{S.gems+=200;note='+200 💎'}
+    res.push({g,note});
+  }
+  save();
+  modal(`<h2 style="text-align:center">Beschwörung!</h2><div class="grid">${res.map(r=>`<div class="gcard ${r.g.rarity==='UR'||r.g.rarity==='SSR'?'glow':''}">${girlSVG(r.g,stageFor(S.girls[r.g.id].lvl))}<div class="info"><span class="rar ${r.g.rarity}">${r.g.rarity}</span> <b>${r.g.name}</b><div class="muted">${r.note}</div></div></div>`).join('')}</div>
+    <button class="btn" style="width:100%;margin-top:12px" data-close>OK</button>`);
+  updateDyn();
+}
+
+function renderFree(){
+  main.innerHTML=`<h2>🎁 Gratis-Ressourcen</h2>
+  <div class="card switch"><div><b>♾️ Unendliche Ressourcen</b><div class="muted">Alles kostet nichts mehr.</div></div>
+    <button class="btn ${S.infinite?'':'alt'}" id="inf">${S.infinite?'AN':'AUS'}</button></div>
+  <div class="card"><b>💰 Gold</b><div class="row" style="margin-top:8px;flex-wrap:wrap">
+    <button class="btn gold" data-add="gold:1e6">+1 Mio</button><button class="btn gold" data-add="gold:1e9">+1 Mrd</button><button class="btn gold" data-add="gold:1e15">+1 Qa</button><button class="btn gold" data-mul="gold:10">×10</button></div></div>
+  <div class="card"><b>💎 Juwelen</b><div class="row" style="margin-top:8px;flex-wrap:wrap">
+    <button class="btn gem" data-add="gems:1000">+1.000</button><button class="btn gem" data-add="gems:100000">+100.000</button></div></div>
+  <div class="card"><b>🎟️ Tickets</b><div class="row" style="margin-top:8px;flex-wrap:wrap">
+    <button class="btn" data-add="tickets:10">+10</button><button class="btn" data-add="tickets:100">+100</button><button class="btn" data-add="tickets:1000">+1.000</button></div></div>
+  <div class="card"><b>⚡ Abkürzungen</b><div class="row" style="margin-top:8px;flex-wrap:wrap">
+    <button class="btn" id="allGirls">Alle Mädchen freischalten</button>
+    <button class="btn" id="maxGirls">Alle Mädchen Max-Level</button>
+    <button class="btn" id="maxBaths">Alle Bäder +100 Level</button>
+    <button class="btn" id="autoAssign">Gastgeberinnen auto-zuweisen</button></div></div>
+  <div class="card"><b>⚙️ Spielstand</b><div class="muted">Wird automatisch lokal auf deinem Gerät gespeichert – komplett offline.</div>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn alt" id="exp">Exportieren</button><button class="btn alt" id="imp">Importieren</button><button class="btn" style="background:#b03a4a" id="reset">Zurücksetzen</button></div></div>`;
+  $('#inf').onclick=()=>{S.infinite=!S.infinite;save();render()};
+  main.querySelectorAll('[data-add]').forEach(b=>b.onclick=e=>{const[k,v]=b.dataset.add.split(':');S[k]+=+v;floatText(e,'+'+fmt(+v));save();updateDyn()});
+  main.querySelectorAll('[data-mul]').forEach(b=>b.onclick=e=>{const[k,v]=b.dataset.mul.split(':');S[k]=Math.max(1,S[k])*+v;floatText(e,'×'+v);save();updateDyn()});
+  $('#allGirls').onclick=()=>{GIRLS.forEach(g=>{if(!S.girls[g.id])S.girls[g.id]={lvl:1,stars:1}});toast('Alle Mädchen freigeschaltet!')};
+  $('#maxGirls').onclick=()=>{Object.values(S.girls).forEach(o=>{o.lvl=GIRL_MAX;o.stars=5});toast('Alle Mädchen auf Lv 100 & 5★!')};
+  $('#maxBaths').onclick=()=>{BATHS.forEach(b=>S.baths[b.id]=(S.baths[b.id]||0)+100);toast('Alle Bäder +100 Level!')};
+  $('#autoAssign').onclick=()=>{autoAssign();toast('Gastgeberinnen zugewiesen!')};
+  $('#exp').onclick=()=>{save();modal(`<h2>Export</h2><textarea style="width:100%;height:140px" readonly>${btoa(unescape(encodeURIComponent(JSON.stringify(S))))}</textarea><button class="btn" style="width:100%;margin-top:8px" data-close>Schließen</button>`)};
+  $('#imp').onclick=()=>{const t=prompt('Spielstand-Code einfügen:');if(!t)return;try{S=Object.assign(fresh(),JSON.parse(decodeURIComponent(escape(atob(t.trim())))));save();toast('Importiert!')}catch(e){alert('Ungültiger Code')}};
+  $('#reset').onclick=()=>{if(confirm('Wirklich alles zurücksetzen?')){S=fresh();save();render()}};
+}
+function autoAssign(){
+  const ranked=Object.keys(S.girls).sort((a,b)=>hostPower(b)-hostPower(a));
+  const baths=BATHS.filter(b=>S.baths[b.id]).sort((a,b)=>b.base-a.base);
+  S.assign={};baths.forEach((b,i)=>{if(ranked[i])S.assign[b.id]=ranked[i]});save();
+}
+function hostPower(id){const o=S.girls[id];return o.lvl*RAR[G(id).rarity].m*(1+0.2*(o.stars-1))}
+
+function openGirl(id){
+  const g=G(id),o=S.girls[id];let view=stageFor(o.lvl);
+  const cur=Object.keys(S.assign).find(k=>S.assign[k]===id)||'';
+  const draw=()=>{
+    const st=stageFor(o.lvl),next=STAGES[st+1];
+    const of=girlOffer(g);
+    modal(`<div class="row"><div class="grow"><span class="rar ${g.rarity}">${g.rarity}</span> <b style="font-size:18px">${g.name}</b>, ${g.age}
+      <div class="stars">${'★'.repeat(o.stars)}${'☆'.repeat(5-o.stars)}</div></div><button class="btn alt" data-close style="min-width:0">✕</button></div>
+      <div class="big">${girlSVG(g,view,{cls:'',vb:'20 5 160 350'}).replace('<svg ','<svg style="width:100%;height:100%" ')}</div>
+      <div class="tabs">${STAGES.map((s,i)=>`<button data-st="${i}" class="${i===view?'on':''}" ${o.lvl>=s.lvl?'':'disabled'}>${o.lvl>=s.lvl?'':'🔒'}${s.name}<br><small>Lv ${s.lvl}</small></button>`).join('')}</div>
+      <div class="muted">${g.bio}</div>
+      <div class="card" style="margin-top:10px"><div class="row"><div class="grow"><b>Level ${o.lvl}/${GIRL_MAX}</b>
+        <div class="muted">${next?`Nächstes Outfit „${next.name}“ ab Lv ${next.lvl}`:'Alle Outfits freigeschaltet'}</div>
+        <div class="muted">Gastgeberin-Bonus: ×${(1+o.lvl*0.05*RAR[g.rarity].m*(1+0.2*(o.stars-1))).toFixed(2)}</div></div>
+        <button class="btn gold" id="lvUp" ${o.lvl>=GIRL_MAX||of.n<1||!canPay('gold',of.cost)?'disabled':''}>${o.lvl>=GIRL_MAX?'MAX':`+${of.n} Lv<br>${fmt(of.cost)} 💰`}</button></div></div>
+      <div class="card"><b>Becken zuweisen</b><select id="asg" style="margin-top:6px"><option value="">— keins —</option>
+        ${BATHS.filter(b=>S.baths[b.id]).map(b=>`<option value="${b.id}" ${S.assign[b.id]===id?'selected':''}>${b.icon} ${b.name}${S.assign[b.id]&&S.assign[b.id]!==id?' (ersetzt '+G(S.assign[b.id]).name+')':''}</option>`).join('')}</select></div>
+      <button class="btn alt" id="fav" style="width:100%">${S.favorite===id?'❤️ Favoritin (auf Startbild)':'🤍 Als Favoritin setzen'}</button>`);
+    document.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{view=+b.dataset.st;draw()});
+    $('#lvUp').onclick=()=>{const f=girlOffer(g);if(f.n>0&&pay('gold',f.cost)){const before=stageFor(o.lvl);const tens=Math.floor(o.lvl/10);o.lvl+=f.n;S.gems+=5*(Math.floor(o.lvl/10)-tens);if(stageFor(o.lvl)>before){view=stageFor(o.lvl);toast(`Neues Outfit: ${STAGES[view].name}!`)}save();draw();updateDyn()}};
+    $('#asg').onchange=e=>{for(const k in S.assign)if(S.assign[k]===id)delete S.assign[k];if(e.target.value)S.assign[e.target.value]=id;save();draw()};
+    $('#fav').onclick=()=>{S.favorite=id;save();draw()};
+  };
+  draw();
+}
+
+function modal(html){
+  const root=$('#modalRoot');
+  root.innerHTML=`<div class="modal"><div class="box">${html}</div></div>`;
+  const m=root.firstChild;
+  m.onclick=e=>{if(e.target===m||e.target.closest('[data-close]')){root.innerHTML='';render()}};
+}
+function toast(t){const d=document.createElement('div');d.className='float';d.style.left='50%';d.style.top='45%';d.style.transform='translateX(-50%)';d.style.fontSize='20px';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1000);save();render()}
+function floatText(e,t){const d=document.createElement('div');d.className='float';d.style.left=(e.clientX-20)+'px';d.style.top=(e.clientY-20)+'px';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),1000)}
+
+function updateDyn(){
+  $('#rGold').textContent=S.infinite?'∞':fmt(S.gold);
+  $('#rGems').textContent=S.infinite?'∞':fmt(S.gems);
+  $('#rTix').textContent=S.infinite?'∞':fmt(S.tickets);
+  $('#rInc').textContent=`+${fmt(income())} Gold/Sek · Sammelbonus ×${collectionBonus().toFixed(1)}`;
+  main.querySelectorAll('[data-bath]').forEach(btn=>{
+    const b=B(btn.dataset.bath),o=bathOffer(b),l=S.baths[b.id]||0;
+    btn.innerHTML=`${l?'+'+o.n+' Lv':'Bauen'}<br>${fmt(o.cost)} 💰`;
+    btn.disabled=o.n<1||!canPay('gold',o.cost);
+  });
+  main.querySelectorAll('[data-binc]').forEach(el=>{const b=B(el.dataset.binc);const l=S.baths[b.id]||0;el.textContent=l?`${fmt(bathIncome(b)*collectionBonus())} Gold/Sek · nächster ×2 bei Lv ${(Math.floor(l/25)+1)*25}`:`Noch nicht gebaut`});
+}
+
+/* ================= Spielschleife ================= */
+let lastTick=performance.now();
+setInterval(()=>{
+  const now=performance.now(),dt=(now-lastTick)/1000;lastTick=now;
+  S.gold+=income()*dt;
+  S.gemTimer+=dt;if(S.gemTimer>=30){S.gemTimer-=30;S.gems+=1}
+  updateDyn();
+},100);
+setInterval(save,5000);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{offline();lastTick=performance.now()}});
+window.addEventListener('pagehide',save);
+
+function offline(){
+  const sec=Math.min((Date.now()-S.last)/1000,OFFLINE_CAP);
+  S.last=Date.now();
+  if(sec<60)return;
+  const earned=income()*sec;S.gold+=earned;const gems=Math.floor(sec/30);S.gems+=gems;
+  modal(`<h2 style="text-align:center">♨️ Willkommen zurück!</h2><p style="text-align:center">Während du ${Math.floor(sec/3600)}h ${Math.floor(sec%3600/60)}min weg warst, haben deine Gäste gebadet:</p>
+    <p style="text-align:center;font-size:22px"><b>+${fmt(earned)} 💰</b><br><b>+${gems} 💎</b></p><button class="btn" style="width:100%" data-close>Einsammeln</button>`);
+}
+
+offline();
+render();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
