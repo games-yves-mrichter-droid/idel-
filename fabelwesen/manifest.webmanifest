@@ -1,0 +1,10 @@
+{
+  "name": "Fabelwesen",
+  "short_name": "Fabelwesen",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c1233",
+  "theme_color": "#2b1a4a",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

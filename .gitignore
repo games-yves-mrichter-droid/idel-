@@ -2,3 +2,7 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+fabelwesen/android/.gradle/
+fabelwesen/android/build/
+fabelwesen/android/app/build/
+fabelwesen/android/local.properties

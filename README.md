@@ -1,3 +1,5 @@
+> 🆕 **Neues Spiel: [Fabelwesen](fabelwesen/README.md)** – Fabelwesen in 3D ausbrüten und großziehen. APK: [`release/Fabelwesen.apk`](release/Fabelwesen.apk)
+
 # Onsen Idle
 
 Ein offline spielbares Idle-Spiel rund um ein japanisches Onsen (heiße Quellen).
