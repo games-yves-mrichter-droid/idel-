@@ -19,15 +19,19 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Aufgaben:** Schicke deine Wesen los (Beeren sammeln, Schatz suchen, Expedition …). Niedliche Wesen haben eigene Aufgaben (Kinder unterhalten, Tiere heilen, Regenbogen malen), böse auch (Dorf erschrecken, Ritter verjagen, Vulkan wecken). Dafür gibt es Gold und Erfahrung.
 - **Pflegen:** Füttern hält den Hunger fern (hungrige Wesen verdienen nur die Hälfte), Streicheln oder Raufen hebt die Laune (+25 % Gold).
 - **Wachsen:** Baby → Kind (Lv 5) → Jugendlich (Lv 12) → Erwachsen (Lv 22) → Uralt (Lv 35). Mit jedem Abschnitt verändert sich das 3D-Modell: Kitsune bekommen mehr Schwänze, Zerberus bis zu drei Köpfe, die Hydra bis zu sieben.
-- **Fabelbuch:** Sammle alle 14 Fabelwesen und schalte ihre Lebensabschnitte frei.
+- **Fabelbuch:** Sammle alle 25 Fabelwesen und schalte ihre Lebensabschnitte frei.
 - **Ausbau:** Mehr Inselplätze und Nester kaufen.
 
-## Die Fabelwesen
+## Die Fabelwesen (25)
 | Seltenheit | Niedlich 💖 | Böse 😈 |
 |---|---|---|
-| Gewöhnlich | Wolpertinger, Irrlicht | Basilisk, Gargoyle |
-| Selten | Einhorn, Greif | Schattenwolf, Krake |
-| Episch | Kitsune, Kristalldrache | Zerberus, Hydra |
-| Legendär | Phönix | Höllendrache |
+| Gewöhnlich | Wolpertinger, Irrlicht, Pilzling | Basilisk, Gargoyle, Mimic, Unglücksrabe |
+| Selten | Einhorn, Greif, Pegasus, Nessie | Schattenwolf, Krake, Lindwurm |
+| Episch | Kitsune, Kristalldrache, Waldhirsch | Zerberus, Hydra, Mantikor, Donnervogel |
+| Legendär | Phönix, Qilin | Höllendrache, Leviathan |
+
+## Grafik
+Echtzeit-3D mit Three.js: physikalisch basierte Materialien mit prozeduralen Fell-, Schuppen-, Feder-, Stein- und Holzstrukturen,
+Himmels-Spiegelungen, weiche Schatten, glänzende Augen, tausende im Wind wehende Grashalme und spiegelndes Wasser.
 
 Der Spielstand wird automatisch gespeichert; Aufgaben und Brutzeiten laufen auch weiter, wenn die App geschlossen ist.
