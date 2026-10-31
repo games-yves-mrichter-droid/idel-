@@ -40,24 +40,28 @@ nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:linear-gradie
 nav button{flex:1;background:none;border:0;color:var(--muted);padding:7px 0 6px;font-size:11px;font-weight:600;cursor:pointer}
 nav button b{display:block;font-size:24px;line-height:1.1}
 nav button.on{color:var(--accent)}
-#sheet{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom));max-height:62%;overflow-y:auto;background:linear-gradient(#35245ff2,#24173ff7);border-top:2px solid var(--line);border-radius:22px 22px 0 0;padding:12px 14px 14px;transform:translateY(110%);transition:transform .25s;z-index:15;touch-action:pan-y}
+#sheet{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom));max-height:40%;overflow-y:auto;overscroll-behavior:contain;background:linear-gradient(#35245ff2,#24173ff7);border-top:2px solid var(--line);border-radius:22px 22px 0 0;padding:6px 12px 12px;transform:translateY(110%);transition:transform .25s;z-index:15;touch-action:pan-y}
 #sheet.open{transform:none}
 .x{position:absolute;right:10px;top:8px;background:var(--panel2);border:0;color:var(--text);width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer}
-.hdr{display:flex;gap:10px;align-items:center;padding-right:36px}
-.hdr img{width:58px;height:58px;background:#ffffff14;border-radius:14px}
-.nm{font-size:20px;font-weight:800;cursor:pointer}
+#sheet::before{content:'';display:block;width:42px;height:4px;border-radius:3px;background:#ffffff40;margin:0 auto 6px}
+.hdr{display:flex;gap:8px;align-items:center;padding-right:36px}
+.hdr img{width:44px;height:44px;background:#ffffff14;border-radius:14px}
+.nm{font-size:17px;font-weight:800;cursor:pointer}
 .tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:9px;margin:2px 3px 0 0;background:var(--panel2)}
 .tag.cute{background:#ff9fd633;color:var(--cute)}
 .tag.evil{background:#ff646433;color:var(--evil)}
-.bars{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:10px 0}
-.bar{font-size:12px;color:var(--muted)}
-.bar .t{height:9px;background:#0005;border-radius:6px;overflow:hidden;margin-top:2px}
+.bars{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;margin:6px 0 8px}
+.bar{font-size:11px;color:var(--muted)}
+.bar .t{height:7px;background:#0005;border-radius:6px;overflow:hidden;margin-top:2px}
 .bar .f{height:100%;border-radius:6px;transition:width .4s}
 .xp .f{background:linear-gradient(90deg,#9b7bff,#ff8fd0)}
 .hu .f{background:linear-gradient(90deg,#ff9a4d,#ffd25e)}
 .en .f{background:linear-gradient(90deg,#4dd0ff,#7cffc6)}
 .ha .f{background:linear-gradient(90deg,#ff6fb5,#ffb3dd)}
-.acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.acts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+#sheet button.btn{padding:7px 4px;font-size:12px}
+#sheet button.btn small{font-size:10px}
+#sheet .tag{font-size:10px;padding:0 6px}
 button.btn{background:linear-gradient(#ff9fd6,#d9539b);color:#fff;border:0;border-radius:14px;padding:10px 6px;font-weight:800;font-size:13px;cursor:pointer;text-shadow:0 1px 2px #0006;box-shadow:0 3px 0 #0004}
 button.btn small{display:block;font-weight:600;font-size:11px;opacity:.9}
 button.btn.b{background:linear-gradient(#8ad3ff,#3b8fd9)}
@@ -745,7 +749,7 @@ const waterN=(()=>{const n=256,W=[];for(let i=0;i<14;i++){const a=Math.round(rnd
   const c=cnv(n,(x)=>{const im=x.createImageData(n,n);for(let y=0;y<n;y++)for(let xx=0;xx<n;xx++){const dx=H(xx+1,y)-H(xx-1,y),dy=H(xx,y+1)-H(xx,y-1);let nx=-dx*6,ny=-dy*6,nz=1;const l=Math.hypot(nx,ny,nz);const i=(y*n+xx)*4;
     im.data[i]=(nx/l*.5+.5)*255;im.data[i+1]=(ny/l*.5+.5)*255;im.data[i+2]=(nz/l*.5+.5)*255;im.data[i+3]=255}x.putImageData(im,0,0)});
   const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(2,2);return t})();
-const world=new THREE.Group();scene.add(world);const grassT={value:0};
+const world=new THREE.Group();scene.add(world);const grassT={value:0},GSEL={value:new THREE.Vector4(0,0,1,0)};
 const ISL=15;const floaters=[],FL=[],FF=[],MIST=[],NEAR=[];
 (function island(){
   let seed=11;const rnd=(a,b)=>{seed=seed*16807%2147483647;return a+seed/2147483647*(b-a)};const pick=a=>a[Math.floor(rnd(0,a.length))];
@@ -764,7 +768,7 @@ const ISL=15;const floaters=[],FL=[],FF=[],MIST=[],NEAR=[];
   // Grashalme (Instanzen, wehen im Wind)
   {const N=Q.grass;const bg=new THREE.PlaneGeometry(.07,.42,1,3);bg.translate(0,.21,0);const ps=bg.attributes.position;for(let i=0;i<ps.count;i++)ps.setX(i,ps.getX(i)*(1-ps.getY(i)/.44));bg.computeVertexNormals();
     const gm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.75,side:THREE.DoubleSide});
-    gm.onBeforeCompile=sh=>{sh.uniforms.uT=grassT;sh.vertexShader='uniform float uT;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float hh=position.y/.42;transformed.x+=sin(uT*1.7+ip.x*.5+ip.z*.35)*.09*hh*hh;transformed.z+=cos(uT*1.2+ip.x*.3)*.05*hh*hh;')};
+    gm.onBeforeCompile=sh=>{sh.uniforms.uT=grassT;sh.uniforms.uSel=GSEL;sh.vertexShader='uniform float uT;uniform vec4 uSel;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);transformed.y*=mix(1.,.12+.88*smoothstep(uSel.z*.55,uSel.z,distance(ip.xz,uSel.xy)),uSel.w);float hh=position.y/.42;transformed.x+=sin(uT*1.7+ip.x*.5+ip.z*.35)*.09*hh*hh;transformed.z+=cos(uT*1.2+ip.x*.3)*.05*hh*hh;')};
     const im=new THREE.InstancedMesh(bg,gm,N);im.receiveShadow=true;const mm=new THREE.Matrix4(),q=new THREE.Quaternion(),sc=new V3(),col=new THREE.Color();let n=0;
     for(let i=0;i<N*2&&n<N;i++){const a=rnd(0,6.3),d=Math.sqrt(rnd(0,1))*12.8,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.hypot(x+6,z+3.5)<3)continue;
       q.setFromEuler(new THREE.Euler(rnd(-.25,.25),rnd(0,6.3),rnd(-.25,.25)));const h=rnd(.6,1.5);sc.set(rnd(.8,1.3),h,1);mm.compose(new V3(x,0,z),q,sc);im.setMatrixAt(n,mm);
@@ -1037,7 +1041,7 @@ function updLabels(){for(const k in LBL)LBL[k].used=0;const t=now();
     const ready=e.end<=t;d.className='lbl'+(ready?' ready':'');d.textContent=ready?'🐣 Schlüpfen!':'⏳ '+fmtT((e.end-t)/1000);place(d,tmpV.copy(o.position).add(new V3(0,.75,0)))}
   for(const c of S.creatures){const w=W.cre[c.id];if(!w)continue;
     if(c.task&&c.task.end<=t){const d=lbl('c'+c.id);d.className='lbl ready';d.textContent='💰 Abholen';place(d,w.pos.clone().add(new V3(0,w.b.h+.35,0)))}
-    else if(c.id===selId){const d=lbl('c'+c.id);d.className='lbl name';d.textContent=c.name+' · Lv '+c.lv;place(d,w.pos.clone().add(new V3(0,w.b.h+.35,0)))}}
+    else if(c.id===selId){const d=lbl('c'+c.id);d.className='lbl name';d.textContent=c.name+' · Lv '+c.lv;const hd=w.b.P.heads[0];const hp=hd?hd.getWorldPosition(new V3()):w.pos.clone();hp.y=Math.max(hp.y,w.pos.y)+w.b.h*.35+.35;place(d,hp)}}
   for(const k in LBL)if(!LBL[k].used){LBL[k].d.remove();delete LBL[k]}}
 function floatAt(w,txt,col){const d=document.createElement('div');d.className='float';d.textContent=txt;d.style.color=col||'#fff';lblBox.appendChild(d);place(d,w.pos.clone().add(new V3(0,w.b.h+.6,0)));setTimeout(()=>d.remove(),1500)}
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
@@ -1063,7 +1067,7 @@ function renderStrip(){const s=$('#strip');const sl=s.scrollLeft;
   s.scrollLeft=sl;s.style.display=curPage==='insel'&&!GAME?'flex':'none'}
 $('#strip').addEventListener('click',e=>{const el=e.target.closest('.cc');if(!el||!el.dataset.id)return;const c=crById(+el.dataset.id);if(c.task&&c.task.end<=now())collect(c);else select(c.id)});
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-function select(id){selId=id;sheetMode='info';const w=W.cre[id];if(w)focusOn(w.pos,Math.max(6,w.b.h*3.2+4));else focusOn(new V3(0,.5,0),21);renderStrip();renderSheet();$('#sheet').classList.add('open')}
+function select(id){selId=id;sheetMode='info';const w=W.cre[id];if(w){focusOn(w.pos,Math.max(4.5,w.b.h*2.6+3.2));cam.wph=Math.min(cam.wph,.82)}else focusOn(new V3(0,.5,0),21);renderStrip();renderSheet();$('#sheet').classList.add('open')}
 function closeSheet(){selId=null;$('#sheet').classList.remove('open');focusOn(new V3(0,.5,0),21);renderStrip()}
 function focusOn(p,d){cam.wtgt.copy(p);cam.wtgt.y=Math.max(.5,p.y);cam.wd=d}
 function bar(cls,label,v,txt){return`<div class="bar ${cls}">${label}<span style="float:right" data-b="${cls}t">${txt??Math.floor(v)}</span><div class="t"><div class="f" data-b="${cls}" style="width:${clamp(v,0,100)}%"></div></div></div>`}
@@ -1361,7 +1365,7 @@ function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,ro
   if(SPECIES[c.sp].b.smoke){w.smoke-=dt;if(w.smoke<0){w.smoke=rnd(1.5,3.5);burst('💨',w.pos.clone().add(new V3(Math.sin(w.yaw)*w.b.sc*1.6,w.b.h*.85,Math.cos(w.yaw)*w.b.sc*1.6)),1,{size:.5,spd:.3,up:.8,g:.3,life:1.5})}}}
 function lerpAng(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*Math.min(1,t)}
 function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
-let fpsN=0,fpsT=0,fpsDone=0;
+let fpsN=0,fpsT=0,fpsDone=0,VOFF=0;
 function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;updDay(dt);updGame(dt);updSound(dt);waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
   for(const id in W.cre)animCreature(id,W.cre[id],dt);
   for(const e of S.eggs){const o=W.eggs[e.id];if(!o)continue;const b=o.userData.base;if(!b)continue;o.userData.wob=Math.max(0,(o.userData.wob||0)-dt*2);
@@ -1376,9 +1380,10 @@ function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/10
       for(const m of t.userData.mats){m.opacity=op;const tr=op<.99;if(m.transparent!==tr){m.transparent=tr;m.depthWrite=!tr;m.needsUpdate=true}}
       t.children.forEach(c=>c.castShadow=op>.5)}}
   updParts(dt);
-  const sw=W.cre[selId];if(sw)cam.wtgt.lerp(new V3(sw.pos.x,Math.max(.5,sw.b.h*.5),sw.pos.z),.1);
+  const sw=W.cre[selId];if(sw)GSEL.value.set(sw.pos.x,sw.pos.z,Math.max(1.1,sw.b.w*.8+.6),Math.min(1,GSEL.value.w+dt*3));else GSEL.value.w=Math.max(0,GSEL.value.w-dt*3);
+  if(sw)cam.wtgt.lerp(new V3(sw.pos.x,Math.max(.5,sw.b.h*.5),sw.pos.z),.1);
   cam.th+=(cam.wth-cam.th)*Math.min(1,dt*8);cam.ph+=(cam.wph-cam.ph)*Math.min(1,dt*8);cam.d+=(cam.wd-cam.d)*Math.min(1,dt*4);cam.tgt.lerp(cam.wtgt,Math.min(1,dt*4));
-  const sheetOpen=selId!==null&&curPage==='insel';const yOff=sheetOpen?cam.d*.16:0;
+  const sheetOpen=selId!==null&&curPage==='insel'&&!GAME,yOff=0;{const sh=sheetOpen?$('#sheet').offsetHeight:0;VOFF+=(sh*.5-VOFF)*Math.min(1,dt*6);if(VOFF>1)camera.setViewOffset(innerWidth,innerHeight,0,VOFF,innerWidth,innerHeight);else if(camera.view&&camera.view.enabled)camera.clearViewOffset()}
   camera.position.set(cam.tgt.x+cam.d*Math.sin(cam.ph)*Math.sin(cam.th),cam.tgt.y+cam.d*Math.cos(cam.ph)-yOff,cam.tgt.z+cam.d*Math.sin(cam.ph)*Math.cos(cam.th));
   camera.lookAt(cam.tgt.x,cam.tgt.y-yOff,cam.tgt.z);
   if(POST)POST();else renderer.render(scene,camera);updLabels()}
