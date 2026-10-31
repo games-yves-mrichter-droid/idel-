@@ -37,7 +37,7 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 | Episch | Kitsune, Kristalldrache, Waldhirsch, Engel | Zerberus, Hydra, Mantikor, Donnervogel, Werwolf, Troll |
 | Legendär | Phönix, Qilin, Dryade | Höllendrache, Leviathan, Dämon |
 
-Menschenähnliche Wesen haben einen eigenen Bauplan mit Kopf, Gesicht, Haaren (3D-Haar), Armen, Beinen und Kleidung – samt Umhang (Vampir, Elfe), Hexenhut, Zipfelmütze und Bart (Zwerg), Heiligenschein (Engel), Feenflügeln, Fischschwanz (Meerjungfrau), Hauern (Troll) oder Hörnern und Flammenhänden (Dämon). Der Werwolf hat einen echten Wolfskopf mit Fell.
+Menschenähnliche Wesen sind realistisch modelliert: Gesicht mit Augenhöhlen, Augen mit Lidern, Iris und Brauen, Nase mit Nasenflügeln, Lippen, Wangenknochen und Kinn; Körper mit Muskeln, Händen mit Fingern, Knien, Waden und Stiefeln; Haut mit weichem Schimmer, Haare aus fallenden Strähnen, Kleidung mit Stoffstruktur und Falten, wehende Umhänge und Gewänder, Atmen und Umherschauen. Sie haben einen eigenen Bauplan mit Kopf, Gesicht, Haaren (3D-Haar), Armen, Beinen und Kleidung – samt Umhang (Vampir, Elfe), Hexenhut, Zipfelmütze und Bart (Zwerg), Heiligenschein (Engel), Feenflügeln, Fischschwanz (Meerjungfrau), Hauern (Troll) oder Hörnern und Flammenhänden (Dämon). Der Werwolf hat einen echten Wolfskopf mit Fell.
 
 ## Grafik
 Echtzeit-3D mit Three.js:
