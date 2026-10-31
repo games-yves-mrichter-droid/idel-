@@ -21,6 +21,7 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Wachsen:** Baby → Kind (Lv 5) → Jugendlich (Lv 12) → Erwachsen (Lv 22) → Uralt (Lv 35). Mit jedem Abschnitt verändert sich das 3D-Modell: Kitsune bekommen mehr Schwänze, Zerberus bis zu drei Köpfe, die Hydra bis zu sieben.
 - **Fabelbuch:** Sammle alle 37 Fabelwesen und schalte ihre Lebensabschnitte frei.
 - **Ausbau:** Mehr Waldplätze und Nester kaufen.
+- **Begegnungen auf der Wiese:** Die Wesen treffen sich von selbst. Zwei böse Wesen **kämpfen** (Angriffe, Blitze, Funken, Sieger und benommener Verlierer), zwei niedliche **spielen Fangen** (Kreise, Hüpfer, Herzen), und ein böses Wesen **schleicht sich an und erschreckt** ein niedliches („BUH!“, das niedliche flieht) oder **ärgert** es, indem es um es herumtanzt. Das bringt etwas Erfahrung und verändert die Laune.
 - **Tag & Nacht:** Ein Spieltag dauert 24 Minuten – mit Sonnenauf- und -untergang, Mond und Sternen. Nachts verdienen böse Wesen +30 % Gold, tagsüber niedliche +20 %.
 - **Wetter:** Klar, Regen (+20 % Erfahrung, nasser Boden, Regentropfen) oder Nebel (böse Wesen +15 % Gold).
 - **Minispiel „Glühwürmchen fangen“:** 25 Sekunden lang leuchtende Glühwürmchen antippen – goldene zählen fünffach. Bringt Gold, Erfahrung und gute Laune.

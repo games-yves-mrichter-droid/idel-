@@ -1495,22 +1495,72 @@ function dailyCheck(){const today=new Date().toDateString();S.daily=S.daily||{la
     <p style="font-size:18px"><b>+${fmt(gold)} 💰${bonus?' + 🌟 Wachstumselixier':''}</b></p><button class="btn y" style="width:100%" id="dOk">Abholen</button>`);
   $('#dOk').onclick=()=>{S.daily={last:today,streak};S.gold+=gold;if(bonus){S.inv=S.inv||{};S.inv.wachstum=(S.inv.wachstum||0)+1}sfx('gold');closeModal();refresh()}}
 
+/* ================== Begegnungen: Kämpfen, Spielen, Erschrecken, Ärgern ================== */
+const INTS=[];let intT=5;
+function eligible(c){const w=W.cre[c.id];return w&&!w.int&&c.id!==selId&&!c.task&&w.pop>=1}
+function moveW(w,tx,tz,sp,dt){const dx=tx-w.pos.x,dz=tz-w.pos.z,d=Math.hypot(dx,dz);if(d>.05){const st=Math.min(d,sp*dt);w.pos.x+=dx/d*st;w.pos.z+=dz/d*st;w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*8);w.mv=1}else w.mv=0;return d}
+function faceW(w,o,dt){w.yaw=lerpAng(w.yaw,Math.atan2(o.pos.x-w.pos.x,o.pos.z-w.pos.z),dt*8)}
+const overW=(w,y)=>w.pos.clone().add(new V3(0,w.b.h*(y||1),0));
+function startInts(){if(GAME||INTS.length>=2||curPage!=='insel')return;const list=S.creatures.filter(eligible);if(list.length<2)return;
+  const a=pick(list),wa=W.cre[a.id];let best=null,bd=10;for(const c of list){if(c===a)continue;const d=W.cre[c.id].pos.distanceTo(wa.pos);if(d<bd){bd=d;best=c}}if(!best)return;
+  const ca=spOf(a).cute,cb=spOf(best).cute;let type,A=a,B=best;
+  if(!ca&&!cb)type='kampf';else if(ca&&cb)type='spiel';else{type=Math.random()<.55?'schreck':'aergern';if(ca){A=best;B=a}}
+  const I={type,a:A,b:B,wa:W.cre[A.id],wb:W.cre[B.id],ph:'hin',t:0,n:0};I.wa.int=I.wb.int=I;INTS.push(I)}
+function endInt(I){I.wa.int=I.wb.int=null;I.wa.mv=I.wb.mv=0;I.wa.state=I.wb.state='idle';I.wa.timer=rnd(2,4);I.wb.timer=rnd(2,4);INTS.splice(INTS.indexOf(I),1)}
+function updInts(dt){intT-=dt;if(intT<=0){intT=rnd(5,10);startInts()}
+  for(const I of[...INTS]){const{wa,wb,a,b}=I;
+    if(W.cre[a.id]!==wa||W.cre[b.id]!==wb||a.id===selId||b.id===selId||a.task||b.task||GAME){endInt(I);continue}
+    I.t+=dt;const ra=wa.b.w*.45,rb=wb.b.w*.45,mx=(wa.pos.x+wb.pos.x)/2,mz=(wa.pos.z+wb.pos.z)/2,gapD=wa.pos.distanceTo(wb.pos);
+    if(I.type==='kampf'){
+      if(I.ph==='hin'){if(gapD>ra+rb+.15){moveW(wa,mx,mz,1.7,dt);moveW(wb,mx,mz,1.7,dt)}else{I.ph='los';I.t=0;wa.mv=wb.mv=0;floatAt(wa,'⚔️ Kampf!','#ff7a5a')}if(I.t>9)endInt(I)}
+      else{faceW(wa,wb,dt);faceW(wb,wa,dt);const step=Math.floor(I.t/.65);
+        if(step>I.n&&I.t<4.4){I.n=step;const att=step%2?wa:wb,def=att===wa?wb:wa;att.hop=1;att.lunge=1;
+          setTimeout(()=>{if(!def.int)return;def.shake=.5;burst(pick(['💥','⚡','💥']),def.pos.clone().add(new V3(0,def.b.h*.6,0)),5,{size:.5,spd:2.5,up:2});if(!spOf(att===wa?a:b).cute&&(att.b.P.flames.length))burst('🔥',def.pos.clone().add(new V3(0,def.b.h*.5,0)),3,{size:.45});sfx('crack')},170)}
+        if(I.t>4.8){const aw=Math.random()<.5,win=aw?wa:wb,los=aw?wb:wa,wc=aw?a:b,lc=aw?b:a;win.hop=1;floatAt(win,'🏆 Sieg!','#ffd25e');burst('😤',overW(win),3,{size:.45});
+          los.spin=1;burst('💫',overW(los,.9),5,{size:.4,spd:1,up:1.5});wc.happy=Math.min(100,wc.happy+6);addXP(wc,3);addXP(lc,1);endInt(I)}}}
+    else if(I.type==='spiel'){
+      if(I.ph==='hin'){if(gapD>ra+rb+.6){moveW(wa,mx,mz,1.5,dt);moveW(wb,mx,mz,1.5,dt)}else{I.ph='los';I.t=0;I.cx=mx;I.cz=mz;I.ang=Math.atan2(wa.pos.x-mx,wa.pos.z-mz);floatAt(wa,'🎈 Spielen!','#9fffd0')}if(I.t>9)endInt(I)}
+      else{I.ang+=dt*1.9;const rr=Math.max(1.1,(ra+rb)*1.15);
+        moveW(wa,I.cx+Math.sin(I.ang)*rr,I.cz+Math.cos(I.ang)*rr,3.4,dt);moveW(wb,I.cx+Math.sin(I.ang-1.9)*rr,I.cz+Math.cos(I.ang-1.9)*rr,3.4,dt);
+        const step=Math.floor(I.t/.8);if(step>I.n){I.n=step;const w=step%2?wa:wb;w.hop=1;burst(pick(['💖','✨','🎵','⭐']),overW(w),2,{size:.4,spd:.8,up:2})}
+        if(I.t>5.6){wa.hop=wb.hop=1;burst('💞',overW(wa),3,{size:.45});burst('💞',overW(wb),3,{size:.45});[a,b].forEach(c=>{c.happy=Math.min(100,c.happy+6);addXP(c,2)});endInt(I)}}}
+    else if(I.type==='schreck'){
+      if(I.ph==='hin'){wb.mv=0;const bx=Math.sin(wb.yaw),bz=Math.cos(wb.yaw),dd=ra+rb+.35;wa.sneak=1;
+        if(moveW(wa,wb.pos.x-bx*dd,wb.pos.z-bz*dd,.8,dt)<.15){I.ph='buh';I.t=0;wa.sneak=0;faceW(wa,wb,1);wa.hop=1;wa.boo=1;
+          burst(pick(['👻','😈','💀']),overW(wa),5,{size:.55,spd:1.5,up:2.5});floatAt(wa,'BUH!','#ff6a6a');sfx('crack');
+          wb.hop=1;wb.shake=.7;burst('😱',overW(wb),3,{size:.5,spd:1,up:2});const ax=wb.pos.x-wa.pos.x,az=wb.pos.z-wa.pos.z,al=Math.hypot(ax,az)||1;I.fx=clamp(wb.pos.x+ax/al*4,-9,9);I.fz=clamp(wb.pos.z+az/al*4,-9,9)}
+        if(I.t>12){wa.sneak=0;endInt(I)}}
+      else{if(I.t>.35)moveW(wb,I.fx,I.fz,3.8,dt);else wb.mv=0;faceW(wa,wb,dt);wa.mv=0;const step=Math.floor(I.t/.5);
+        if(step>I.n&&step<4){I.n=step;wa.hop=.8;burst('😂',overW(wa),1,{size:.45,spd:.5,up:1.5})}
+        if(I.t>2.3){b.happy=Math.max(0,b.happy-4);a.happy=Math.min(100,a.happy+6);addXP(a,2);endInt(I)}}}
+    else{
+      if(I.ph==='hin'){wb.mv=0;if(moveW(wa,wb.pos.x,wb.pos.z,1.5,dt)<ra+rb+.5){I.ph='los';I.t=0;I.ang=Math.atan2(wa.pos.x-wb.pos.x,wa.pos.z-wb.pos.z);floatAt(wa,'😈 Ärgern!','#ff8ad0')}if(I.t>9)endInt(I)}
+      else{I.ang+=dt*2.7;const rr=ra+rb+.6;moveW(wa,wb.pos.x+Math.sin(I.ang)*rr,wb.pos.z+Math.cos(I.ang)*rr,4.2,dt);faceW(wb,wa,dt);wb.mv=0;
+        const step=Math.floor(I.t/.7);if(step>I.n){I.n=step;burst('💢',overW(wb),1,{size:.45,spd:.4,up:1.2});if(step%2)wa.hop=.7;else burst(pick(['😜','😝','🤪']),overW(wa),1,{size:.4,spd:.4,up:1.2})}
+        if(I.t>4.6){wb.hop=1;wb.shake=.4;burst('😠',overW(wb),2,{size:.5});b.happy=Math.max(0,b.happy-3);a.happy=Math.min(100,a.happy+5);addXP(a,1);endInt(I)}}}
+  }}
+
 /* ================== Animation ================== */
 let last=performance.now(),T=0;
 function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,root=w.b.root;
   w.timer-=dt;
   const sel=+id===selId;
-  if(sel){w.state='idle';const toCam=Math.atan2(camera.position.x-w.pos.x,camera.position.z-w.pos.z);w.yaw=lerpAng(w.yaw,toCam,dt*4)}
+  if(w.int){}
+  else if(sel){w.state='idle';const toCam=Math.atan2(camera.position.x-w.pos.x,camera.position.z-w.pos.z);w.yaw=lerpAng(w.yaw,toCam,dt*4)}
   else if(w.state==='idle'&&w.timer<=0){w.state='walk';w.tgt=randSpot();w.timer=12}
   else if(w.state==='walk'){const d=new V3().subVectors(w.tgt,w.pos);d.y=0;const L=d.length();
     if(L<.2||w.timer<=0){w.state='idle';w.timer=rnd(2,6)}
     else{const sp=(.7+w.st*.18)*(c.hunger<25?.6:1);const want=Math.atan2(d.x,d.z);w.yaw=lerpAng(w.yaw,want,dt*5);
       const step=Math.min(L,sp*dt);w.pos.x+=Math.sin(w.yaw)*step;w.pos.z+=Math.cos(w.yaw)*step}}
-  const moving=w.state==='walk'?1:0;w.walk+=dt*(moving?9:0);
+  const moving=w.int?(w.mv?1:0):(w.state==='walk'?1:0);w.walk+=dt*(moving?(w.int?13:9):0)*(w.sneak?.5:1);
   w.pop=Math.min(1,w.pop+dt*2.2);const pop=w.pop<1?easeBack(w.pop):1;
   w.hop=Math.max(0,w.hop-dt*2);const hop=Math.sin(w.hop*Math.PI)*.5;
   root.position.set(w.pos.x,(P.hover?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*.06*moving+hop,w.pos.z);
-  root.rotation.y=w.yaw;root.scale.setScalar(pop);if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
+  if(w.lunge>0){w.lunge=Math.max(0,w.lunge-dt*3);const l=Math.sin(w.lunge*Math.PI)*.35*Math.max(.6,w.b.w*.5);root.position.x+=Math.sin(w.yaw)*l;root.position.z+=Math.cos(w.yaw)*l}
+  if(w.shake>0){w.shake=Math.max(0,w.shake-dt);root.position.x+=Math.sin(T*70)*w.shake*.1}
+  if(w.spin>0){w.spin=Math.max(0,w.spin-dt*.7);w.yaw+=dt*14*w.spin}
+  w.boo=Math.max(0,(w.boo||0)-dt*2);
+  root.rotation.y=w.yaw;root.scale.set(pop*(1+w.boo*.25),pop*(1+w.boo*.3)*(w.sneak?.88:1),pop*(1+w.boo*.25));if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
   P.legs.forEach(l=>l.rotation.x=moving?Math.sin(w.walk+l.userData.ph)*.6:0);
   P.wings.forEach(p=>p.rotation.z=p.userData.rest+(P.fast?Math.sin(T*28)*.35:Math.sin(T*(moving?8:2.5))*(moving?.45:.12))+hop*.8);
   P.tails.forEach((t,i)=>t.rotation.y=Math.sin(T*3+i*.6)*.35);
@@ -1527,6 +1577,7 @@ function lerpAng(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-
 function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
 let fpsN=0,fpsT=0,fpsDone=0,VOFF=0;
 function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;updDay(dt);updGame(dt);updSound(dt);waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
+  updInts(dt);
   for(const id in W.cre)animCreature(id,W.cre[id],dt);
   for(const e of S.eggs){const o=W.eggs[e.id];if(!o)continue;const b=o.userData.base;if(!b)continue;o.userData.wob=Math.max(0,(o.userData.wob||0)-dt*2);
     const ready=e.end<=now();o.position.set(b.x,b.y+(ready?Math.abs(Math.sin(T*4))*.12:0),b.z);o.rotation.z=Math.sin(T*(ready?9:2))*(ready?.12:.03)+Math.sin(T*30)*o.userData.wob*.2}
