@@ -31,7 +31,14 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 | Legendär | Phönix, Qilin | Höllendrache, Leviathan |
 
 ## Grafik
-Echtzeit-3D mit Three.js: physikalisch basierte Materialien mit prozeduralen Fell-, Schuppen-, Feder-, Stein- und Holzstrukturen,
-Himmels-Spiegelungen, weiche Schatten, glänzende Augen, tausende im Wind wehende Grashalme und spiegelndes Wasser.
+Echtzeit-3D mit Three.js:
+- Weiche, organische Körper: Rumpf, Kopf, Beine und Schwänze werden aus Formen verschmolzen (Signed-Distance-Felder + Surface Nets) – mit fließenden Farbübergängen
+- Echtes 3D-Fell (Shell-Rendering), Mähnen und buschige Schwänze
+- Augen mit strukturierter Iris und Glanz, leuchtende Augen bei bösen Wesen
+- Physikalisch basierte Materialien mit Schuppen-, Feder-, Stein- und Holzstrukturen
+- Himmel mit Sonne, Spiegelungen, Gegenlicht, weiche Schatten, Leuchteffekte für Flammen und Magie
+- Wehendes Gras, Teich mit bewegten Wellen, Wolkenmeer unter der Insel
+
+Im Menü lässt sich die Grafik zwischen **Hoch** und **Schnell** (für ältere Handys) umschalten.
 
 Der Spielstand wird automatisch gespeichert; Aufgaben und Brutzeiten laufen auch weiter, wenn die App geschlossen ist.
