@@ -204,6 +204,30 @@ const SPECIES={
     b:{t:'quad',c:0xe9c25a,belly:0xfff2c8,br:.5,bl:.66,legL:.72,legR:.1,paw:0x3a2a1a,hr:.38,neckH:.55,neck:1,mane:[0xff7a3a,0xffa63a,0xff5a2a],tail:{t:'rainbow'},orbs:0xffd25e,skin:'scale',head:{ears:'small',earC:0xe9c25a,earIn:0xff9a5a,snout:.95,snoutC:0xfff2c8,nose:0x6a3a1a,antlers:0xffd25e,antGlow:1,eye:0xd06a10}},size:1.1},
   leviathan:{n:'Leviathan',r:3,cute:false,d:'Das Urmonster der Ozeane. Es ist so gewaltig, dass Seefahrer es für eine Insel halten.',names:['Abyssor','Tiefenkönig','Mahlstrom','Tidus','Kraakon'],
     b:{t:'serp',c:0x173866,c2:0x3d7fc0,r:.42,L:4,hr:.42,spikes:0x0d1f3d,flippers:0x0d1f3d,skin:'scale',head:{snout:1.1,fins:0x0d1f3d,horns:0x0a1428,fangs:1,eye:0x5ff5ff,brow:0x081530,nose:0x081530}},size:1.3},
+  fee:{n:'Fee',r:0,cute:true,d:'Eine winzige Waldfee mit schillernden Flügeln. Wo sie fliegt, bleibt glitzernder Feenstaub in der Luft.',names:['Lilly','Tinka','Mirabell','Flora','Glöckchen'],
+    b:{t:'human',H:.9,build:.8,skinC:0xffe0d0,hair:{s:'long',c:0xffd36b},top:0x8fe3a0,dress:1,bottom:0xffe0d0,shoes:0x6fbf7a,wings:'fairy',wingC:0xb8f0ff,eye:0x3fa0e0,ears:'elf',orbs:0xfff3a0}},
+  zwerg:{n:'Zwerg',r:0,cute:true,d:'Ein kleiner, kräftiger Bergmann mit prächtigem Bart. Er gräbt am liebsten nach Edelsteinen.',names:['Grimbart','Thorin','Bolli','Knorz','Brumli'],
+    b:{t:'human',H:1.1,build:1.5,skinC:0xf0c2a0,hair:{s:'short',c:0xb0602a},beard:0xb0602a,top:0x3f6aa8,bottom:0x6a4a2a,shoes:0x3a2a1a,hat:'cap',hatC:0xc83a3a,eye:0x4a3020,nose:1.4,belt:0x2a1a10}},
+  kobold:{n:'Kobold',r:0,cute:false,d:'Ein listiger grüner Kobold. Er klaut gern glänzende Sachen und kichert dabei hämisch.',names:['Gnatz','Zwick','Grubbel','Klepto','Schnorr'],
+    b:{t:'human',H:.95,build:.85,skinC:0x7fae4a,hair:{s:'none'},top:0x6a4a2a,bottom:0x4a3a2a,shoes:0x3a2a1a,ears:'goblin',nose:1.9,eye:0xffd000,fangs:1,hunch:.25,claws:1}},
+  waldelfe:{n:'Waldelfe',r:1,cute:true,d:'Eine anmutige Elfe aus den uralten Wäldern. Sie spricht mit den Bäumen und trifft mit dem Bogen jedes Ziel.',names:['Elara','Lirael','Sylvana','Nimue','Faelin'],
+    b:{t:'human',H:1.75,build:.85,skinC:0xf6dcc8,hair:{s:'long',c:0xf2e2b0},top:0x3e7a46,bottom:0x5a4a30,shoes:0x4a3a24,ears:'elf',eye:0x3fa060,cape:0x2f5a36,orbs:0x9fffb0}},
+  meerjungfrau:{n:'Meerjungfrau',r:1,cute:true,d:'Halb Mensch, halb Fisch. Ihr Gesang ist so schön, dass sogar die Wellen still werden.',names:['Marina','Perla','Ariella','Coralie','Undine'],
+    b:{t:'human',H:1.6,build:.85,skinC:0xf8dccc,hair:{s:'long',c:0xd83a5a},top:0xb06adf,bottom:0x2fb0a0,mermaid:0x2fb0a0,eye:0x2a8ad0}},
+  vampir:{n:'Vampir',r:1,cute:false,d:'Ein bleicher Graf aus einem alten Schloss. Er schläft am Tag im Sarg und erwacht bei Mondschein.',names:['Graf Dracul','Vladimir','Nosferas','Lestat','Morbius'],
+    b:{t:'human',H:1.8,build:.9,skinC:0xf2e6e8,hair:{s:'slick',c:0x15121a},top:0x1a1a22,bottom:0x15151c,shoes:0x0a0a0e,cape:0x14080c,capeIn:0x8a0a1a,collar:1,eye:0xff2030,fangs:1}},
+  hexe:{n:'Hexe',r:1,cute:false,d:'Eine alte Waldhexe mit spitzem Hut. In ihrem Kessel brodeln seltsame Tränke.',names:['Morgana','Baba','Grimhild','Hagatha','Rabenmutter'],
+    b:{t:'human',H:1.65,build:.85,skinC:0xa8c890,hair:{s:'long',c:0x2a2a30},top:0x2a1a3a,robe:0x2a1a3a,hat:'witch',hatC:0x1e1428,eye:0xc0ff40,nose:1.7,hunch:.15,orbs:0x9a5aff}},
+  werwolf:{n:'Werwolf',r:2,cute:false,d:'Bei Tag ein Mensch, bei Vollmond eine reißende Bestie. Sein Heulen hallt durch den ganzen Wald.',names:['Lykos','Fenris','Grauheul','Wolfgang','Mondfang'],
+    b:{t:'human',H:2.0,build:1.25,skinC:0x5a5048,skin:'fur',wolf:1,hair:{s:'none'},top:0x5a5048,sleeve:0x5a5048,bottom:0x3a3a52,barefoot:1,eye:0xffc020,claws:1,hunch:.3,tail:'wolf',head:{ears:'pointy',earC:0x5a5048,earIn:0x2a2220,snout:1.05,snoutC:0x6a6058,fangs:1,eye:0xffc020}}},
+  troll:{n:'Troll',r:2,cute:false,d:'Ein riesiger Höhlentroll. Er ist nicht besonders klug, aber unglaublich stark.',names:['Grumm','Steinfaust','Ogg','Brokk','Moosbart'],
+    b:{t:'human',H:2.3,build:1.8,skinC:0x7a8a70,skin:'stone',hair:{s:'wild',c:0x3a4a2a},top:0x6a5034,sleeve:0x7a8a70,bottom:0x5a4028,barefoot:1,eye:0xffa020,nose:2.1,tusks:1,hunch:.35,claws:1},size:1.1},
+  engel:{n:'Engel',r:2,cute:true,d:'Ein leuchtendes Himmelswesen mit weißen Schwingen. Es beschützt alle, die sich im Wald verirrt haben.',names:['Seraphina','Gabriel','Aurelia','Lumen','Celestine'],
+    b:{t:'human',H:1.75,build:.85,skinC:0xfbe6d8,hair:{s:'long',c:0xffe08a},top:0xffffff,robe:0xf6f2ff,wings:'feather',wingC:0xffffff,halo:0xffd860,eye:0x5aa0ff,hover:1,orbs:0xfff6c0}},
+  dryade:{n:'Dryade',r:3,cute:true,d:'Die Hüterin des Zauberwalds. Ihr Haar besteht aus Blättern und Blüten, ihre Haut aus lebendiger Rinde.',names:['Sylvia','Eiche','Lindra','Moosrose','Elm'],
+    b:{t:'human',H:1.85,build:.85,skinC:0x9a7a52,skin:'bark',hair:{s:'leaf',c:0x4fa04a,c2:0xff9ad0},top:0x5f8a3a,robe:0x4a7a34,eye:0x7affb0,ears:'elf',orbs:0x9cffd0},size:1.05},
+  daemon:{n:'Dämon',r:3,cute:false,d:'Ein Fürst der Unterwelt mit gewaltigen Hörnern. Wo er geht, glimmt der Boden und Flammen tanzen in seinen Händen.',names:['Belzor','Azrakar','Infernal','Mephisto','Abaddor'],
+    b:{t:'human',H:2.2,build:1.35,skinC:0xa82020,hair:{s:'none'},top:0xa82020,sleeve:0xa82020,bottom:0x1a0a0a,barefoot:1,horns:0x1a1010,wings:'bat',wingC:0x2a0a0a,wingM:0x7a1010,tail:'devil',eye:0xffd000,fangs:1,claws:1,flame:1},size:1.1},
 };
 Object.entries({wolpertinger:'fur',basilisk:'scale',gargoyle:'stone',einhorn:'fur',greif:'fur',schattenwolf:'fur',kraken:'slime',kitsune:'fur',kristalldrache:'scale',zerberus:'fur',hydra:'scale',phoenix:'feather',hoellendrache:'scale'}).forEach(([k,v])=>SPECIES[k].b.skin=v);
 Object.entries({wolpertinger:'rabbit',gargoyle:'gargoyle',einhorn:'horse',greif:'cat',schattenwolf:'dog',pegasus:'horse',kitsune:'fox',kristalldrache:'dragon',zerberus:'dog',hirschgeist:'deer',mantikor:'cat',hoellendrache:'dragon',qilin:'horse'}).forEach(([k,v])=>SPECIES[k].b.arch=v);
@@ -712,7 +736,88 @@ function buildChest(o,st,cute){
   g.add(lid);P.lid=lid;
   return{g,P};
 }
-const BUILDERS={quad:buildQuad,bird:buildBird,serp:buildSerp,octo:buildOcto,wisp:buildWisp,shroom:buildShroom,chest:buildChest};
+// Menschenähnliche Wesen: Körper, Arme, Beine, Gesicht, Haare, Kleidung
+GEO.wingF=(()=>{const s=new THREE.Shape();s.absellipse(.5,0,.5,.2,0,Math.PI*2);return new THREE.ShapeGeometry(s,24).rotateX(Math.PI/2)})();
+function buildHuman(o,st,cute){
+  const g=new THREE.Group(),P=mkParts(),k=st/4,baby=1-k,b=o.build||1;
+  const Ht=o.H*(.55+.45*k),R=Ht*(.075+.04*baby),legL=o.mermaid?0:Ht*(.4+.07*k),torso=Ht*.29,sw=Ht*.115*b,hipW=Ht*.07*b,lr=Ht*.04*Math.sqrt(b);
+  const hipY=o.mermaid?Ht*.32:legL,sk=o.skinC,top=o.top??sk,bot=o.bottom??top,hunch=o.hunch||0,robe=o.robe!==undefined;
+  const lift=o.wings==='fairy'?Ht*.35:0;g.position.y=lift;
+  const body=new THREE.Group();body.position.y=hipY;body.rotation.x=hunch*.6;g.add(body);
+  const T=[primE(V(0,0,0),V(hipW*1.55,Ht*.075,hipW*1.15),bot),primC(V(0,0,0),V(0,torso*.55,0),Ht*.072*b,Ht*.078*b,top),
+    primE(V(0,torso*.66,Ht*.005),V(sw*.92,torso*.33,Ht*.072*b),top),primC(V(-sw*.78,torso*.83,0),V(sw*.78,torso*.83,0),Ht*.045*b,Ht*.045*b,top),
+    primC(V(0,torso*.85,0),V(0,torso+R*.3,R*.08),R*.36,R*.3,sk)];
+  if(o.dress&&!robe)T.push(primC(V(0,0,0),V(0,-legL*.48,0),Ht*.085,Ht*.15,top));
+  if(robe)T.push(primC(V(0,0,0),V(0,-hipY+Ht*.03,0),Ht*.085*b,Ht*.17,o.robe),primE(V(0,-hipY+Ht*.04,0),V(Ht*.17,Ht*.04,Ht*.17),o.robe));
+  body.add(blob(T,{k:Ht*.035,res:38,axis:'y',fur:1,fl:.8}));
+  if(o.belt!==undefined){const t=mesh(GEO.tor,M(o.belt,{r:.5}));t.scale.set(Ht*.078*b,Ht*.078*b,Ht*.12);t.rotation.x=Math.PI/2;t.position.y=Ht*.02;body.add(t)}
+  // Kopf
+  const hd=new THREE.Group();hd.position.set(0,torso+R*1.12,R*.1);hd.userData.px=-hunch*.6;body.add(hd);
+  if(o.wolf){const h=makeHead({...o.head,R:R*1.15,c:sk},false,st,'canine');h.g.position.z=-R*.2;hd.add(h.g);P.eyes.push(...h.eyes)}
+  else{const ns=o.nose||1,HP=[primE(V(0,0,0),V(R*.86,R,R*.92),sk),primE(V(0,-R*.42,R*.22),V(R*.6,R*.45,R*.58),sk),primC(V(0,-R*.02,R*.82),V(0,-R*.28,R*(.9+.12*ns)),R*.07*ns,R*.1*ns,sk)];
+    if(cute)for(const s of[-1,1])HP.push(primE(V(s*R*.4,-R*.22,R*.52),V(R*.24,R*.2,R*.2),sk));
+    if(!cute)HP.push(primE(V(0,R*.24,R*.62),V(R*.62,R*.12,R*.24),sk));
+    for(const s of[-1,1]){if(o.ears==='elf')HP.push(primC(V(s*R*.8,-R*.05,-R*.05),V(s*R*1.45,R*.55,-R*.35),R*.14,R*.02,sk));
+      else if(o.ears==='goblin')HP.push(primC(V(s*R*.8,0,-R*.05),V(s*R*1.9,R*.3,-R*.3),R*.2,R*.03,sk));
+      else HP.push(primE(V(s*R*.84,-R*.08,-R*.02),V(R*.1,R*.2,R*.12),sk))}
+    hd.add(blob(HP,{k:R*.22,res:30,fur:0}));
+    P.eyes.push(...addEyes(hd,R,cute,o.eye??0x4a3020,st,{spread:.37,up:.08,rad:.86,er:.26-.07*k,es:.85}));
+    hd.add(at(E(0x6a2a2a,R*.2,R*.035,R*.06,{r:.4}),0,-R*.5,R*.8));
+    if(o.fangs)for(const s of[-1,1]){const f=cone(0xfff6e0,R*.04,R*.13,{r:.3});f.rotation.x=Math.PI;at(f,s*R*.08,-R*.52,R*.8);hd.add(f)}
+    if(o.tusks)for(const s of[-1,1]){const f=cone(0xf0e6c8,R*.08,R*.38,{r:.4});dirTo(f,V(s*.25,1,.25));at(f,s*R*.28,-R*.65,R*.62);hd.add(f)}
+    const hc=o.hair?.c,hs=o.hair?.s,HR=[];
+    const hfl=R*.14/BC.fl;if(hs&&hs!=='none'){HR.push(primE(V(0,R*(hs==='slick'?.36:.42),-R*.2),V(R*(hs==='wild'?1.0:.92),R*(hs==='slick'?.66:.7),R*.95),hc));
+      if(hs==='long'){HR.push(primC(V(0,R*.15,-R*.45),V(0,-R*1.7,-R*.55),R*.78,R*.5,hc));for(const s of[-1,1])HR.push(primC(V(s*R*.74,R*.1,-R*.25),V(s*R*.7,-R*1.3,-R*.3),R*.26,R*.16,hc))}
+      if(hs==='slick')HR.push(primE(V(0,R*.7,R*.42),V(R*.1,R*.12,R*.12),hc));
+      if(hs==='wild')for(let i=0;i<6;i++){const a=i/6*Math.PI*2;HR.push(primE(V(Math.cos(a)*R*.7,R*.4+Math.sin(a)*R*.2,-R*.35+Math.sin(a)*R*.4),V(R*.4,R*.4,R*.4),hc))}
+      if(hs==='leaf'){HR.push(primC(V(0,R*.1,-R*.45),V(0,-R*1.5,-R*.6),R*.8,R*.55,hc));for(let i=0;i<9;i++){const a=i/9*Math.PI*2;HR.push(primE(V(Math.cos(a)*R*.85,R*.55+Math.sin(i*2.1)*R*.25,Math.sin(a)*R*.7-R*.2),V(R*.25,R*.25,R*.25),i%3?hc:o.hair.c2))}}
+      hd.add(blob(HR,{k:R*.25,res:30,skin:'fur',forceFur:1,fl:hfl*(hs==='leaf'?1.5:1)}))}
+    if(o.beard!==undefined)hd.add(blob([primE(V(0,-R*.72,R*.48),V(R*.55,R*.6,R*.38),o.beard),primC(V(0,-R*.8,R*.5),V(0,-R*1.9,R*.62),R*.48,R*.12,o.beard),primE(V(0,-R*.25,R*.86),V(R*.4,R*.1,R*.1),o.beard)],{k:R*.2,res:28,skin:'fur',forceFur:1,fl:R*.2/BC.fl}));
+    if(o.hat==='cap'){const c=cone(o.hatC,R*.92,R*(1.9+.3*st));c.rotation.x=-.35;at(c,0,R*.45,-R*.12);hd.add(c);hd.add(at(E(0xffffff,R*.2),0,R*(2.1+.25*st),-R*.85))}
+    if(o.hat==='witch'){const br=mesh(GEO.cyl,M(o.hatC,{r:.8}));br.scale.set(R*1.9,R*.05,R*1.9);br.position.y=R*.55;hd.add(br);const c1=mesh(GEO.tap,M(o.hatC,{r:.8}));c1.scale.set(R*.85,R*1.4,R*.85);c1.position.y=R*.55;hd.add(c1);
+      const c2=cone(o.hatC,R*.53,R*1.4,{r:.8});c2.rotation.x=-.6;at(c2,0,R*1.9,-R*.05);hd.add(c2);const bd=mesh(GEO.tor,M(0x7a4fbf,{r:.4}));bd.scale.set(R*.82,R*.82,R*.5);bd.rotation.x=Math.PI/2;bd.position.y=R*.68;hd.add(bd)}
+    if(o.halo!==undefined){const h=mesh(GEO.tor,M(o.halo,{em:o.halo,ei:1.6,mt:.6}));h.scale.set(R*.7,R*.7,R*.35);h.rotation.x=Math.PI/2;h.position.y=R*1.55;h.castShadow=false;hd.add(h);hd.add(at(glow(o.halo,R*4,.45),0,R*1.55,0))}
+  }
+  if(o.horns!==undefined)for(const s of[-1,1])hd.add(hornChain(o.horns,V(s*R*.42,R*.6,-R*.05),V(s*.6,1,.15),R*(1.3+.6*st),R*.2,V(s*.15,-.15,-.55)));
+  P.heads.push(hd);
+  // Arme
+  const armL=Ht*.37,sleeve=o.sleeve??top;
+  for(const s of[-1,1]){const p=new THREE.Group();at(p,s*sw*.92,torso*.83,0);const inner=new THREE.Group();inner.rotation.z=s*.1;p.add(inner);
+    inner.add(blob([primC(V(0,0,0),V(0,-armL*.48,0),lr*1.15,lr*.9,sleeve),primC(V(0,-armL*.48,0),V(0,-armL*.9,lr*.6),lr*.9,lr*.68,o.wolf?sk:sleeve),primE(V(0,-armL*.98,lr*.7),V(lr*.6,lr*1.0,lr*.75),sk)],{k:lr*.5,res:24,axis:'y',fur:1,fl:.7}));
+    if(o.claws)for(const a of[-.3,0,.3]){const cl=cone(0xe8e0d0,lr*.12,lr*.5,{r:.3});cl.rotation.x=Math.PI*.9;at(cl,a*lr,-armL*1.08,lr*.85);inner.add(cl)}
+    if(o.flame){const f=flame(.35);at(f,0,-armL*.98,lr*1.4);inner.add(f);P.flames.push(f)}
+    p.userData.ph=s>0?Math.PI:0;body.add(p);P.legs.push(p)}
+  // Beine, Fischschwanz
+  if(!robe&&!o.mermaid)for(const s of[-1,1]){const p=new THREE.Group();at(p,s*hipW,legL,0);const pc=o.bottom??bot,shoe=o.barefoot?sk:(o.shoes??0x2a2420);
+    p.add(blob([primC(V(0,0,0),V(0,-legL*.5,lr*.4),lr*1.5,lr*1.05,pc),primC(V(0,-legL*.5,lr*.4),V(0,-legL+lr*.6,0),lr*1.05,lr*.75,pc),primE(V(0,-legL+lr*.45,lr*1.1),V(lr*.85,lr*.55,lr*1.8),shoe)],{k:lr*.5,res:24,axis:'y',fur:1,fl:.7}));
+    if(o.claws&&o.barefoot)for(const a of[-.3,0,.3]){const cl=cone(0xe8e0d0,lr*.12,lr*.45,{r:.3});cl.rotation.x=Math.PI/2;at(cl,a*lr*.9,-legL+lr*.3,lr*2.8);p.add(cl)}
+    p.userData.ph=s>0?0:Math.PI;g.add(p);P.legs.push(p)}
+  if(o.mermaid!==undefined){const tm=tubeMesh([V(0,hipY+Ht*.02,0),V(0,hipY*.55,Ht*.03),V(0,Ht*.08,-Ht*.06),V(0,Ht*.06,-Ht*.25),V(0,Ht*.16,-Ht*.38)],t=>Ht*(.075-.06*t),o.mermaid,0x9ff0e0,'scale','none',0);g.add(tm.m);
+    const tp=tm.curve.getPointAt(1);for(const s of[-1,1]){const f=E(o.mermaid,Ht*.11,Ht*.012,Ht*.06,{r:.3});f.rotation.y=s*.7;at(f,tp.x+s*Ht*.07,tp.y+Ht*.02,tp.z-Ht*.05);g.add(f)}P.hover=1}
+  // Umhang
+  if(o.cape!==undefined){const ch=torso*.85+hipY*.92,cg=new THREE.CylinderGeometry(sw*1.05,sw*1.9,ch,18,1,true,Math.PI/2,Math.PI);
+    const co=new THREE.Mesh(cg,M(o.cape,{r:.6}));co.castShadow=true;const ci=new THREE.Mesh(cg,M(o.capeIn??o.cape,{r:.5,ds:1}));ci.scale.set(.97,1,.97);
+    const cp=new THREE.Group();cp.add(co,ci);cp.position.set(0,torso*.86-ch/2,-Ht*.02);body.add(cp);
+    if(o.collar)for(const s of[-1,1]){const c=cone(o.cape,R*.6,R*1.5,{r:.6});c.rotation.z=-s*.35;c.rotation.x=-.25;at(c,s*R*.5,torso*.82,-R*.45);body.add(c)}}
+  // Flügel
+  if(o.wings){for(const s of[-1,1]){const mnt=new THREE.Group();at(mnt,s*sw*.25,torso*.72,-Ht*.06);mnt.scale.x=s;const piv=new THREE.Group();mnt.add(piv);let w;
+    if(o.wings==='fairy'){w=new THREE.Group();const wm=new THREE.MeshStandardMaterial({color:o.wingC,emissive:o.wingC,emissiveIntensity:.8,transparent:true,opacity:.75,side:THREE.DoubleSide,roughness:.2,depthWrite:false});
+      const w1=new THREE.Mesh(GEO.wingF,wm);w1.scale.set(Ht*.38,1,Ht*.4);w1.rotation.z=.6;w1.rotation.y=-.2;const w2=new THREE.Mesh(GEO.wingF,wm);w2.scale.set(Ht*.28,1,Ht*.3);w2.rotation.z=-.2;w2.rotation.y=.3;w.add(w1,w2);
+      piv.userData.rest=piv.rotation.z=.2;mnt.rotation.y=s*.9;mnt.rotation.x=0;P.fast=1}
+    else if(o.wings==='feather'){w=featherWing(o.wingC,0xeef2ff);w.scale.setScalar(Ht*.75*(.4+.6*k));piv.userData.rest=piv.rotation.z=.55;mnt.rotation.y=s*.55}
+    else{w=batWing(o.wingC,o.wingM);w.scale.setScalar(Ht*.55*(.4+.6*k));piv.userData.rest=piv.rotation.z=.55;mnt.rotation.y=s*.5}
+    piv.add(w);body.add(mnt);P.wings.push(piv)}}
+  // Schwanz
+  if(o.tail==='devil'||o.tail==='wolf'){const t=new THREE.Group();at(t,0,hipY-Ht*.02,-hipW*1.1);
+    if(o.tail==='devil'){const pts=[V(0,0,0),V(0,-Ht*.12,-Ht*.12),V(0,-Ht*.2,-Ht*.3),V(0,-Ht*.08,-Ht*.45)];const TP=[];for(let i=0;i<3;i++)TP.push(primC(pts[i],pts[i+1],Ht*.02*(1-i*.25),Ht*.02*(1-(i+1)*.25),sk));t.add(blob(TP,{k:Ht*.01,res:24}));
+      const sp=cone(o.horns??0x1a1010,Ht*.04,Ht*.08);dirTo(sp,pts[3].clone().sub(pts[2]));sp.scale.z=Ht*.008;sp.position.copy(pts[3]);t.add(sp)}
+    else t.add(blob([primC(V(0,0,0),V(0,-Ht*.12,-Ht*.12),Ht*.025,Ht*.05,sk),primC(V(0,-Ht*.12,-Ht*.12),V(0,-Ht*.32,-Ht*.16),Ht*.05,Ht*.02,sk)],{k:Ht*.03,res:20,fur:1,fl:1.6}));
+    body.add(t);P.tails.push(t)}
+  if(o.orbs!==undefined)for(let i=0;i<st+1;i++)P.orbit.push({m:addTo(g,(m=>{m.add(glow(o.orbs,6));return m})(E(o.orbs,.04,.04,.04,{em:o.orbs,ei:1.6}))),r:Ht*.35+(i%2)*.15,h:Ht*.5+(i%3)*Ht*.15,ph:i*1.9,sp:1.1+i*.15});
+  if(o.hover)P.hover=1;
+  return{g,P};
+}
+const BUILDERS={quad:buildQuad,bird:buildBird,serp:buildSerp,octo:buildOcto,wisp:buildWisp,shroom:buildShroom,chest:buildChest,human:buildHuman};
 function buildCreature(sp,st){
   const S_=SPECIES[sp];BC={skin:S_.b.skin||'smooth',fur:S_.b.skin==='fur',fl:(S_.b.furLen||.058)};const r=BUILDERS[S_.b.t](S_.b,st,S_.cute);
   const sk=S_.b.skin;if(sk)r.g.traverse(m=>{if(m.isMesh&&m.material.userData.plain)m.material=M(m.material.color.getHex(),{sk})});
@@ -1314,7 +1419,8 @@ const ACH=[
   {id:'l35',e:'👑',n:'Uralte Weisheit',d:'Ein Wesen erreicht Level 35',v:bestLv,goal:35,g:10000},
   {id:'s5',e:'📖',n:'Sammler',d:'Entdecke 5 Fabelwesen',v:seenN,goal:5,g:400},
   {id:'s15',e:'🔍',n:'Forscher',d:'Entdecke 15 Fabelwesen',v:seenN,goal:15,g:3000},
-  {id:'s25',e:'🌍',n:'Fabelkundiger',d:'Entdecke alle 25 Fabelwesen',v:seenN,goal:25,g:20000},
+  {id:'s25',e:'🌍',n:'Fabelkundiger',d:`Entdecke alle ${SP_IDS.length} Fabelwesen`,v:seenN,goal:SP_IDS.length,g:25000},
+  {id:'s30',e:'🧙',n:'Menschenkenner',d:'Entdecke 30 Fabelwesen',v:seenN,goal:30,g:8000},
   {id:'f20',e:'✨',n:'Glühwürmchenfänger',d:'Fange 20 Glühwürmchen in einem Spiel',v:()=>S.best||0,goal:20,g:500},
   {id:'f40',e:'🌟',n:'Lichtjäger',d:'Fange 40 Glühwürmchen in einem Spiel',v:()=>S.best||0,goal:40,g:2000},
   {id:'n5',e:'🌙',n:'Nachtschwärmer',d:'Erledige 5 Aufgaben in der Nacht',v:()=>S.nightTasks||0,goal:5,g:400},
@@ -1353,7 +1459,7 @@ function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,ro
   root.position.set(w.pos.x,(P.hover?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*.06*moving+hop,w.pos.z);
   root.rotation.y=w.yaw;root.scale.setScalar(pop);if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
   P.legs.forEach(l=>l.rotation.x=moving?Math.sin(w.walk+l.userData.ph)*.6:0);
-  P.wings.forEach(p=>p.rotation.z=p.userData.rest+Math.sin(T*(moving?8:2.5))*(moving?.45:.12)+hop*.8);
+  P.wings.forEach(p=>p.rotation.z=p.userData.rest+(P.fast?Math.sin(T*28)*.35:Math.sin(T*(moving?8:2.5))*(moving?.45:.12))+hop*.8);
   P.tails.forEach((t,i)=>t.rotation.y=Math.sin(T*3+i*.6)*.35);
   P.heads.forEach((h,i)=>{h.rotation.x=(h.userData.px||0)+Math.sin(T*1.3+i)*.06;if(h.userData.ph!==undefined)h.rotation.y=Math.sin(T*1.1+h.userData.ph)*.25});
   w.blink-=dt;const bl=w.blink<0&&w.blink>-.13;if(w.blink<-.13)w.blink=rnd(2,5);P.eyes.forEach(e=>e.scale.y=bl?.1:1);

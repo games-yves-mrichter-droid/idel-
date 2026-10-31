@@ -19,23 +19,25 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Aufgaben:** Schicke deine Wesen los (Beeren sammeln, Schatz suchen, Expedition …). Niedliche Wesen haben eigene Aufgaben (Kinder unterhalten, Tiere heilen, Regenbogen malen), böse auch (Dorf erschrecken, Ritter verjagen, Vulkan wecken). Dafür gibt es Gold und Erfahrung.
 - **Pflegen:** Füttern hält den Hunger fern (hungrige Wesen verdienen nur die Hälfte), Streicheln oder Raufen hebt die Laune (+25 % Gold).
 - **Wachsen:** Baby → Kind (Lv 5) → Jugendlich (Lv 12) → Erwachsen (Lv 22) → Uralt (Lv 35). Mit jedem Abschnitt verändert sich das 3D-Modell: Kitsune bekommen mehr Schwänze, Zerberus bis zu drei Köpfe, die Hydra bis zu sieben.
-- **Fabelbuch:** Sammle alle 25 Fabelwesen und schalte ihre Lebensabschnitte frei.
+- **Fabelbuch:** Sammle alle 37 Fabelwesen und schalte ihre Lebensabschnitte frei.
 - **Ausbau:** Mehr Waldplätze und Nester kaufen.
 - **Tag & Nacht:** Ein Spieltag dauert 24 Minuten – mit Sonnenauf- und -untergang, Mond und Sternen. Nachts verdienen böse Wesen +30 % Gold, tagsüber niedliche +20 %.
 - **Wetter:** Klar, Regen (+20 % Erfahrung, nasser Boden, Regentropfen) oder Nebel (böse Wesen +15 % Gold).
 - **Minispiel „Glühwürmchen fangen“:** 25 Sekunden lang leuchtende Glühwürmchen antippen – goldene zählen fünffach. Bringt Gold, Erfahrung und gute Laune.
 - **Zaubertränke:** Energietrank, Wachstumselixier, Festmahl (alle satt) und Brutfeuer (alle Eier sofort schlupfbereit).
-- **Erfolge:** 16 Erfolge mit Gold-Belohnungen.
+- **Erfolge:** 17 Erfolge mit Gold-Belohnungen.
 - **Tägliche Belohnung:** Jeden Tag Gold, am 7. Tag in Folge ein Wachstumselixier.
 - **Geräusche:** Vogelgezwitscher am Tag, Grillen in der Nacht, Regen und Effektklänge (im Menü abschaltbar).
 
-## Die Fabelwesen (25)
+## Die Fabelwesen (37)
 | Seltenheit | Niedlich 💖 | Böse 😈 |
 |---|---|---|
-| Gewöhnlich | Wolpertinger, Irrlicht, Pilzling | Basilisk, Gargoyle, Mimic, Unglücksrabe |
-| Selten | Einhorn, Greif, Pegasus, Nessie | Schattenwolf, Krake, Lindwurm |
-| Episch | Kitsune, Kristalldrache, Waldhirsch | Zerberus, Hydra, Mantikor, Donnervogel |
-| Legendär | Phönix, Qilin | Höllendrache, Leviathan |
+| Gewöhnlich | Wolpertinger, Irrlicht, Pilzling, Fee, Zwerg | Basilisk, Gargoyle, Mimic, Unglücksrabe, Kobold |
+| Selten | Einhorn, Greif, Pegasus, Nessie, Waldelfe, Meerjungfrau | Schattenwolf, Krake, Lindwurm, Vampir, Hexe |
+| Episch | Kitsune, Kristalldrache, Waldhirsch, Engel | Zerberus, Hydra, Mantikor, Donnervogel, Werwolf, Troll |
+| Legendär | Phönix, Qilin, Dryade | Höllendrache, Leviathan, Dämon |
+
+Menschenähnliche Wesen haben einen eigenen Bauplan mit Kopf, Gesicht, Haaren (3D-Haar), Armen, Beinen und Kleidung – samt Umhang (Vampir, Elfe), Hexenhut, Zipfelmütze und Bart (Zwerg), Heiligenschein (Engel), Feenflügeln, Fischschwanz (Meerjungfrau), Hauern (Troll) oder Hörnern und Flammenhänden (Dämon). Der Werwolf hat einen echten Wolfskopf mit Fell.
 
 ## Grafik
 Echtzeit-3D mit Three.js:
