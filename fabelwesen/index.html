@@ -100,6 +100,10 @@ button.btn:disabled{opacity:.4;cursor:default}
 #modal img.big{width:150px;height:150px}
 #modal input,#modal textarea{width:100%;font-size:17px;padding:10px;border-radius:12px;border:2px solid var(--line);background:#0004;color:var(--text);text-align:center;margin:10px 0;user-select:text;-webkit-user-select:text}
 #modal textarea{font-size:11px;text-align:left;height:120px}
+#ghud{position:fixed;left:50%;top:calc(58px + env(safe-area-inset-top));transform:translateX(-50%);background:#1c1233dd;border:2px solid #ffd25e;border-radius:18px;padding:8px 18px;font-size:22px;font-weight:800;display:none;z-index:30;pointer-events:none;white-space:nowrap}
+#tod{pointer-events:auto;cursor:pointer}
+.nb{position:absolute;margin:-4px 0 0 -6px;background:#ff5a7a;color:#fff;border-radius:9px;font-size:10px;padding:0 5px;font-weight:800}
+nav button{position:relative}
 #toast{position:fixed;left:50%;top:calc(56px + env(safe-area-inset-top));transform:translateX(-50%);background:#1c1233ee;border:2px solid var(--accent);border-radius:16px;padding:8px 14px;font-weight:700;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;max-width:90%;text-align:center}
 #toast.on{opacity:1}
 .row{display:flex;gap:8px;align-items:center}
@@ -109,7 +113,8 @@ button.btn:disabled{opacity:.4;cursor:default}
 <body>
 <canvas id="c"></canvas>
 <div id="labels"></div>
-<div id="hud"><div class="pill g" id="gold">💰 0</div><div class="pill" id="cnt">🐾 0/0</div><div class="pill" id="lvl">⭐ 0</div></div>
+<div id="hud"><div class="pill g" id="gold">💰 0</div><div class="pill" id="cnt">🐾 0/0</div><div class="pill" id="lvl">⭐ 0</div><div class="pill" id="tod">☀️</div></div>
+<div id="ghud"></div>
 <div id="strip"></div>
 <div id="sheet"></div>
 <div id="page"></div>
@@ -117,6 +122,7 @@ button.btn:disabled{opacity:.4;cursor:default}
   <button data-p="insel" class="on"><b>🌲</b>Wald</button>
   <button data-p="shop"><b>🥚</b>Eier-Shop</button>
   <button data-p="buch"><b>📖</b>Fabelbuch</button>
+  <button data-p="erfolge"><b>🏆</b>Erfolge<span class="nb" id="achB" style="display:none"></span></button>
   <button data-p="menu"><b>⚙️</b>Menü</button>
 </nav>
 <div id="modal"><div class="box" id="mbox"></div></div>
@@ -242,7 +248,7 @@ const spOf=c=>SPECIES[c.sp];
 const canvas=$('#c');
 const HQ=(()=>{try{return localStorage.getItem('fabelwesen-q')!=='0'}catch(e){return true}})();
 const MOB=Math.min(innerWidth,innerHeight)<700;
-const Q={fur:HQ,furN:HQ?(MOB?9:13):0,grass:HQ?(MOB?5500:8500):2200,shadow:HQ?2048:1024,dpr:HQ?1.75:1.2};
+const Q={fur:HQ,furN:HQ?(MOB?12:16):0,grass:HQ?(MOB?5500:8500):2200,shadow:HQ?2048:1024,dpr:HQ?1.75:1.2};
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,Q.dpr));
 renderer.shadowMap.enabled=true;
@@ -382,7 +388,7 @@ function furMat(len){const key=f3(len);if(FM[key])return FM[key];
   const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,map:skinTex('fur').c});
   m.onBeforeCompile=sh=>{sh.uniforms.furTex={value:furTex()};sh.uniforms.furLen={value:len};sh.uniforms.furN={value:Q.furN};
     sh.vertexShader='uniform float furLen;uniform float furN;varying float vL;varying vec2 vFu;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nfloat L=(float(gl_InstanceID)+1.)/furN;vL=L;vFu=uv;transformed+=objectNormal*furLen*L;transformed.y-=furLen*L*L*.45;');
-    sh.fragmentShader='uniform sampler2D furTex;varying float vL;varying vec2 vFu;\n'+sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\nfloat fz=texture2D(furTex,vFu*.75).r;if(fz<vL*.92+.06)discard;diffuseColor.rgb*=mix(.55,1.18,vL);')};
+    sh.fragmentShader='uniform sampler2D furTex;varying float vL;varying vec2 vFu;\n'+sh.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\nfloat fz=texture2D(furTex,vFu*.75).r;if(fz<vL*.92+.06)discard;diffuseColor.rgb*=mix(.5,1.2,vL)*(.86+.28*texture2D(furTex,vFu*.11).r);')};
   m.customProgramCacheKey=()=>'fur';return FM[key]=m}
 const _id=new THREE.Matrix4();
 let BC={skin:'smooth',fur:false,fl:.045};
@@ -704,29 +710,30 @@ function buildChest(o,st,cute){
 }
 const BUILDERS={quad:buildQuad,bird:buildBird,serp:buildSerp,octo:buildOcto,wisp:buildWisp,shroom:buildShroom,chest:buildChest};
 function buildCreature(sp,st){
-  const S_=SPECIES[sp];BC={skin:S_.b.skin||'smooth',fur:S_.b.skin==='fur',fl:(S_.b.furLen||.045)};const r=BUILDERS[S_.b.t](S_.b,st,S_.cute);
+  const S_=SPECIES[sp];BC={skin:S_.b.skin||'smooth',fur:S_.b.skin==='fur',fl:(S_.b.furLen||.058)};const r=BUILDERS[S_.b.t](S_.b,st,S_.cute);
   const sk=S_.b.skin;if(sk)r.g.traverse(m=>{if(m.isMesh&&m.material.userData.plain)m.material=M(m.material.color.getHex(),{sk})});
   const root=new THREE.Group();root.add(r.g);
   const sc=(.52+.17*st)*(S_.size||1);r.g.scale.setScalar(sc);
   const box=new THREE.Box3().setFromObject(root);
+  const bs=box.getSize(new V3());r.w=Math.max(bs.x,bs.z);
   r.h=box.max.y;r.sc=sc;r.root=root;r.inner=r.g;
   return r;
 }
 
 /* ================== Welt ================== */
-const envScene=new THREE.Scene();
+const envScene=new THREE.Scene();let SKY,SUNBALL,PMG,HEMI;const WET=[];
 (function sky(){
   const m=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,
-    uniforms:{top:{value:new THREE.Color(0x3a64b4)},mid:{value:new THREE.Color(0xb39ce6)},bot:{value:new THREE.Color(0xffcfe6)}},
+    uniforms:{top:{value:new THREE.Color(0x3a64b4)},mid:{value:new THREE.Color(0xb39ce6)},bot:{value:new THREE.Color(0xffcfe6)},sunDir:{value:new V3(.43,.79,.36)},moonDir:{value:new V3(-.4,.6,.3)},sunA:{value:1},night:{value:0},uT:{value:0}},
     vertexShader:'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:'uniform vec3 top;uniform vec3 mid;uniform vec3 bot;varying vec3 vP;void main(){float h=normalize(vP).y;vec3 n=normalize(vP);vec3 c=h>0.?mix(mid,top,smoothstep(0.,.6,h)):mix(mid,bot,smoothstep(0.,-.5,h));c=mix(c,vec3(1.,.95,.92),exp(-abs(h)*9.)*.45);float sd=max(dot(n,normalize(vec3(.43,.79,.36))),0.);c+=vec3(1.,.88,.65)*(pow(sd,900.)*6.+pow(sd,40.)*.35+pow(sd,6.)*.12);gl_FragColor=vec4(c,1.);\n#include <colorspace_fragment>\n}'});
-  const sky=new THREE.Mesh(new THREE.SphereGeometry(120,32,16),m);scene.add(sky);
+    fragmentShader:'uniform vec3 top;uniform vec3 mid;uniform vec3 bot;uniform vec3 sunDir;uniform vec3 moonDir;uniform float sunA;uniform float night;uniform float uT;varying vec3 vP;float h1(vec3 p){return fract(sin(dot(p,vec3(12.9898,78.233,45.164)))*43758.5453);}void main(){vec3 n=normalize(vP);float h=n.y;vec3 c=h>0.?mix(mid,top,smoothstep(0.,.6,h)):mix(mid,bot,smoothstep(0.,-.5,h));c=mix(c,mid*1.12,exp(-abs(h)*9.)*.35);float sd=max(dot(n,sunDir),0.);c+=vec3(1.,.88,.65)*sunA*(pow(sd,900.)*6.+pow(sd,40.)*.35+pow(sd,6.)*.12);float md=max(dot(n,moonDir),0.);c+=vec3(.85,.9,1.)*night*(smoothstep(.9993,.9996,md)*2.5+pow(md,60.)*.12);float s=h1(floor(n*260.));c+=vec3(step(.9975,s)*night*smoothstep(0.,.25,h)*(.6+.4*sin(uT*3.+s*60.))*1.6);gl_FragColor=vec4(c,1.);\n#include <colorspace_fragment>\n}'});
+  const sky=new THREE.Mesh(new THREE.SphereGeometry(120,32,16),m);scene.add(sky);SKY=m;
   envScene.add(sky.clone());
-  const sunBall=new THREE.Mesh(new THREE.SphereGeometry(8,16,8),new THREE.MeshBasicMaterial({color:new THREE.Color(14,12,9)}));sunBall.position.set(48,88,40);envScene.add(sunBall);
+  const sunBall=new THREE.Mesh(new THREE.SphereGeometry(8,16,8),new THREE.MeshBasicMaterial({color:new THREE.Color(14,12,9)}));sunBall.position.set(48,88,40);envScene.add(sunBall);SUNBALL=sunBall;
   const gnd=new THREE.Mesh(new THREE.CircleGeometry(60,24),new THREE.MeshBasicMaterial({color:0x6a9a50}));gnd.rotation.x=-Math.PI/2;gnd.position.y=-6;envScene.add(gnd);
-  scene.environment=new THREE.PMREMGenerator(renderer).fromScene(envScene,.03).texture;
+  PMG=new THREE.PMREMGenerator(renderer);scene.environment=PMG.fromScene(envScene,.03).texture;
 })();
-scene.add(new THREE.HemisphereLight(0xc9d4ff,0x3f5f3a,.6));
+HEMI=new THREE.HemisphereLight(0xc9d4ff,0x3f5f3a,.6);scene.add(HEMI);
 const sun=new THREE.DirectionalLight(0xffe2bf,2.4);
 sun.position.set(12,22,10);sun.castShadow=true;sun.shadow.mapSize.set(Q.shadow,Q.shadow);sun.shadow.radius=4;
 Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60});sun.shadow.bias=-.0005;sun.shadow.normalBias=.02;
@@ -751,9 +758,9 @@ const ISL=15;const floaters=[],FL=[],FF=[],MIST=[],NEAR=[];
   const ftx=new THREE.CanvasTexture(cnv(512,(x,n)=>{x.fillStyle='#34502a';x.fillRect(0,0,n,n);for(let i=0;i<900;i++){x.globalAlpha=.3;x.fillStyle=pick(['#2b4424','#3f5f2e','#4a6a34','#2f3f22']);x.beginPath();x.arc(rnd(0,n),rnd(0,n),rnd(4,26),0,7);x.fill()}
     x.globalAlpha=.85;for(let i=0;i<2600;i++){x.fillStyle=pick(['#6b4a2a','#8a5f30','#5a3e24','#7a6a34','#9a7a3a','#4a3a24']);x.save();x.translate(rnd(0,n),rnd(0,n));x.rotate(rnd(0,6.3));x.beginPath();x.ellipse(0,0,rnd(3,7),rnd(1.5,3),0,0,7);x.fill();x.restore()}x.globalAlpha=1}));
   ftx.wrapS=ftx.wrapT=THREE.RepeatWrapping;ftx.repeat.set(30,30);ftx.colorSpace=THREE.SRGBColorSpace;ftx.anisotropy=8;
-  const floor=new THREE.Mesh(new THREE.CircleGeometry(95,64),new THREE.MeshStandardMaterial({map:ftx,roughness:.95}));floor.rotation.x=-Math.PI/2;floor.position.y=-.02;floor.receiveShadow=true;world.add(floor);
+  const floor=new THREE.Mesh(new THREE.CircleGeometry(95,64),new THREE.MeshStandardMaterial({map:ftx,roughness:.95}));floor.rotation.x=-Math.PI/2;floor.position.y=-.02;floor.receiveShadow=true;world.add(floor);WET.push(floor.material);
   const am=new THREE.CanvasTexture(cnv(256,(x,n)=>{const g=x.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,'#fff');g.addColorStop(.7,'#fff');g.addColorStop(1,'#000');x.fillStyle=g;x.fillRect(0,0,n,n)}));
-  const top=new THREE.Mesh(new THREE.CircleGeometry(16,96),new THREE.MeshStandardMaterial({map:gt,alphaMap:am,transparent:true,depthWrite:false,roughness:.95}));top.rotation.x=-Math.PI/2;top.position.y=.005;top.receiveShadow=true;world.add(top);
+  const top=new THREE.Mesh(new THREE.CircleGeometry(16,96),new THREE.MeshStandardMaterial({map:gt,alphaMap:am,transparent:true,depthWrite:false,roughness:.95}));top.rotation.x=-Math.PI/2;top.position.y=.005;top.receiveShadow=true;world.add(top);WET.push(top.material);
   // Grashalme (Instanzen, wehen im Wind)
   {const N=Q.grass;const bg=new THREE.PlaneGeometry(.07,.42,1,3);bg.translate(0,.21,0);const ps=bg.attributes.position;for(let i=0;i<ps.count;i++)ps.setX(i,ps.getX(i)*(1-ps.getY(i)/.44));bg.computeVertexNormals();
     const gm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.75,side:THREE.DoubleSide});
@@ -840,7 +847,10 @@ const ISL=15;const floaters=[],FL=[],FF=[],MIST=[],NEAR=[];
     for(let c=0;c<120&&n<N;c++){const a=rnd(0,6.3),d=rnd(10.5,30),cx=Math.cos(a)*d,cz=Math.sin(a)*d;if(Math.abs(a-1.02)<.3&&d<14)continue;for(let j=0;j<7&&n<N;j++){const r=j/7*6.28+rnd(-.3,.3);q.setFromEuler(new THREE.Euler(0,r,0));const s=rnd(.8,1.8);mm.compose(V(cx,0,cz),q,V(s,s,s));im.setMatrixAt(n++,mm)}}
     im.count=n;im.receiveShadow=true;world.add(im)}
   // Teich (magisch leuchtend)
-  const pond=new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,.08,48),new THREE.MeshPhysicalMaterial({color:0x1d6f8f,emissive:0x0b5f70,emissiveIntensity:.45,roughness:.03,metalness:.1,clearcoat:1,transparent:true,opacity:.92,normalMap:waterN,normalScale:new THREE.Vector2(.5,.5)}));pond.position.set(-6,.02,-3.5);pond.receiveShadow=true;world.add(pond);
+  const pond=new THREE.Mesh(new THREE.CylinderGeometry(2.6,2.6,.08,48),new THREE.MeshPhysicalMaterial({color:0x1d6f8f,emissive:0x0b5f70,emissiveIntensity:.2,roughness:.03,metalness:.1,clearcoat:1,transparent:true,opacity:.55,normalMap:waterN,normalScale:new THREE.Vector2(.5,.5)}));pond.position.set(-6,.02,-3.5);pond.receiveShadow=true;world.add(pond);
+  {const cm=new THREE.ShaderMaterial({uniforms:{uT:grassT},vertexShader:'varying vec2 vU;void main(){vU=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader:'uniform float uT;varying vec2 vU;float ca(vec2 uv){vec2 p=mod(uv*6.2832,6.2832)-250.;vec2 i=p;float c=1.,inten=.005;for(int n=0;n<4;n++){float t=uT*.35*(1.-(3.5/float(n+1)));i=p+vec2(cos(t-i.x)+sin(t+i.y),sin(t-i.y)+cos(t+i.x));c+=1./length(vec2(p.x/(sin(i.x+t)/inten),p.y/(cos(i.y+t)/inten)));}c/=4.;c=1.17-pow(c,1.4);return pow(abs(c),8.);}void main(){float r=length(vU-.5)*2.;vec3 base=mix(vec3(.05,.32,.36),vec3(.18,.42,.34),r);vec3 c=base+vec3(.55,.9,1.)*ca(vU*2.2)*.9;gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'});
+    const pf=new THREE.Mesh(new THREE.CircleGeometry(2.55,40),cm);pf.rotation.x=-Math.PI/2;pf.position.set(-6,.012,-3.5);world.add(pf)}
   for(let i=0;i<16;i++){const a=i/16*6.28;const s=new THREE.Mesh(rockGeo,rockMat);s.scale.set(rnd(.22,.38),rnd(.14,.24),rnd(.22,.38));at(s,-6+Math.cos(a)*2.7,.05,-3.5+Math.sin(a)*2.7);s.castShadow=s.receiveShadow=true;world.add(s)}
   for(let i=0;i<4;i++){const lx=-6+rnd(-1.6,1.6),lz=-3.5+rnd(-1.6,1.6);const l=new THREE.Mesh(new THREE.CylinderGeometry(.38,.38,.02,20,1,false,.3,5.9),M(0x3f8f3a,{r:.5}));l.position.set(lx,.08,lz);world.add(l);
     if(i<3){const lo=new THREE.Group();for(let j=0;j<7;j++){const pt=E(0xffb8e8,.06,.14,.03,{em:0xff7ad0,ei:.6});pt.rotation.y=j/7*6.28;pt.rotation.x=.5;pt.position.set(Math.sin(j/7*6.28)*.06,.1,Math.cos(j/7*6.28)*.06);lo.add(pt)}lo.add(at(glow(0xff9ae0,.9,.6),0,.12,0));at(lo,lx,.08,lz);world.add(lo)}}
@@ -850,7 +860,7 @@ const ISL=15;const floaters=[],FL=[],FF=[],MIST=[],NEAR=[];
   {const N=240,geo=new THREE.BufferGeometry(),pos=new Float32Array(N*3),col=new Float32Array(N*3),cols=[new THREE.Color(0xfff27a),new THREE.Color(0x9ffff0),new THREE.Color(0xffb0f0)];
     for(let i=0;i<N;i++){const a=rnd(0,6.3),d=rnd(2,28);FF.push({x:Math.cos(a)*d,y:rnd(.3,3.8),z:Math.sin(a)*d,ph:rnd(0,6.3),c:pick(cols)})}
     geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('color',new THREE.BufferAttribute(col,3));glow(0xffffff,1);
-    const pts=new THREE.Points(geo,new THREE.PointsMaterial({size:.32,map:GLOWT,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));pts.frustumCulled=false;world.add(pts);FF.geo=geo}
+    const pts=new THREE.Points(geo,new THREE.PointsMaterial({size:.32,map:GLOWT,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));pts.frustumCulled=false;world.add(pts);FF.geo=geo;FF.mat=pts.material}
   // Lichtstrahlen
   {const sm=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,uniforms:{uT:grassT,col:{value:new THREE.Color(0xfff0c8)}},
       vertexShader:'varying vec2 vU;void main(){vU=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -892,6 +902,7 @@ function makeEgg(type){const e=EGG[type];const g=new THREE.Group();const o=e.glo
 
 /* ================== Weltobjekte für Wesen & Eier ================== */
 const W={cre:{},eggs:{},hatch:[],shells:[]};
+const CSG=new THREE.CircleGeometry(1,24),CSM=new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.45,depthWrite:false,map:new THREE.CanvasTexture(cnv(64,(x)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,64,64)}))});CSM.alphaMap=CSM.map;
 let selId=null;
 
 function randSpot(){const a=rnd(0,6.28),d=Math.sqrt(Math.random())*9;return new V3(Math.cos(a)*d,0,Math.sin(a)*d)}
@@ -899,7 +910,8 @@ function spawnCreature(c,pos,pop){
   const st=stageOf(c.lv);const b=buildCreature(c.sp,st);
   b.root.userData.pick={k:'c',id:c.id};
   const w={b,st,pos:pos?pos.clone():randSpot(),tgt:null,yaw:rnd(0,6.28),state:'idle',timer:rnd(1,3),blink:rnd(1,4),pop:pop?0:1,hop:0,walk:0,smoke:rnd(0,2)};
-  w.pos.y=0;b.root.position.copy(w.pos);world.add(b.root);W.cre[c.id]=w;return w}
+  w.pos.y=0;b.root.position.copy(w.pos);world.add(b.root);W.cre[c.id]=w;
+  const cs=new THREE.Mesh(CSG,CSM);cs.rotation.x=-Math.PI/2;cs.scale.setScalar(Math.min(b.w*.6,2.2));cs.renderOrder=2;b.root.add(cs);b.cs=cs;return w}
 function despawn(id){const w=W.cre[id];if(!w)return;world.remove(w.b.root);delete W.cre[id]}
 function rebuild(c){const w=W.cre[c.id];if(!w)return;const pos=w.pos.clone(),yaw=w.yaw;world.remove(w.b.root);delete W.cre[c.id];const n=spawnCreature(c,pos,true);n.yaw=yaw}
 function inWorld(c){return!c.task||c.task.end<=now()}
@@ -942,7 +954,7 @@ function up(e){ptrs.delete(e.pointerId);if(tap&&ptrs.size===0&&tap.moved<10&&per
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);tap=null});
 canvas.addEventListener('wheel',e=>{cam.wd=clamp(cam.wd*(1+Math.sign(e.deltaY)*.1),5,22);e.preventDefault()},{passive:false});
 const ray=new THREE.Raycaster();
-function onTap(x,y){ray.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
+function onTap(x,y){if(GAME)return gameTap(x,y);ray.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
   const objs=[...Object.values(W.cre).map(w=>w.b.root),...Object.values(W.eggs)];
   const hit=ray.intersectObjects(objs,true)[0];
   if(!hit){if(selId!==null)closeSheet();return}
@@ -953,33 +965,34 @@ function onTap(x,y){ray.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/inn
 
 /* ================== Spiellogik ================== */
 function nat(c){return spOf(c).cute?1:2}
-function taskReward(c,t){const sp=spOf(c);let m=RAR[sp.r].m*(1+c.lv*.08);let note='';
-  if(c.hunger<25){m*=.5;note='Hungrig: halbe Belohnung'}else if(c.happy>=70){m*=1.25;note='Gute Laune: +25 %'}
-  return{g:Math.round(t.g*m),x:Math.round(t.x*(1+c.lv*.05)*(c.hunger<25?.5:1)),note}}
+function taskReward(c,t){const sp=spOf(c);let m=RAR[sp.r].m*(1+c.lv*.08);const notes=[];
+  if(c.hunger<25){m*=.5;notes.push('😫 Hungrig: halbe Belohnung')}else if(c.happy>=70){m*=1.25;notes.push('😊 Gute Laune: +25 %')}
+  const eb=envBonus(c);m*=eb.g;notes.push(...eb.notes);
+  return{g:Math.round(t.g*m),x:Math.round(t.x*(1+c.lv*.05)*(c.hunger<25?.5:1)*eb.x),note:notes.join('<br>')}}
 function addXP(c,x){if(c.lv>=MAXLV)return;c.xp+=x;let lvUp=false;const st0=stageOf(c.lv);
   while(c.lv<MAXLV&&c.xp>=xpNeed(c.lv)){c.xp-=xpNeed(c.lv);c.lv++;lvUp=true}
   if(c.lv>=MAXLV)c.xp=0;
   if(lvUp){const w=W.cre[c.id];const st=stageOf(c.lv);S.seen[c.sp]=Math.max(S.seen[c.sp]??0,st);
-    if(w){burst('⭐',w.pos.clone().add(new V3(0,w.b.h,0)),10,{spd:2.5});floatAt(w,'Level '+c.lv+'!','#ffd25e')}
+    if(w){burst('⭐',w.pos.clone().add(new V3(0,w.b.h,0)),10,{spd:2.5});floatAt(w,'Level '+c.lv+'!','#ffd25e')}sfx('level');
     if(st>st0){toast(`🎉 ${c.name} ist gewachsen und jetzt ${STAGES[st].n}!`);if(w){rebuild(c);const n=W.cre[c.id];burst('✨',n.pos.clone().add(new V3(0,1,0)),18,{spd:3,up:4})}}
     else toast(`⭐ ${c.name} hat Level ${c.lv} erreicht!`)}}
 function feed(c){const cost=feedCost(c);if(S.gold<cost)return toast('Nicht genug Gold!');if(c.hunger>=98)return toast(`${c.name} ist schon satt.`);
   S.gold-=cost;c.hunger=Math.min(100,c.hunger+35);c.happy=Math.min(100,c.happy+5);
   const w=W.cre[c.id];if(w){w.hop=1;burst(pick(['🍖','🍎','🍓','🥕']),w.pos.clone().add(new V3(0,w.b.h*.8,0)),5,{size:.45})}
-  addXP(c,2);refresh()}
+  addXP(c,2);sfx('feed');refresh()}
 const feedCost=c=>5+c.lv*2;
 function pet(c){const t=now();if(t<c.petAt)return;c.petAt=t+20000;c.happy=Math.min(100,c.happy+20);
   const w=W.cre[c.id];if(w){w.hop=1;burst(spOf(c).cute?'💖':pick(['😈','🔥','💢']),w.pos.clone().add(new V3(0,w.b.h*.9,0)),7,{size:.45,spd:1.5})}
-  addXP(c,1);refresh()}
+  addXP(c,1);sfx('pet');refresh()}
 function startTask(c,t){if(c.task)return;if(c.energy<t.en)return toast(`${c.name} ist zu müde. Warte etwas!`);
-  const r=taskReward(c,t);c.energy-=t.en;c.task={id:t.id,start:now(),end:now()+t.t*1000,g:r.g,x:r.x};
+  const r=taskReward(c,t);c.energy-=t.en;c.task={id:t.id,start:now(),end:now()+t.t*1000,g:r.g,x:r.x,night:DN.night>.5};sfx('pop');
   const w=W.cre[c.id];if(w)burst('💨',w.pos.clone().add(new V3(0,.4,0)),8,{size:.6,spd:2.5,up:1.5,g:0});
   toast(`${t.e} ${c.name}: ${t.n} gestartet`);sheetMode='info';syncWorld();refresh()}
-function collect(c){if(!c.task||c.task.end>now())return;const t=c.task;c.task=null;S.gold+=t.g;S.tasksDone++;
+function collect(c){if(!c.task||c.task.end>now())return;const t=c.task;c.task=null;S.gold+=t.g;S.tasksDone++;if(t.night)S.nightTasks=(S.nightTasks||0)+1;sfx('coin');
   const w=W.cre[c.id];if(w){burst('💰',w.pos.clone().add(new V3(0,w.b.h,0)),8,{spd:2});floatAt(w,'+'+fmt(t.g)+' 💰','#ffd25e')}
   addXP(c,t.x);if(selId===null)select(c.id);refresh()}
 function tapEgg(id){const e=S.eggs.find(x=>x.id===id);if(!e)return;const o=W.eggs[id];
-  if(e.end>now()){e.end-=1500;burst('💗',o.position.clone().add(new V3(0,.6,0)),2,{size:.35,spd:.8,up:2});o.userData.wob=1;refreshTimers();return}
+  if(e.end>now()){e.end-=1500;sfx('pop');burst('💗',o.position.clone().add(new V3(0,.6,0)),2,{size:.35,spd:.8,up:2});o.userData.wob=1;refreshTimers();return}
   if(S.creatures.length>=S.slots)return toast('🌲 Der Wald ist voll! Kaufe mehr Platz im Shop oder lasse ein Wesen frei.');
   if(W.hatch.find(h=>h.e.id===id))return;
   W.hatch.push({e,o,t:0})}
@@ -987,7 +1000,7 @@ function finishHatch(h){const e=h.e;S.eggs=S.eggs.filter(x=>x.id!==e.id);world.r
   const pos=h.o.position.clone();
   for(const[g,v]of[[GEO.hTop,1],[GEO.hBot,-1]]){const m=mesh(g,M(EGG[e.type].c));m.scale.set(.42,.56,.42);m.position.copy(pos);
     m.userData={v:new V3(rnd(-1,1),2+v,rnd(-1,1)),r:new V3(rnd(-4,4),0,rnd(-4,4)),t:0};world.add(m);W.shells.push(m)}
-  burst('✨',pos.clone().add(new V3(0,.4,0)),16,{spd:3,up:4});
+  burst('✨',pos.clone().add(new V3(0,.4,0)),16,{spd:3,up:4});sfx('hatch');
   const sp=SPECIES[e.sp];const c={id:S.nextId++,sp:e.sp,name:pick(sp.names),lv:1,xp:0,hunger:80,energy:100,happy:80,task:null,petAt:0,born:now()};
   S.creatures.push(c);S.hatched++;const isNew=S.seen[c.sp]===undefined;S.seen[c.sp]=Math.max(S.seen[c.sp]??0,0);
   const off=pos.clone().normalize().multiplyScalar(-1.6);const w=spawnCreature(c,pos.clone().add(off),true);w.yaw=Math.atan2(-pos.x,-pos.z);
@@ -995,7 +1008,7 @@ function finishHatch(h){const e=h.e;S.eggs=S.eggs.filter(x=>x.id!==e.id);world.r
   setTimeout(()=>nameModal(c,isNew),700)}
 function buyEgg(type,natSel){const e=EGG[type];const price=eggPrice(e,natSel);
   if(S.gold<price)return toast('Nicht genug Gold!');if(S.eggs.length>=S.nests)return toast('Alle Nester sind belegt! Kaufe ein weiteres Nest.');
-  S.gold-=price;
+  S.gold-=price;sfx('buy');
   const roll=Math.random()*100;let r=0,acc=0;for(let i=0;i<4;i++){acc+=e.odds[i];if(roll<acc){r=i;break}}
   let pool=SP_IDS.filter(id=>SPECIES[id].r===r&&(natSel===0||(natSel===1)===SPECIES[id].cute));
   if(!pool.length)pool=SP_IDS.filter(id=>SPECIES[id].r===r);
@@ -1010,7 +1023,7 @@ function release(c){const g=Math.round(25*RAR[spOf(c).r].m*c.lv);S.creatures=S.c
 // Werte über Zeit verändern
 function simulate(c,sec){c.energy=Math.min(100,c.energy+sec/4);c.hunger=Math.max(0,c.hunger-sec/30);c.happy=Math.max(0,c.happy-sec/45)}
 let lastSim=now();
-function tick(){const t=now(),sec=(t-lastSim)/1000;lastSim=t;S.creatures.forEach(c=>simulate(c,sec));syncWorld();refreshTimers()}
+function tick(){updWeather();const t=now(),sec=(t-lastSim)/1000;lastSim=t;S.creatures.forEach(c=>simulate(c,sec));syncWorld();refreshTimers()}
 
 /* ================== Labels & Texte ================== */
 const fmt=n=>n>=1e9?(n/1e9).toFixed(1)+'Mrd':n>=1e6?(n/1e6).toFixed(1)+'Mio':n>=1e4?(n/1e3).toFixed(1)+'K':String(Math.floor(n));
@@ -1042,19 +1055,19 @@ const eggThumb=t=>THUMB['egg'+t]||render1(makeEgg(t),'egg'+t);
 /* ================== UI: Leiste & Detailblatt ================== */
 let sheetMode='info',sheetKey='';
 function refresh(){refreshHUD();renderStrip();renderSheet();if(curPage!=='insel')renderPage();save()}
-function refreshHUD(){$('#gold').textContent='💰 '+fmt(S.gold);$('#cnt').textContent='🐾 '+S.creatures.length+'/'+S.slots;$('#lvl').textContent='🥚 '+S.eggs.length+'/'+S.nests}
+function refreshHUD(){$('#tod').textContent=todText();{const n=achReady(),b=$('#achB');b.style.display=n?'':'none';b.textContent=n}$('#gold').textContent='💰 '+fmt(S.gold);$('#cnt').textContent='🐾 '+S.creatures.length+'/'+S.slots;$('#lvl').textContent='🥚 '+S.eggs.length+'/'+S.nests}
 function cardStatus(c){const t=now();if(c.task)return c.task.end<=t?'✅ fertig':TASKS.find(x=>x.id===c.task.id).e+' '+fmtT((c.task.end-t)/1000);if(c.hunger<25)return'😫 hungrig';return'Lv '+c.lv+' · '+STAGES[stageOf(c.lv)].n}
 function renderStrip(){const s=$('#strip');const sl=s.scrollLeft;
   s.innerHTML=S.creatures.map(c=>`<div class="cc${c.id===selId?' sel':''}${c.task&&c.task.end>now()?' away':''}" data-id="${c.id}">${c.task&&c.task.end<=now()?'<span class="badge">💰</span>':''}<img src="${thumb(c.sp,stageOf(c.lv))}"><div class="n">${esc(c.name)}</div><div class="s" data-st="${c.id}">${cardStatus(c)}</div></div>`).join('')
    +(S.creatures.length?'':'<div class="cc" data-shop="1" style="flex-basis:130px;padding:14px 6px"><div class="n">Noch keine Wesen</div><div class="s">Tippe ein Ei an 🥚</div></div>');
-  s.scrollLeft=sl;s.style.display=curPage==='insel'?'flex':'none'}
+  s.scrollLeft=sl;s.style.display=curPage==='insel'&&!GAME?'flex':'none'}
 $('#strip').addEventListener('click',e=>{const el=e.target.closest('.cc');if(!el||!el.dataset.id)return;const c=crById(+el.dataset.id);if(c.task&&c.task.end<=now())collect(c);else select(c.id)});
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function select(id){selId=id;sheetMode='info';const w=W.cre[id];if(w)focusOn(w.pos,Math.max(6,w.b.h*3.2+4));else focusOn(new V3(0,.5,0),21);renderStrip();renderSheet();$('#sheet').classList.add('open')}
 function closeSheet(){selId=null;$('#sheet').classList.remove('open');focusOn(new V3(0,.5,0),21);renderStrip()}
 function focusOn(p,d){cam.wtgt.copy(p);cam.wtgt.y=Math.max(.5,p.y);cam.wd=d}
 function bar(cls,label,v,txt){return`<div class="bar ${cls}">${label}<span style="float:right" data-b="${cls}t">${txt??Math.floor(v)}</span><div class="t"><div class="f" data-b="${cls}" style="width:${clamp(v,0,100)}%"></div></div></div>`}
-function sheetStateKey(c){const t=now();return[sheetMode,c.id,c.lv,c.name,!!c.task,c.task&&c.task.end<=t,Math.floor(c.energy/5),S.gold>=feedCost(c),c.petAt>t,c.hunger<25].join('|')}
+function sheetStateKey(c){const t=now(),iv=S.inv||{};return[iv.energie,iv.wachstum,DN.night>.5,WX.type,sheetMode,c.id,c.lv,c.name,!!c.task,c.task&&c.task.end<=t,Math.floor(c.energy/5),S.gold>=feedCost(c),c.petAt>t,c.hunger<25].join('|')}
 function renderSheet(){const el=$('#sheet');const c=crById(selId);if(!c){el.classList.remove('open');return}
   sheetKey=sheetStateKey(c);const sp=spOf(c),st=stageOf(c.lv),t=now();
   let h=`<button class="x" data-a="close">✕</button><div class="hdr"><img src="${thumb(c.sp,st)}"><div><div class="nm" data-a="rename">${esc(c.name)} ✏️</div>
@@ -1069,11 +1082,12 @@ function renderSheet(){const el=$('#sheet');const c=crById(selId);if(!c){el.clas
     for(const tk of TASKS){if(tk.nat&&tk.nat!==nat(c))continue;const lock=c.lv<tk.lv;const r=taskReward(c,tk);
       h+=`<div class="task${lock?' lock':''}"><div class="e">${tk.e}</div><div class="i"><b>${tk.n}</b><span>${lock?'🔒 ab Level '+tk.lv:`⏱ ${fmtT(tk.t)} · ⚡ ${tk.en} · +${fmt(r.g)} 💰 · +${r.x} ✨`}</span></div>
         ${lock?'':`<button class="btn b" data-a="task" data-t="${tk.id}" ${c.energy<tk.en?'disabled':''}>Los!</button>`}</div>`}
-    const r0=taskReward(c,TASKS[0]);if(r0.note)h+=`<div style="text-align:center;font-size:12px;color:var(--muted)">${r0.note}</div>`}
+    const r0=taskReward(c,TASKS[0]);if(r0.note)h+=`<div style="text-align:center;font-size:12px;color:var(--muted);line-height:1.5">${r0.note}</div>`}
   else{const pc=c.petAt>t;
     h+=`<div class="acts"><button class="btn y" data-a="feed" ${S.gold<feedCost(c)?'disabled':''}>🍖 Füttern<small>${feedCost(c)} 💰</small></button>
       <button class="btn" data-a="pet" ${pc?'disabled':''}>${sp.cute?'🤚 Streicheln':'🤜 Raufen'}<small data-b="pc">${pc?fmtT((c.petAt-t)/1000):'+Laune'}</small></button>
       <button class="btn v" data-a="tasks">📋 Aufgaben<small>Gold & XP</small></button></div>
+      <div class="acts" style="margin-top:8px"><button class="btn b" data-a="game" ${c.energy<15?'disabled':''}>🎮 Spielen<small>⚡ 15 · Glühwürmchen</small></button>${['energie','wachstum'].map(id=>`<button class="btn gr" data-a="use" data-i="${id}" ${(S.inv||{})[id]?'':'disabled'}>${POT[id].e} ${id==='energie'?'Energie':'Wachstum'}<small>${(S.inv||{})[id]||0}× im Beutel</small></button>`).join('')}</div>
       ${c.hunger<25?'<div style="text-align:center;font-size:12px;color:#ffb36b;margin-top:8px">😫 '+esc(c.name)+' hat Hunger! Hungrige Wesen verdienen nur die Hälfte.</div>':''}
       <p style="font-size:12px;color:var(--muted);margin:10px 0 6px">${sp.d}</p>
       <button class="btn gr" data-a="release" style="width:100%;font-size:12px;padding:7px">👋 Freilassen (+${fmt(Math.round(25*RAR[sp.r].m*c.lv))} 💰)</button>`}
@@ -1085,6 +1099,7 @@ function tickSheet(){const c=crById(selId);if(!c)return;if(sheetStateKey(c)!==sh
   if(c.petAt>t)txt('pc',fmtT((c.petAt-t)/1000))}
 $('#sheet').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const c=crById(selId);if(!c)return;const a=b.dataset.a;
   if(a==='close')closeSheet();if(a==='feed')feed(c);if(a==='pet')pet(c);if(a==='tasks'){sheetMode='tasks';renderSheet()}if(a==='info'){sheetMode='info';renderSheet()}
+  if(a==='game')startGame(c);if(a==='use')usePotion(c,b.dataset.i);
   if(a==='task')startTask(c,TASKS.find(x=>x.id===b.dataset.t));if(a==='collect')collect(c);if(a==='rename')nameModal(c,false,true);
   if(a==='release')confirmModal(`${esc(c.name)} wirklich freilassen?`,'Das Wesen verlässt deinen Wald für immer.',()=>release(c))});
 function refreshTimers(){refreshHUD();document.querySelectorAll('[data-st]').forEach(e=>{const c=crById(+e.dataset.st);if(c)e.textContent=cardStatus(c)});
@@ -1117,6 +1132,7 @@ function renderPage(){const pg=$('#page');let h='';
       h+=`<div class="card egg"><img src="${eggThumb(e.id)}"><div class="i"><b>${e.n}</b><div style="font-size:12px;color:var(--muted)">${e.d}</div>
         <div class="odds">${e.odds.map((o,i)=>o?`<span style="color:${RAR[i].c}">${RAR[i].n} ${o}%</span>`:'').filter(Boolean).join(' · ')} · ⏱ ${fmtT(e.time)}</div>
         <button class="btn y" style="margin-top:6px" data-buy="${e.id}" data-p="${p}" ${S.gold<p?'disabled':''}>Kaufen · ${fmt(p)} 💰</button></div></div>`}
+    h+=`<h2 style="margin-top:18px">⚗️ Zaubertränke</h2><div class="sub">Tränke für Energie und Erfahrung landen in deinem Beutel und werden im Wesen-Menü benutzt.</div>`+POTIONS.map(p=>`<div class="card row"><div style="font-size:30px">${p.e}</div><div class="grow"><b>${p.n}</b>${p.use&&(S.inv||{})[p.id]?` <span class="tag">${S.inv[p.id]}× im Beutel</span>`:''}<div style="font-size:12px;color:var(--muted)">${p.d}</div></div><button class="btn y" data-pot="${p.id}" data-p="${potPrice(p)}" ${S.gold<potPrice(p)?'disabled':''}>${fmt(potPrice(p))} 💰</button></div>`).join('');
     h+=`<h2 style="margin-top:18px">🏗️ Ausbau</h2><div class="sub">Mehr Platz für mehr Fabelwesen.</div>
       <div class="card row"><div class="grow"><b>🌲 Waldplatz +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.slots} Plätze</div></div><button class="btn y" data-up="slot" data-p="${slotPrice()}" ${S.gold<slotPrice()?'disabled':''}>${fmt(slotPrice())} 💰</button></div>
       ${S.nests<NEST_POS.length?`<div class="card row"><div class="grow"><b>🪺 Nest +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.nests} Nester – mehr Eier gleichzeitig ausbrüten</div></div><button class="btn y" data-up="nest" data-p="${nestPrice()}" ${S.gold<nestPrice()?'disabled':''}>${fmt(nestPrice())} 💰</button></div>`:''}`}
@@ -1129,21 +1145,24 @@ function renderPage(){const pg=$('#page');let h='';
       for(const id of SP_IDS){const sp=SPECIES[id],k=S.seen[id]!==undefined;
         h+=`<div class="be" data-bk="${k?id:''}" style="border-color:${k?RAR[sp.r].c+'88':'var(--line)'}"><img src="${thumb(id,3)}" class="${k?'':'sil'}"><b>${k?sp.n:'???'}</b><span style="font-size:10px;color:${RAR[sp.r].c}">${RAR[sp.r].n}</span></div>`}
       h+='</div>'}}
+  if(curPage==='erfolge')h=achPage();
   if(curPage==='menu'){const best=S.creatures.reduce((a,c)=>Math.max(a,c.lv),0);
     h=`<h2>⚙️ Menü</h2><div class="card"><b>📊 Statistik</b><div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.7">
       🐣 Geschlüpft: ${S.hatched}<br>📋 Erledigte Aufgaben: ${S.tasksDone}<br>⭐ Höchstes Level: ${best}<br>📖 Entdeckt: ${Object.keys(S.seen).length}/${SP_IDS.length}</div></div>
       <div class="card"><b>❓ So geht's</b><div style="font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5">
       🥚 Kaufe Eier im Shop und tippe sie im Nest an, um sie schneller auszubrüten.<br>📋 Schicke deine Wesen auf Aufgaben – so verdienen sie Gold und Erfahrung.<br>
       🍖 Füttere sie, damit sie nicht hungrig werden, und streichle sie für gute Laune (+25 % Gold).<br>🌱 Mit höherem Level wachsen sie: Baby → Kind (Lv 5) → Jugendlich (Lv 12) → Erwachsen (Lv 22) → Uralt (Lv 35).<br>
-      👆 Wische zum Drehen, mit zwei Fingern zoomen.</div></div>
+      🌙 Ein Tag dauert 24 Minuten. Nachts verdienen böse Wesen mehr, tagsüber niedliche. Bei Regen gibt es mehr Erfahrung.<br>🎮 Spiele mit deinen Wesen und fange Glühwürmchen.<br>👆 Wische zum Drehen, mit zwei Fingern zoomen.</div></div>
       <div class="card row"><div class="grow"><b>🎨 Grafik</b><div style="font-size:12px;color:var(--muted)">${HQ?'Hoch: 3D-Fell, viel Gras, feine Schatten':'Schnell: für ältere Handys'}</div></div><button class="btn b" data-m="q">${HQ?'Auf Schnell':'Auf Hoch'}</button></div>
+      <div class="card row"><div class="grow"><b>🔊 Geräusche</b><div style="font-size:12px;color:var(--muted)">Waldklänge, Regen und Effekte</div></div><button class="btn b" data-m="snd">${SND?'Aus':'An'}</button></div>
       <div class="card"><b>💾 Spielstand</b><div class="row" style="margin-top:8px"><button class="btn b grow" data-m="exp">Exportieren</button><button class="btn b grow" data-m="imp">Importieren</button></div>
       <button class="btn gr" style="width:100%;margin-top:8px" data-m="reset">🗑️ Neues Spiel starten</button></div>`}
   pg.innerHTML=h}
 function tickShop(){$('#page').querySelectorAll('[data-p]').forEach(b=>b.disabled=S.gold<+b.dataset.p)}
-$('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[data-buy],[data-up],[data-bk],[data-m]');if(!t)return;const d=t.dataset;
+$('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[data-buy],[data-up],[data-bk],[data-m],[data-pot],[data-ach]');if(!t)return;const d=t.dataset;
   if(d.nat!==undefined){shopNat=+d.nat;renderPage()}
-  if(d.buy)buyEgg(d.buy,shopNat);
+  if(d.buy)buyEgg(d.buy,shopNat);if(d.pot)buyPotion(d.pot);if(d.ach)claimAch(d.ach);
+  if(d.m==='snd'){SND=!SND;try{localStorage.setItem('fabelwesen-snd',SND?'1':'0')}catch(e){}if(SND)ac();else if(RAING)RAING.gain.value=0;if(WINDG)WINDG.gain.value=SND?.04:0;renderPage()}
   if(d.up==='slot'){const p=slotPrice();if(S.gold>=p){S.gold-=p;S.slots++;toast('🌲 Mehr Platz im Wald!');refresh()}}
   if(d.up==='nest'){const p=nestPrice();if(S.gold>=p){S.gold-=p;S.nests++;syncWorld();toast('🪺 Neues Nest gebaut!');refresh()}}
   if(d.bk!==undefined&&(d.bk||bookSel)){bookSel=d.bk||null;renderPage();$('#page').scrollTop=0}
@@ -1152,7 +1171,166 @@ $('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[da
     $('#impOk').onclick=()=>{try{const n=JSON.parse(decodeURIComponent(escape(atob($('#impT').value.trim()))));if(!n.creatures)throw 0;localStorage.setItem(KEY,JSON.stringify(n));location.reload()}catch(err){toast('Ungültiger Code')}}}
   if(d.m==='q'){save();try{localStorage.setItem('fabelwesen-q',HQ?'0':'1')}catch(e){}location.reload()}
   if(d.m==='reset')confirmModal('Neues Spiel starten?','Alle Fabelwesen und das Gold gehen verloren!',()=>{localStorage.removeItem(KEY);S=null;location.reload()})});
-window.onAndroidBack=()=>{if($('#modal').classList.contains('open')){closeModal();return true}if(curPage!=='insel'){goPage('insel');return true}if(selId!==null){closeSheet();return true}save();return false};
+window.onAndroidBack=()=>{if(GAME)return true;if($('#modal').classList.contains('open')){closeModal();return true}if(curPage!=='insel'){goPage('insel');return true}if(selId!==null){closeSheet();return true}save();return false};
+
+/* ================== Tageszeit (1 Spielstunde = 1 echte Minute) & Wetter ================== */
+const DN={h:12,e:1,night:0,rain:0,fog:0};
+const PALS={day:{top:0x3a74c8,mid:0xb7c6ee,bot:0xffe2ee,fog:0x9fb0d4,hemi:.6,sun:2.5,sunC:0xfff0d8,rim:.9,exp:1.05},
+  dusk:{top:0x2b3f8a,mid:0xe08a9a,bot:0xffb07a,fog:0x9a7e9e,hemi:.42,sun:1.5,sunC:0xff9a5a,rim:.6,exp:1.12},
+  night:{top:0x040920,mid:0x161a40,bot:0x24204a,fog:0x1a2040,hemi:.2,sun:.55,sunC:0x9fb4ff,rim:.35,exp:1.3}};
+for(const k in PALS)for(const f of['top','mid','bot','fog','sunC'])PALS[k][f]=new THREE.Color(PALS[k][f]);
+const gameHour=()=>window.__hour??(now()/60000)%24;
+const _pal={top:new THREE.Color(),mid:new THREE.Color(),bot:new THREE.Color(),fog:new THREE.Color(),sunC:new THREE.Color()},GREY=new THREE.Color(0x5d6470),GREYN=new THREE.Color(0x14161e);
+function mixPal(a,b,t){for(const f of['top','mid','bot','fog','sunC'])_pal[f].copy(a[f]).lerp(b[f],t);for(const f of['hemi','sun','rim','exp'])_pal[f]=a[f]+(b[f]-a[f])*t;return _pal}
+let envT=0;const SD=new V3(),MD=new V3();
+function updDay(dt){const h=gameHour(),ang=(h-6)/24*Math.PI*2;SD.set(Math.cos(ang)*.8,Math.sin(ang),.45).normalize();MD.set(-SD.x,Math.max(.35,-SD.y),.3).normalize();
+  const e=SD.y;DN.h=h;DN.e=e;DN.night=clamp((.05-e)/.25,0,1);
+  const P=e>=.25?mixPal(PALS.day,PALS.day,0):e>=0?mixPal(PALS.dusk,PALS.day,e/.25):e>=-.2?mixPal(PALS.night,PALS.dusk,(e+.2)/.2):mixPal(PALS.night,PALS.night,0);
+  const want=WX.type==='regen'?1:0,wf=WX.type==='nebel'?1:0;DN.rain+=(want-DN.rain)*Math.min(1,dt*.3);DN.fog+=(wf-DN.fog)*Math.min(1,dt*.3);
+  const wr=DN.rain,gc=DN.night>.5?GREYN:GREY;
+  SKY.uniforms.top.value.copy(P.top).lerp(gc,.55*wr);SKY.uniforms.mid.value.copy(P.mid).lerp(gc,.6*wr+.3*DN.fog);SKY.uniforms.bot.value.copy(P.bot).lerp(gc,.6*wr);
+  SKY.uniforms.sunDir.value.copy(SD);SKY.uniforms.moonDir.value.copy(MD);SKY.uniforms.sunA.value=clamp(e*4,0,1)*(1-wr*.9);SKY.uniforms.night.value=DN.night*(1-wr*.8)*(1-DN.fog*.6);SKY.uniforms.uT.value=T;
+  scene.fog.color.copy(P.fog).lerp(gc,.5*wr+.2*DN.fog);scene.fog.near=24-10*wr-14*DN.fog;scene.fog.far=68-24*wr-34*DN.fog;
+  HEMI.intensity=P.hemi*(1-.25*wr);sun.color.copy(P.sunC);sun.intensity=P.sun*(1-.6*wr);rim.intensity=P.rim;
+  sun.position.copy(e>-.05?SD:MD).multiplyScalar(30);renderer.toneMappingExposure=P.exp;
+  SUNBALL.visible=e>0;SUNBALL.position.copy(SD).multiplyScalar(90);
+  if(FF.mat)FF.mat.opacity=.35+.65*DN.night;
+  WET.forEach(m=>{m.roughness=.95-.6*wr;m.color.setScalar(1-.3*wr)});waterN.repeat.set(2+wr*3,2+wr*3);
+  RAINM.uniforms.amt.value=wr;RAINM.uniforms.ctr.value.copy(cam.tgt);
+  envT-=dt;if(envT<=0){envT=25;const old=scene.environment;scene.environment=PMG.fromScene(envScene,.03).texture;if(old)old.dispose()}}
+const RAINM=(()=>{const N=MOB?1400:2400,P=new Float32Array(N*6),Ea=new Float32Array(N*2);
+  for(let i=0;i<N;i++){const x=rnd(-20,20),y=rnd(0,18),z=rnd(-20,20);for(let k=0;k<2;k++){P.set([x,y,z],(i*2+k)*3);Ea[i*2+k]=k}}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('e',new THREE.BufferAttribute(Ea,1));
+  const m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uT:grassT,amt:{value:0},ctr:{value:new V3()}},
+    vertexShader:'attribute float e;uniform float uT;uniform vec3 ctr;varying float vA;void main(){vec3 p=position;p.y=mod(p.y-uT*14.,18.)-e*.45;p.x+=e*.06;p.xz+=ctr.xz;vA=1.-e*.7;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}',
+    fragmentShader:'uniform float amt;varying float vA;void main(){gl_FragColor=vec4(.75,.82,.95,.35*amt*vA);}'});
+  const l=new THREE.LineSegments(g,m);l.frustumCulled=false;scene.add(l);return m})();
+const WX_T={klar:{e:'',n:'Klar'},regen:{e:'🌧️',n:'Regen'},nebel:{e:'🌫️',n:'Nebel'}};
+let WX={type:'klar',until:0};
+function updWeather(){if(!S.wx||S.wx.until<now()){const r=Math.random();S.wx={type:r<.6?'klar':r<.85?'regen':'nebel',until:now()+rnd(6,12)*60000}}WX=S.wx}
+function envBonus(c){const sp=spOf(c),r={g:1,x:1,notes:[]};
+  if(DN.night>.5&&!sp.cute){r.g*=1.3;r.notes.push('🌙 Nacht: +30 % Gold für Böse')}
+  if(DN.night<.5&&sp.cute){r.g*=1.2;r.notes.push('☀️ Tag: +20 % Gold für Niedliche')}
+  if(WX.type==='regen'){r.x*=1.2;r.notes.push('🌧️ Regen: +20 % Erfahrung')}
+  if(WX.type==='nebel'&&!sp.cute){r.g*=1.15;r.notes.push('🌫️ Nebel: +15 % Gold für Böse')}return r}
+function todText(){const h=Math.floor(DN.h),m=Math.floor((DN.h%1)*60);return`${DN.night>.5?'🌙':DN.e<.25?'🌅':'☀️'} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${WX_T[WX.type].e?' '+WX_T[WX.type].e:''}`}
+
+/* ================== Nachbearbeitung: Bloom, Vignette, Farbstimmung ================== */
+const POST=HQ?(()=>{const q=new THREE.Mesh(new THREE.PlaneGeometry(2,2));q.frustumCulled=false;const qs=new THREE.Scene();qs.add(q);const oc=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  const vs='varying vec2 vU;void main(){vU=uv;gl_Position=vec4(position.xy,0.,1.);}';
+  const bright=new THREE.ShaderMaterial({uniforms:{t:{value:null}},vertexShader:vs,fragmentShader:'uniform sampler2D t;varying vec2 vU;void main(){vec3 c=texture2D(t,vU).rgb;float l=max(c.r,max(c.g,c.b));gl_FragColor=vec4(c*smoothstep(.85,1.6,l),1.);}',toneMapped:false});
+  const blur=new THREE.ShaderMaterial({uniforms:{t:{value:null},d:{value:new THREE.Vector2()}},vertexShader:vs,toneMapped:false,
+    fragmentShader:'uniform sampler2D t;uniform vec2 d;varying vec2 vU;void main(){vec3 c=texture2D(t,vU).rgb*.227;c+=(texture2D(t,vU+d*1.38).rgb+texture2D(t,vU-d*1.38).rgb)*.316;c+=(texture2D(t,vU+d*3.23).rgb+texture2D(t,vU-d*3.23).rgb)*.07;gl_FragColor=vec4(c,1.);}'});
+  const comp=new THREE.ShaderMaterial({uniforms:{t:{value:null},b:{value:null},s:{value:.9}},vertexShader:vs,
+    fragmentShader:'uniform sampler2D t;uniform sampler2D b;uniform float s;varying vec2 vU;void main(){vec3 c=texture2D(t,vU).rgb+texture2D(b,vU).rgb*s;vec2 d=vU-.5;c*=1.-dot(d,d)*.55;c=pow(c,vec3(1.04));c*=vec3(1.02,1.,.97);gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'});
+  let rt,ra,rb;
+  function size(){const s=renderer.getDrawingBufferSize(new THREE.Vector2());[rt,ra,rb].forEach(r=>r&&r.dispose());
+    rt=new THREE.WebGLRenderTarget(s.x,s.y,{type:THREE.HalfFloatType,samples:MOB?2:4});const w=Math.max(1,s.x>>2),h=Math.max(1,s.y>>2);
+    ra=new THREE.WebGLRenderTarget(w,h,{type:THREE.HalfFloatType});rb=new THREE.WebGLRenderTarget(w,h,{type:THREE.HalfFloatType});blur.userData.px=new THREE.Vector2(1/w,1/h)}
+  size();addEventListener('resize',size);
+  const pass=(mat,target)=>{q.material=mat;renderer.setRenderTarget(target);renderer.render(qs,oc)};
+  return function(){renderer.setRenderTarget(rt);renderer.render(scene,camera);
+    bright.uniforms.t.value=rt.texture;pass(bright,ra);const px=blur.userData.px;
+    for(let i=0;i<2;i++){blur.uniforms.t.value=ra.texture;blur.uniforms.d.value.set(px.x*(i+1),0);pass(blur,rb);blur.uniforms.t.value=rb.texture;blur.uniforms.d.value.set(0,px.y*(i+1));pass(blur,ra)}
+    comp.uniforms.t.value=rt.texture;comp.uniforms.b.value=ra.texture;comp.uniforms.s.value=.7+.6*DN.night;pass(comp,null)}})():null;
+
+/* ================== Geräusche (Web Audio, ohne Dateien) ================== */
+let AC=null,MASTER=null,NOISE=null,RAING=null,WINDG=null,SND=(()=>{try{return localStorage.getItem('fabelwesen-snd')!=='0'}catch(e){return true}})();
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();MASTER=AC.createGain();MASTER.gain.value=.55;MASTER.connect(AC.destination);
+  NOISE=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=NOISE.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  const loopN=(f,q,g)=>{const s=AC.createBufferSource();s.buffer=NOISE;s.loop=true;const fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=f;fl.Q.value=q;const gn=AC.createGain();gn.gain.value=g;s.connect(fl);fl.connect(gn);gn.connect(MASTER);s.start();return gn};
+  RAING=loopN(1400,.5,0);WINDG=loopN(320,.8,.04)}catch(e){AC=null}}if(AC&&AC.state==='suspended')AC.resume();return AC}
+addEventListener('pointerdown',()=>{if(SND)ac()},{passive:true});
+function tone(f,dur,type,vol,slide,delay){if(!AC||!SND)return;const t=AC.currentTime+(delay||0),o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f,t);
+  if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+dur);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol||.2,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(MASTER);o.start(t);o.stop(t+dur+.05)}
+function crack(){if(!AC||!SND)return;const s=AC.createBufferSource();s.buffer=NOISE;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2500;const g=AC.createGain();const t=AC.currentTime;g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);s.connect(f);f.connect(g);g.connect(MASTER);s.start(t,rnd(0,1.5),.2)}
+const SFX={pop:()=>tone(520,.12,'sine',.18,900),coin:()=>{tone(988,.1,'square',.06);tone(1319,.25,'square',.06,0,.08)},level:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.28,'triangle',.14,0,i*.09)),
+  hatch:()=>{crack();[784,988,1175,1568].forEach((f,i)=>tone(f,.35,'sine',.13,0,.15+i*.1))},catch:()=>tone(1200+Math.random()*600,.18,'sine',.14,2600),gold:()=>[1047,1319,1568,2093].forEach((f,i)=>tone(f,.22,'triangle',.11,0,i*.05)),
+  feed:()=>{tone(300,.08,'sine',.2,200);tone(350,.08,'sine',.2,250,.1)},pet:()=>tone(660,.35,'sine',.1,880),buy:()=>tone(880,.15,'triangle',.14,1320),crack};
+function sfx(n){if(SND&&AC&&SFX[n])SFX[n]()}
+function updSound(dt){if(!AC||!SND)return;RAING.gain.value+=(DN.rain*.22-RAING.gain.value)*Math.min(1,dt*2);
+  if(document.hidden)return;
+  if(DN.night>.5&&Math.random()<dt*1.4){const f=rnd(3800,4600);for(let i=0;i<3;i++)tone(f,.03,'sine',.025,0,i*.06)}
+  if(DN.night<.5&&DN.rain<.3&&Math.random()<dt*.35){const f=rnd(1800,2600),n=1+Math.floor(rnd(0,3));for(let i=0;i<n;i++)tone(f,.11,'sine',.035,f*rnd(1.3,1.7),i*.14)}}
+
+/* ================== Minispiel: Glühwürmchen fangen ================== */
+let GAME=null;
+function startGame(c){if(c.task)return;if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;
+  GAME={c,t:25,score:0,gold:0,orbs:[],spawn:0};selId=null;$('#sheet').classList.remove('open');$('#strip').style.display='none';$('#ghud').style.display='block';
+  focusOn(new V3(0,.5,0),17);toast('✨ Tippe auf die Glühwürmchen! Goldene zählen fünffach.');sfx('level')}
+function updGame(dt){if(!GAME)return;const G=GAME;G.t-=dt;G.spawn-=dt;
+  if(G.spawn<=0&&G.orbs.length<9&&G.t>.5){G.spawn=rnd(.25,.6);const gold=Math.random()<.12,col=gold?0xffd25e:pick([0x9ffff0,0xfff27a,0xffb0f0]);
+    const s=glow(col,gold?1.5:1.1,1);const a=rnd(0,6.3),d=rnd(0,7);s.position.set(Math.cos(a)*d,rnd(.8,3),Math.sin(a)*d);
+    const core=glow(0xffffff,.35,1);s.add(core);s.userData={v:new V3(rnd(-1,1),rnd(-.3,.3),rnd(-1,1)),life:rnd(2.5,4),max:0,gold};s.userData.max=s.userData.life;scene.add(s);G.orbs.push(s)}
+  for(let i=G.orbs.length-1;i>=0;i--){const s=G.orbs[i],u=s.userData;u.life-=dt;u.v.x+=rnd(-2,2)*dt;u.v.z+=rnd(-2,2)*dt;u.v.y+=rnd(-1,1)*dt;s.position.addScaledVector(u.v,dt);
+    const f=Math.min(1,(u.max-u.life)*4,u.life*2);s.material.opacity=f;if(u.life<=0){scene.remove(s);G.orbs.splice(i,1)}}
+  $('#ghud').textContent=`⏱ ${Math.ceil(Math.max(0,G.t))}  ·  ✨ ${G.score}`;
+  if(G.t<=0)endGame()}
+function gameTap(x,y){let best=null,bd=55;for(const s of GAME.orbs){tmpV.copy(s.position).project(camera);const px=(tmpV.x*.5+.5)*innerWidth,py=(-tmpV.y*.5+.5)*innerHeight,d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=s}}
+  if(!best)return;const g=best.userData.gold;GAME.score+=g?5:1;burst(g?'🌟':'✨',best.position,g?8:4,{size:.4,spd:2,up:2});sfx(g?'gold':'catch');scene.remove(best);GAME.orbs.splice(GAME.orbs.indexOf(best),1)}
+function endGame(){const G=GAME;GAME=null;G.orbs.forEach(s=>scene.remove(s));$('#ghud').style.display='none';const c=G.c;
+  const gold=Math.round(G.score*(5+c.lv*1.2)*RAR[spOf(c).r].m),xp=G.score*3;S.gold+=gold;c.happy=Math.min(100,c.happy+20);S.best=Math.max(S.best||0,G.score);
+  addXP(c,xp);sfx('coin');refresh();
+  modal(`<h2 style="margin-top:0">✨ Spiel vorbei!</h2><img class="big" src="${thumb(c.sp,stageOf(c.lv))}"><p>${esc(c.name)} und du habt <b>${G.score}</b> Glühwürmchen gefangen.</p>
+    <p style="font-size:18px"><b>+${fmt(gold)} 💰 · +${xp} ✨</b></p><p style="color:var(--muted);font-size:12px">Rekord: ${S.best} · ${esc(c.name)} hat jetzt richtig gute Laune!</p><button class="btn" style="width:100%" id="gOk">Super!</button>`);
+  $('#gOk').onclick=()=>{closeModal();select(c.id)}}
+
+/* ================== Zaubertränke ================== */
+const POTIONS=[
+  {id:'energie',n:'Energietrank',e:'🧪',d:'Füllt die Energie eines Wesens ganz auf.',p:120,use:1},
+  {id:'wachstum',n:'Wachstumselixier',e:'🌟',d:'Schenkt einem Wesen die Hälfte der Erfahrung bis zum nächsten Level.',p:450,use:1},
+  {id:'festmahl',n:'Festmahl',e:'🧺',d:'Macht sofort alle deine Wesen satt und glücklich.',p:220},
+  {id:'brut',n:'Brutfeuer',e:'🔥',d:'Alle Eier in den Nestern sind sofort schlupfbereit.',p:300}];
+const POT=Object.fromEntries(POTIONS.map(p=>[p.id,p]));
+const potPrice=p=>Math.round(p.p*(p.id==='festmahl'?Math.max(1,S.creatures.length/3):1));
+function buyPotion(id){const p=POT[id],pr=potPrice(p);if(S.gold<pr)return toast('Nicht genug Gold!');
+  if(id==='brut'&&!S.eggs.length)return toast('Es liegen keine Eier in den Nestern.');
+  if(id==='festmahl'&&!S.creatures.length)return toast('Du hast noch keine Wesen.');
+  S.gold-=pr;sfx('buy');
+  if(p.use){S.inv=S.inv||{};S.inv[id]=(S.inv[id]||0)+1;toast(`${p.e} ${p.n} gekauft! Benutze ihn bei einem Wesen.`)}
+  if(id==='festmahl'){S.creatures.forEach(c=>{c.hunger=100;c.happy=Math.min(100,c.happy+30);const w=W.cre[c.id];if(w)burst('🍖',w.pos.clone().add(new V3(0,w.b.h,0)),4,{size:.4})});toast('🧺 Festmahl! Alle Wesen sind satt und glücklich.')}
+  if(id==='brut'){S.eggs.forEach(e=>e.end=Math.min(e.end,now()));toast('🔥 Alle Eier sind bereit zum Schlüpfen!')}
+  refresh()}
+function usePotion(c,id){S.inv=S.inv||{};if(!S.inv[id])return;S.inv[id]--;const w=W.cre[c.id];
+  if(id==='energie'){c.energy=100;if(w)burst('⚡',w.pos.clone().add(new V3(0,w.b.h,0)),6,{size:.4})}
+  if(id==='wachstum'){if(w)burst('🌟',w.pos.clone().add(new V3(0,w.b.h,0)),10,{size:.4});addXP(c,Math.ceil(xpNeed(c.lv)*.5))}
+  sfx('level');refresh()}
+
+/* ================== Erfolge ================== */
+const bestLv=()=>S.creatures.reduce((a,c)=>Math.max(a,c.lv),0),seenN=()=>Object.keys(S.seen).length;
+const ACH=[
+  {id:'h1',e:'🐣',n:'Erstes Küken',d:'Brüte dein erstes Ei aus',v:()=>S.hatched,goal:1,g:100},
+  {id:'h5',e:'🥚',n:'Brutmeister',d:'Brüte 5 Eier aus',v:()=>S.hatched,goal:5,g:500},
+  {id:'h15',e:'🪺',n:'Wesenhüter',d:'Brüte 15 Eier aus',v:()=>S.hatched,goal:15,g:3000},
+  {id:'t10',e:'📋',n:'Fleißig',d:'Erledige 10 Aufgaben',v:()=>S.tasksDone,goal:10,g:200},
+  {id:'t50',e:'💼',n:'Arbeitstier',d:'Erledige 50 Aufgaben',v:()=>S.tasksDone,goal:50,g:1200},
+  {id:'t200',e:'🏅',n:'Unermüdlich',d:'Erledige 200 Aufgaben',v:()=>S.tasksDone,goal:200,g:6000},
+  {id:'l5',e:'🧒',n:'Großgezogen',d:'Ein Wesen erreicht Level 5',v:bestLv,goal:5,g:150},
+  {id:'l22',e:'💪',n:'Erwachsen',d:'Ein Wesen erreicht Level 22',v:bestLv,goal:22,g:2500},
+  {id:'l35',e:'👑',n:'Uralte Weisheit',d:'Ein Wesen erreicht Level 35',v:bestLv,goal:35,g:10000},
+  {id:'s5',e:'📖',n:'Sammler',d:'Entdecke 5 Fabelwesen',v:seenN,goal:5,g:400},
+  {id:'s15',e:'🔍',n:'Forscher',d:'Entdecke 15 Fabelwesen',v:seenN,goal:15,g:3000},
+  {id:'s25',e:'🌍',n:'Fabelkundiger',d:'Entdecke alle 25 Fabelwesen',v:seenN,goal:25,g:20000},
+  {id:'f20',e:'✨',n:'Glühwürmchenfänger',d:'Fange 20 Glühwürmchen in einem Spiel',v:()=>S.best||0,goal:20,g:500},
+  {id:'f40',e:'🌟',n:'Lichtjäger',d:'Fange 40 Glühwürmchen in einem Spiel',v:()=>S.best||0,goal:40,g:2000},
+  {id:'n5',e:'🌙',n:'Nachtschwärmer',d:'Erledige 5 Aufgaben in der Nacht',v:()=>S.nightTasks||0,goal:5,g:400},
+  {id:'d7',e:'📅',n:'Treue Seele',d:'Hole 7 Tage am Stück die Tagesbelohnung',v:()=>S.daily?.streak||0,goal:7,g:2000}];
+const achReady=()=>ACH.filter(a=>!(S.ach||{})[a.id]&&a.v()>=a.goal).length;
+function claimAch(id){const a=ACH.find(x=>x.id===id);S.ach=S.ach||{};if(!a||S.ach[id]||a.v()<a.goal)return;S.ach[id]=1;S.gold+=a.g;sfx('gold');toast(`🏆 ${a.n}: +${fmt(a.g)} 💰`);refresh()}
+function achPage(){let h=`<h2>🏆 Erfolge</h2><div class="sub">${Object.keys(S.ach||{}).length} von ${ACH.length} abgeschlossen</div>`;
+  for(const a of ACH){const v=Math.min(a.v(),a.goal),done=(S.ach||{})[a.id],ready=!done&&v>=a.goal;
+    h+=`<div class="card row" style="${done?'opacity:.55':''}"><div style="font-size:30px">${a.e}</div><div class="grow"><b>${a.n}</b><div style="font-size:12px;color:var(--muted)">${a.d}</div>
+      <div class="prog" style="margin:6px 0 0"><div style="width:${v/a.goal*100}%"></div></div><div style="font-size:11px;color:var(--muted)">${v}/${a.goal} · Belohnung ${fmt(a.g)} 💰</div></div>
+      ${done?'<div>✅</div>':`<button class="btn y" data-ach="${a.id}" ${ready?'':'disabled'}>Abholen</button>`}</div>`}
+  return h}
+
+/* ================== Tägliche Belohnung ================== */
+function dailyCheck(){const today=new Date().toDateString();S.daily=S.daily||{last:'',streak:0};if(S.daily.last===today)return;
+  const y=new Date(Date.now()-864e5).toDateString(),streak=S.daily.last===y?S.daily.streak+1:1,day=((streak-1)%7)+1,gold=day*120,bonus=day===7;
+  modal(`<h2 style="margin-top:0">🎁 Tägliche Belohnung</h2><p style="color:var(--muted)">Tag ${streak} in Folge – komm jeden Tag wieder!</p>
+    <div style="display:flex;gap:4px;justify-content:center;margin:10px 0">${[1,2,3,4,5,6,7].map(i=>`<div style="flex:1;padding:6px 0;border-radius:10px;font-size:11px;background:${i<day?'#6ee7a033':i===day?'#ffd25e':'#0003'};color:${i===day?'#4a2a00':'inherit'}">Tag ${i}<br>${i===7?'🌟':'💰'}</div>`).join('')}</div>
+    <p style="font-size:18px"><b>+${fmt(gold)} 💰${bonus?' + 🌟 Wachstumselixier':''}</b></p><button class="btn y" style="width:100%" id="dOk">Abholen</button>`);
+  $('#dOk').onclick=()=>{S.daily={last:today,streak};S.gold+=gold;if(bonus){S.inv=S.inv||{};S.inv.wachstum=(S.inv.wachstum||0)+1}sfx('gold');closeModal();refresh()}}
 
 /* ================== Animation ================== */
 let last=performance.now(),T=0;
@@ -1169,7 +1347,7 @@ function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,ro
   w.pop=Math.min(1,w.pop+dt*2.2);const pop=w.pop<1?easeBack(w.pop):1;
   w.hop=Math.max(0,w.hop-dt*2);const hop=Math.sin(w.hop*Math.PI)*.5;
   root.position.set(w.pos.x,(P.hover?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*.06*moving+hop,w.pos.z);
-  root.rotation.y=w.yaw;root.scale.setScalar(pop);
+  root.rotation.y=w.yaw;root.scale.setScalar(pop);if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
   P.legs.forEach(l=>l.rotation.x=moving?Math.sin(w.walk+l.userData.ph)*.6:0);
   P.wings.forEach(p=>p.rotation.z=p.userData.rest+Math.sin(T*(moving?8:2.5))*(moving?.45:.12)+hop*.8);
   P.tails.forEach((t,i)=>t.rotation.y=Math.sin(T*3+i*.6)*.35);
@@ -1184,7 +1362,7 @@ function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,ro
 function lerpAng(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*Math.min(1,t)}
 function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
 let fpsN=0,fpsT=0,fpsDone=0;
-function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
+function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;updDay(dt);updGame(dt);updSound(dt);waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
   for(const id in W.cre)animCreature(id,W.cre[id],dt);
   for(const e of S.eggs){const o=W.eggs[e.id];if(!o)continue;const b=o.userData.base;if(!b)continue;o.userData.wob=Math.max(0,(o.userData.wob||0)-dt*2);
     const ready=e.end<=now();o.position.set(b.x,b.y+(ready?Math.abs(Math.sin(T*4))*.12:0),b.z);o.rotation.z=Math.sin(T*(ready?9:2))*(ready?.12:.03)+Math.sin(T*30)*o.userData.wob*.2}
@@ -1203,15 +1381,17 @@ function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/10
   const sheetOpen=selId!==null&&curPage==='insel';const yOff=sheetOpen?cam.d*.16:0;
   camera.position.set(cam.tgt.x+cam.d*Math.sin(cam.ph)*Math.sin(cam.th),cam.tgt.y+cam.d*Math.cos(cam.ph)-yOff,cam.tgt.z+cam.d*Math.sin(cam.ph)*Math.cos(cam.th));
   camera.lookAt(cam.tgt.x,cam.tgt.y-yOff,cam.tgt.z);
-  renderer.render(scene,camera);updLabels()}
+  if(POST)POST();else renderer.render(scene,camera);updLabels()}
 
 /* ================== Start ================== */
-(function start(){const away=(now()-S.t)/1000;
+(function start(){updWeather();const away=(now()-S.t)/1000;
   S.creatures.forEach(c=>{simulate(c,Math.min(away,8*3600));S.seen[c.sp]=Math.max(S.seen[c.sp]??0,stageOf(c.lv))});
   syncWorld();refresh();
   const ready=S.creatures.filter(c=>c.task&&c.task.end<=now()).length;
   if(away>60&&S.creatures.length)toast(`👋 Willkommen zurück!${ready?` ${ready} Wesen warten mit Gold auf dich.`:''}`);
   else if(!S.tip){S.tip=1;toast('🥚 Tippe auf das Ei im Nest, um es zu wärmen!')}
+  setTimeout(dailyCheck,1500);
+  $('#tod').onclick=()=>toast(`${todText()} · ${DN.night>.5?'Nacht: böse Wesen +30 % Gold':'Tag: niedliche Wesen +20 % Gold'}${WX.type==='regen'?' · Regen: +20 % Erfahrung':WX.type==='nebel'?' · Nebel: böse Wesen +15 % Gold':''}`);
   requestAnimationFrame(loop);setInterval(tick,1000);setInterval(save,5000);
   addEventListener('visibilitychange',()=>{if(document.hidden)save()});
   if('serviceWorker'in navigator&&location.protocol.startsWith('http')&&!navigator.userAgent.includes('FabelwesenApp'))navigator.serviceWorker.register('sw.js').catch(()=>{});

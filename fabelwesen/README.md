@@ -20,7 +20,14 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Pflegen:** Füttern hält den Hunger fern (hungrige Wesen verdienen nur die Hälfte), Streicheln oder Raufen hebt die Laune (+25 % Gold).
 - **Wachsen:** Baby → Kind (Lv 5) → Jugendlich (Lv 12) → Erwachsen (Lv 22) → Uralt (Lv 35). Mit jedem Abschnitt verändert sich das 3D-Modell: Kitsune bekommen mehr Schwänze, Zerberus bis zu drei Köpfe, die Hydra bis zu sieben.
 - **Fabelbuch:** Sammle alle 25 Fabelwesen und schalte ihre Lebensabschnitte frei.
-- **Ausbau:** Mehr Inselplätze und Nester kaufen.
+- **Ausbau:** Mehr Waldplätze und Nester kaufen.
+- **Tag & Nacht:** Ein Spieltag dauert 24 Minuten – mit Sonnenauf- und -untergang, Mond und Sternen. Nachts verdienen böse Wesen +30 % Gold, tagsüber niedliche +20 %.
+- **Wetter:** Klar, Regen (+20 % Erfahrung, nasser Boden, Regentropfen) oder Nebel (böse Wesen +15 % Gold).
+- **Minispiel „Glühwürmchen fangen“:** 25 Sekunden lang leuchtende Glühwürmchen antippen – goldene zählen fünffach. Bringt Gold, Erfahrung und gute Laune.
+- **Zaubertränke:** Energietrank, Wachstumselixier, Festmahl (alle satt) und Brutfeuer (alle Eier sofort schlupfbereit).
+- **Erfolge:** 16 Erfolge mit Gold-Belohnungen.
+- **Tägliche Belohnung:** Jeden Tag Gold, am 7. Tag in Folge ein Wachstumselixier.
+- **Geräusche:** Vogelgezwitscher am Tag, Grillen in der Nacht, Regen und Effektklänge (im Menü abschaltbar).
 
 ## Die Fabelwesen (25)
 | Seltenheit | Niedlich 💖 | Böse 😈 |
@@ -42,6 +49,8 @@ Echtzeit-3D mit Three.js:
 - Physikalisch basierte Materialien mit Schuppen-, Feder-, Stein- und Holzstrukturen
 - Himmel mit Sonne, Spiegelungen, Gegenlicht, weiche Schatten, Leuchteffekte für Flammen und Magie
 - Wehendes Gras, Teich mit bewegten Wellen, Wolkenmeer unter der Insel
+
+Dazu kommen Bloom-Leuchten, Vignette und Farbstimmung als Kino-Look, weiche Kontaktschatten unter den Wesen und tanzende Lichtmuster (Kaustik) im Teich.
 
 Im Menü lässt sich die Grafik zwischen **Hoch** und **Schnell** (für ältere Handys) umschalten.
 
