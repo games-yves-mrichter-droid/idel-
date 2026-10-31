@@ -1,0 +1,29 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'de.kosmosschmiede.app'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'de.kosmosschmiede.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.debug }
+    }
+    lint { checkReleaseBuilds false; abortOnError false }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets { main { assets.srcDirs += ["$buildDir/generated/webassets"] } }
+}
+
+// Das Spiel liegt in ../kosmos und wird beim Bauen in die App kopiert.
+def copyWeb = tasks.register('copyWebAssets', Copy) {
+    from(rootProject.file('../kosmos')) { include 'index.html', 'icon.svg' }
+    into "$buildDir/generated/webassets/www"
+}
+tasks.named('preBuild') { dependsOn copyWeb }

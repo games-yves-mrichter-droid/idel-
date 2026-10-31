@@ -2,3 +2,7 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+android-kosmos/.gradle/
+android-kosmos/build/
+android-kosmos/app/build/
+android-kosmos/local.properties

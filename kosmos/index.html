@@ -7,6 +7,7 @@
 <title>Kosmos Schmiede</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#090c18">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
@@ -474,6 +475,8 @@ function start(data){
   document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const away=Math.min((Date.now()-S.last)/1000,(4+2*lv('off'))*3600);if(away>2){tick(Math.min(away,5));const rest=away-Math.min(away,5);if(rest>0)earn(totalPS(true)*rest)}last=performance.now()}});
   window.addEventListener('pagehide',save);
 }
+window.save=save;
+window.onAndroidBack=()=>{if(!$('#modal').hidden){$('#mok').click();return true}if(view!=='kosmos'){switchView('kosmos');return true}save();return false};
 window.claude?.hot?.snapshot?.(()=>({save:JSON.stringify(S)}));
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
 })();
