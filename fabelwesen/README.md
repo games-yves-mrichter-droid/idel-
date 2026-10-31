@@ -1,6 +1,6 @@
 # Fabelwesen 🥚🐉
 
-Ein 3D-Handyspiel, in dem du Fabelwesen aus Eiern ausbrütest und großziehst.
+Ein 3D-Handyspiel, in dem du Fabelwesen aus Eiern ausbrütest und in einem Zauberwald großziehst.
 
 ## Android-App (APK)
 Die fertige APK liegt unter [`release/Fabelwesen.apk`](../release/Fabelwesen.apk).
@@ -34,7 +34,8 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 Echtzeit-3D mit Three.js:
 - Realistische Tierkörper nach echten Vorbildern (Pferd, Hirsch, Hund, Fuchs, Katze, Hase, Drache, Vogel): Brustkorb, Hüfte, Beine mit Knie- und Sprunggelenk, lange Schnauzen, angelegte Federflügel
 - Schlangen, Hälse und Tentakel als glatte Röhren mit Schlängel- und Wellenbewegung
-- Zauberwald: knorrige Uraltbäume mit Wurzeln, leuchtende Ranken, Trauerweiden, Blütenbäume, Leuchtpilze und Feenring, Farne, bemooste Felsen, Glühwürmchen, Lichtstrahlen und Nebel
+- Dichter Zauberwald statt schwebender Insel: Lichtung umgeben von hunderten Bäumen (Laubbäume und Tannen in vielen Reihen, per Instancing), Büsche, umgestürzte bemooste Stämme und Waldboden bis zum Horizont im Nebel; Bäume, die die Sicht verdecken, werden automatisch durchsichtig
+- Zauberbäume: knorrige Uraltbäume mit Wurzeln, leuchtende Ranken, Trauerweiden, Blütenbäume, Leuchtpilze und Feenring, Farne, bemooste Felsen, Glühwürmchen, Lichtstrahlen und Nebel
 - Weiche, organische Körper: Rumpf, Kopf, Beine und Schwänze werden aus Formen verschmolzen (Signed-Distance-Felder + Surface Nets) – mit fließenden Farbübergängen
 - Echtes 3D-Fell (Shell-Rendering), Mähnen und buschige Schwänze
 - Augen mit strukturierter Iris und Glanz, leuchtende Augen bei bösen Wesen
