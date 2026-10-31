@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--BODY-START-->
+<title>Kosmos Schmiede</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#090c18">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen instrument panel — readouts on top, a live sky to tap, then a scrolling ledger of cosmic objects, tabs at the bottom. */
+:root{
+  --void:#090c18; --hull:#121831; --hull2:#1a2244; --seam:#2a3566;
+  --ink:#e9edff; --dim:#8d97c4; --star:#ffb655; --ion:#7fe0ff; --life:#74e6a9; --flare:#ff6b8b;
+  --f-display:"Chakra Petch","Segoe UI",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--void);color:var(--ink);font:15px/1.4 var(--f-body);user-select:none;-webkit-user-select:none;overflow:hidden}
+button{font:inherit;color:inherit}
+button:focus-visible,textarea:focus-visible{outline:2px solid var(--ion);outline-offset:2px}
+#app{height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 0}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* readouts */
+#top{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px}
+.stat{background:var(--hull);border:1px solid var(--seam);border-radius:10px;padding:5px 9px;min-width:0}
+.stat .lbl{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{display:block;font:700 17px/1.2 var(--f-num);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#mat{color:var(--star)} #mps{color:var(--ion);font-size:14px} #sng{color:#d8b4ff;font-size:14px}
+
+/* sky */
+#sky{position:relative;margin-top:8px;height:clamp(150px,30vh,280px);border-radius:16px;overflow:hidden;
+  background:radial-gradient(ellipse at 50% 60%,#18214a 0%,#0b0f22 60%,#05070f 100%);border:1px solid var(--seam);flex:none;touch-action:manipulation}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+.skyname{position:absolute;left:12px;bottom:8px;font:600 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none}
+.skyhint{position:absolute;right:12px;bottom:8px;font-size:11px;color:var(--dim);pointer-events:none}
+#boost{position:absolute;left:12px;top:10px;background:#ff6b8b26;border:1px solid var(--flare);color:#ffd0da;border-radius:99px;padding:2px 10px;font:600 12px var(--f-display);letter-spacing:.05em}
+#comet{position:absolute;left:0;top:0;width:46px;height:46px;border:0;padding:0;background:none;cursor:pointer;z-index:2}
+#comet::before{content:"";position:absolute;right:10px;top:50%;width:70px;height:6px;margin-top:-3px;border-radius:6px;background:linear-gradient(90deg,#7fe0ff00,#7fe0ffaa);transform-origin:right center}
+#comet::after{content:"";position:absolute;right:6px;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:radial-gradient(circle,#fff 0 30%,#9be8ff 55%,#7fe0ff00 72%);box-shadow:0 0 18px 6px #7fe0ff88}
+
+/* buy mode + views */
+#views{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-block:10px 14px;scrollbar-width:thin}
+.view{display:flex;flex-direction:column;gap:8px}
+.modes{display:flex;gap:6px;align-items:center}
+.modes .lbl{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-right:auto}
+.chip{background:var(--hull);border:1px solid var(--seam);border-radius:8px;padding:4px 10px;font:600 13px var(--f-display);cursor:pointer;color:var(--dim)}
+.chip.on{background:var(--star);border-color:var(--star);color:#1d1204}
+
+/* tier rows */
+.tier{display:grid;grid-template-columns:52px minmax(0,1fr) 104px;gap:10px;align-items:center;background:var(--hull);border:1px solid var(--seam);border-radius:12px;padding:8px}
+.tier .ico{width:52px;height:52px;border-radius:10px;background:#070a16}
+.tier .nm{font:700 15px var(--f-display);letter-spacing:.02em;display:flex;gap:6px;align-items:baseline;min-width:0}
+.tier .nm span{font:500 12px var(--f-num);color:var(--dim)}
+.tier .sub{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tier .sub b{color:var(--ink);font-weight:600}
+.prog{position:relative;height:16px;border-radius:5px;background:#070a16;border:1px solid var(--seam);margin-top:4px;overflow:hidden}
+.prog i{position:absolute;inset:0;background:linear-gradient(90deg,#2d79a8,var(--ion));transform-origin:left;transform:scaleX(0)}
+.prog span{position:relative;display:block;text-align:center;font:700 11px/14px var(--f-num);color:#fff;text-shadow:0 1px 2px #000}
+.ms{font-size:11px;color:var(--dim);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms em{font-style:normal;color:var(--life)}
+.buy{background:linear-gradient(#ffc777,#e88f2a);border:0;border-radius:10px;padding:6px 4px;cursor:pointer;color:#241503;text-align:center;align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+.buy small{display:block;font:600 11px var(--f-display);letter-spacing:.04em}
+.buy b{display:block;font:700 14px var(--f-num);white-space:nowrap}
+.buy:disabled{background:var(--hull2);color:var(--dim);cursor:default}
+.tier.locked .nm{color:var(--dim)}
+.tier.locked .ico{filter:brightness(.15) contrast(1.5)}
+
+/* generic panels */
+.panel{background:var(--hull);border:1px solid var(--seam);border-radius:12px;padding:12px}
+h2{font:700 18px var(--f-display);letter-spacing:.03em;margin:2px 0 0;text-wrap:balance}
+h3{font:600 12px var(--f-display);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:10px 0 0}
+p{margin:4px 0;color:var(--dim);max-width:65ch}
+.row{display:flex;gap:10px;align-items:center}
+.grow{flex:1;min-width:0}
+.item{display:flex;gap:10px;align-items:center;background:var(--hull);border:1px solid var(--seam);border-radius:12px;padding:10px}
+.item .t{font:700 14px var(--f-display)}
+.item .d{font-size:12px;color:var(--dim)}
+.btn{background:linear-gradient(#ffc777,#e88f2a);color:#241503;border:0;border-radius:10px;padding:8px 12px;font:700 13px var(--f-display);cursor:pointer;min-width:96px;white-space:nowrap}
+.btn.ion{background:linear-gradient(#a6ecff,#3fb4e0);color:#04202c}
+.btn.violet{background:linear-gradient(#e2c6ff,#9a5cf0);color:#1b0836}
+.btn.ghost{background:var(--hull2);color:var(--ink);border:1px solid var(--seam)}
+.btn.danger{background:linear-gradient(#ff9aae,#e0425f);color:#2c0310}
+.btn:disabled{background:var(--hull2);color:var(--dim);cursor:default}
+.big{font:700 26px var(--f-num);color:#d8b4ff}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13px}
+.kv span:nth-child(odd){color:var(--dim)}
+.kv span:nth-child(even){font-family:var(--f-num);text-align:right}
+.achgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px}
+.ach{border:1px solid var(--seam);border-radius:10px;padding:7px 9px;background:var(--hull);font-size:12px;color:var(--dim)}
+.ach b{display:block;font:600 13px var(--f-display);color:var(--dim)}
+.ach.done{border-color:#74e6a966;background:#74e6a914;color:var(--ink)}
+.ach.done b{color:var(--life)}
+textarea{width:100%;min-height:70px;background:#070a16;color:var(--ink);border:1px solid var(--seam);border-radius:8px;font:12px var(--f-num);padding:8px;user-select:text;-webkit-user-select:text;resize:vertical}
+.pill{display:inline-block;border-radius:99px;padding:1px 8px;font:600 11px var(--f-display);background:var(--hull2);color:var(--dim)}
+.pill.max{background:#74e6a922;color:var(--life)}
+
+/* nav */
+#nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--seam);background:var(--void);flex:none;padding-block:4px 6px}
+#nav button{background:none;border:0;padding:6px 0 2px;color:var(--dim);font:600 11px var(--f-display);letter-spacing:.04em;cursor:pointer;position:relative}
+#nav svg{display:block;margin:0 auto 2px;width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#nav button.on{color:var(--star)}
+#nav .dot{position:absolute;top:2px;left:calc(50% + 8px);min-width:16px;height:16px;border-radius:8px;background:var(--flare);color:#fff;font:700 10px/16px var(--f-num);padding:0 4px}
+
+#toast{position:fixed;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;z-index:20;width:min(90vw,420px)}
+#toast div{background:#1a2244f2;border:1px solid var(--seam);border-radius:10px;padding:7px 12px;font-size:13px;animation:tin .25s ease-out;text-align:center}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+#modal{position:fixed;inset:0;background:#05070fcc;display:flex;align-items:center;justify-content:center;z-index:30;padding:16px}
+#modal .panel{max-width:360px;width:100%;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center}
+@media (prefers-reduced-motion:reduce){#toast div{animation:none}}
+</style>
+<div id="app">
+  <header id="top">
+    <div class="stat"><span class="lbl">Materie</span><b id="mat" class="num">0</b></div>
+    <div class="stat"><span class="lbl">pro Sekunde</span><b id="mps" class="num">0</b></div>
+    <div class="stat"><span class="lbl">Singularität</span><b id="sng" class="num">0</b></div>
+  </header>
+  <section id="sky" aria-label="Universum – tippen für Materie">
+    <canvas id="cv"></canvas>
+    <button id="comet" hidden aria-label="Komet einfangen"></button>
+    <div id="boost" hidden></div>
+    <div class="skyname" id="skyname">Quark</div>
+    <div class="skyhint">Tippen = Materie</div>
+  </section>
+  <main id="views">
+    <div class="view" id="v-kosmos">
+      <div class="modes" id="modes"><span class="lbl">Kaufmenge</span></div>
+      <div class="view" id="list"></div>
+    </div>
+    <div class="view" id="v-ups" hidden></div>
+    <div class="view" id="v-bang" hidden></div>
+    <div class="view" id="v-ach" hidden></div>
+    <div class="view" id="v-opt" hidden></div>
+  </main>
+  <nav id="nav">
+    <button data-v="kosmos" class="on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="10.5" ry="4" transform="rotate(-20 12 12)"/></svg>Kosmos</button>
+    <button data-v="ups"><svg viewBox="0 0 24 24"><path d="M12 20V5M6 11l6-6 6 6"/><path d="M5 20h14"/></svg>Upgrades<span class="dot" id="updot" hidden></span></button>
+    <button data-v="bang"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3"/></svg>Urknall</button>
+    <button data-v="ach"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Erfolge</button>
+    <button data-v="opt"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>Menü</button>
+  </nav>
+</div>
+<div id="toast"></div>
+<div id="modal" hidden><div class="panel" id="modalbody"></div></div>
+
+<script>
+(function(){
+"use strict";
+let S;
+/* ---------- Daten ---------- */
+const TIERS=[
+ ['Quark','Teilchen, aus denen alles besteht.'],
+ ['Proton','Drei Quarks, fest verbunden.'],
+ ['Atom','Kern und Elektronenwolke.'],
+ ['Molekül','Atome gehen Bindungen ein.'],
+ ['Sternenstaub','Feine Körner zwischen den Sternen.'],
+ ['Asteroid','Gestein, das durchs All taumelt.'],
+ ['Mond','Ein treuer Begleiter.'],
+ ['Planet','Ozeane, Kontinente, Wetter.'],
+ ['Gasriese','Wirbelnde Bänder und Ringe.'],
+ ['Stern','Kernfusion im Gleichgewicht.'],
+ ['Roter Riese','Ein Stern im Spätherbst.'],
+ ['Neutronenstern','Ein Teelöffel wiegt Milliarden Tonnen.'],
+ ['Nebel','Kinderstube neuer Sterne.'],
+ ['Schwarzes Loch','Nicht einmal Licht entkommt.'],
+ ['Quasar','Hellster Leuchtturm im All.'],
+ ['Galaxie','Hunderte Milliarden Sonnen.'],
+ ['Galaxienhaufen','Das größte Gefüge des Kosmos.']
+].map(([n,d],i)=>{
+  const cost=4*Math.pow(22,i)*(i?1.25:1), time=0.8*Math.pow(1.6,i), pay=8*Math.pow(1.7,i);
+  return {n,d,cost,time,rev:cost*time/pay,r:1.08+0.005*i};
+});
+const N=TIERS.length;
+const MS=[10,25,50,100,150,200,250,300,400,500,600,700,800,900,1000,1250,1500,2000,2500,3000];
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII'];
+const UPS=[];
+TIERS.forEach((t,i)=>{for(let k=0;k<4;k++)UPS.push({id:'t'+i+'_'+k,kind:'tier',tier:i,cost:t.cost*20*Math.pow(1e4,k+1),name:t.n+'-Resonanz '+ROMAN[k],desc:t.n+' erzeugt ×3 Materie'})});
+for(let k=0;k<18;k++)UPS.push({id:'g'+k,kind:'all',cost:1e6*Math.pow(1e4,k),name:'Kosmische Inflation '+ROMAN[k],desc:'Alle Objekte erzeugen ×2'});
+for(let k=0;k<12;k++)UPS.push({id:'c'+k,kind:'tap',cost:250*Math.pow(120,k),name:'Gravitationsimpuls '+ROMAN[k],desc:'Jeder Tipp bringt +2 % der Materie pro Sekunde'});
+UPS.sort((a,b)=>a.cost-b.cost);
+const UPMAP=Object.fromEntries(UPS.map(u=>[u.id,u]));
+const RES=[
+ {id:'dark',name:'Dunkle Materie',desc:'Alle Objekte +50 % pro Stufe',max:100,cost:l=>Math.ceil(Math.pow(1.5,l))},
+ {id:'time',name:'Zeitdehnung',desc:'Alle Zyklen 15 % schneller pro Stufe',max:12,cost:l=>2*Math.pow(2,l)},
+ {id:'tap',name:'Gravitationslinse',desc:'Tippen bringt doppelt so viel pro Stufe',max:15,cost:l=>Math.ceil(Math.pow(1.8,l))},
+ {id:'off',name:'Ereignishorizont',desc:'+2 Stunden Offline-Einnahmen pro Stufe',max:10,cost:l=>1+2*l},
+ {id:'start',name:'Urimpuls',desc:'Nach dem Urknall mit ×100 mehr Startmaterie',max:10,cost:l=>3*(l+1)},
+ {id:'comet',name:'Kometenfänger',desc:'Kometen kommen öfter, Belohnung +50 %',max:5,cost:l=>4*(l+1)},
+ {id:'auto',name:'Selbstorganisation',desc:'Kauft automatisch neue Objekte',max:1,cost:()=>20}
+];
+const ACH=[];
+const TIERWORDS=['Erste Spur','Kleine Familie','Hundertschaft','Massenproduktion','Halbes Tausend'];
+TIERS.forEach((t,i)=>[1,25,100,250,500].forEach((c,j)=>ACH.push({id:'a'+i+'_'+c,name:t.n+': '+TIERWORDS[j],desc:'Besitze '+c+'× '+t.n,test:()=>S.g[i].n>=c})));
+[1e3,1e6,1e9,1e12,1e15,1e18,1e21,1e24,1e30,1e36,1e42,1e50].forEach((v,j)=>ACH.push({id:'l'+j,name:'Materiesammler '+ROMAN[j],desc:'Insgesamt '+fmt(v,true)+' Materie',test:()=>S.life>=v}));
+[[50,'Fingerübung'],[500,'Trommelwirbel'],[5000,'Pulsar-Daumen']].forEach(([v,n])=>ACH.push({id:'tp'+v,name:n,desc:v+'× ins All getippt',test:()=>S.taps>=v}));
+[[1,'Es werde Licht'],[3,'Ewige Wiederkehr'],[10,'Zyklisches Universum'],[25,'Multiversum']].forEach(([v,n])=>ACH.push({id:'bb'+v,name:n,desc:v+'× Urknall ausgelöst',test:()=>S.bangs>=v}));
+[[1,'Sternschnuppe'],[10,'Kometenjäger'],[50,'Oortsche Wolke']].forEach(([v,n])=>ACH.push({id:'co'+v,name:n,desc:v+' Kometen eingefangen',test:()=>S.comets>=v}));
+const MODES=[1,10,100,'next','max'], MODELBL=['×1','×10','×100','Ziel','Max'];
+
+/* ---------- Zahlen ---------- */
+function de(x,d){return x.toFixed(d).replace('.',',')}
+function suffix(e){const B=['','K','M','B','T'];if(e<5)return B[e];const k=e-5;return String.fromCharCode(97+Math.floor(k/26)%26)+String.fromCharCode(97+k%26)}
+function fmt(n,plain){
+  if(!isFinite(n))return '∞';
+  if(n<0)return '-'+fmt(-n);
+  if(n<1000)return n<10&&!plain?de(n,2):n<100&&!plain?de(n,1):String(Math.floor(n));
+  if(!plain&&S&&S.sci)return de(n/Math.pow(10,Math.floor(Math.log10(n))),2)+'e'+Math.floor(Math.log10(n));
+  let e=Math.floor(Math.log10(n)/3),v=n/Math.pow(1000,e);
+  if(v>=999.995){e++;v/=1000}
+  return (plain?String(Math.round(v)):de(v,2))+suffix(e);
+}
+function fmtT(s){
+  if(s<60)return de(s,s<10?2:1)+'s';
+  if(s<3600)return Math.floor(s/60)+'m '+Math.floor(s%60)+'s';
+  if(s<86400)return Math.floor(s/3600)+'h '+Math.floor(s%3600/60)+'m';
+  return Math.floor(s/86400)+'d '+Math.floor(s%86400/3600)+'h';
+}
+
+/* ---------- Zustand ---------- */
+const KEY='kosmosSchmiede.v1';
+function fresh(keep){
+  const s={m:5,run:0,life:0,sing:0,qp:0,g:TIERS.map(()=>({n:0,p:0})),up:{},res:{},ach:{},taps:0,bangs:0,comets:0,bm:0,sci:false,autoOn:true,boostUntil:0,last:Date.now(),born:Date.now(),best:0};
+  if(keep)for(const k of ['life','sing','qp','res','ach','taps','bangs','comets','bm','sci','autoOn','born','best'])s[k]=keep[k];
+  if(keep)s.m=5*Math.pow(100,lv('start',s));
+  return s;
+}
+function lv(id,s){return ((s||S).res[id])||0}
+function load(data){
+  let raw=data&&data.save;
+  if(!raw){try{raw=localStorage.getItem(KEY)}catch(e){}}
+  try{if(raw){const o=JSON.parse(raw);const f=fresh();S=Object.assign(f,o);S.g=TIERS.map((_,i)=>Object.assign({n:0,p:0},o.g&&o.g[i]));return true}}catch(e){}
+  S=fresh();return false;
+}
+function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+/* ---------- Rechenwerk ---------- */
+let M={tier:[],all:1,tapK:0,glob:1,speed:1};
+function msInfo(n){let sp=1,out=1,next=null;for(const m of MS){if(n>=m){if(m<=100)sp*=2;else out*=3}else{next=m;break}}return{sp,out,next,nextFx:next==null?'':next<=100?'Tempo ×2':'Ertrag ×3'}}
+function achCount(){return Object.keys(S.ach).length}
+function recalc(){
+  M.tier=TIERS.map(()=>1);M.all=1;M.tapK=0;
+  for(const id in S.up){const u=UPMAP[id];if(!u)continue;if(u.kind==='tier')M.tier[u.tier]*=3;else if(u.kind==='all')M.all*=2;else M.tapK++}
+  M.glob=M.all*(1+0.1*S.sing)*(1+0.5*lv('dark'))*(1+0.02*achCount());
+  M.speed=Math.pow(1.15,lv('time'));
+}
+function boosting(){return Date.now()<S.boostUntil}
+function cycleT(i){return TIERS[i].time/(msInfo(S.g[i].n).sp*M.speed)}
+function perCycle(i,noBoost){const n=S.g[i].n;return TIERS[i].rev*n*msInfo(n).out*M.tier[i]*M.glob*(boosting()&&!noBoost?7:1)}
+function perSec(i,nb){return S.g[i].n?perCycle(i,nb)/cycleT(i):0}
+function totalPS(nb){let s=0;for(let i=0;i<N;i++)s+=perSec(i,nb);return s}
+function tapValue(){return (1+totalPS(true)*(0.01+0.02*M.tapK))*Math.pow(2,lv('tap'))*(boosting()?7:1)}
+function earn(x){S.m+=x;S.run+=x;S.life+=x}
+function costOf(i,k){const t=TIERS[i],n=S.g[i].n;return t.cost*Math.pow(t.r,n)*(Math.pow(t.r,k)-1)/(t.r-1)}
+function maxBuy(i){const t=TIERS[i],c=t.cost*Math.pow(t.r,S.g[i].n);return Math.max(0,Math.floor(Math.log(S.m*(t.r-1)/c+1)/Math.log(t.r)+1e-9))}
+function amount(i){const md=MODES[S.bm];if(md==='max')return Math.max(1,maxBuy(i));if(md==='next'){const nx=msInfo(S.g[i].n).next;return nx?nx-S.g[i].n:1}return md}
+function buy(i,k){const c=costOf(i,k);if(c>S.m||k<1)return false;S.m-=c;S.g[i].n+=k;return true}
+function bangGain(){return Math.floor(Math.cbrt(S.run/1e12)+1e-9)}
+
+/* ---------- Spielschleife ---------- */
+function tick(dt){
+  for(let i=0;i<N;i++){const g=S.g[i];if(!g.n)continue;g.p+=dt/cycleT(i);if(g.p>=1){const c=Math.floor(g.p);g.p-=c;earn(perCycle(i)*c)}}
+}
+let autoAcc=0;
+function autoBuy(dt){
+  if(!lv('auto')||!S.autoOn)return;autoAcc+=dt;if(autoAcc<0.5)return;autoAcc=0;
+  for(let n=0;n<40;n++){let best=-1,bc=Infinity;
+    for(let i=0;i<N;i++){if(i>0&&!S.g[i-1].n&&!S.g[i].n)break;const c=costOf(i,1);if(c<bc){bc=c;best=i}}
+    if(best<0||bc>S.m*0.5)break;buy(best,1);}
+}
+function checkAch(){
+  let got=false;
+  for(const a of ACH){if(!S.ach[a.id]&&a.test()){S.ach[a.id]=1;got=true;toast('Erfolg: <b>'+a.name+'</b> · +2 % Produktion')}}
+  if(got){recalc();if(view==='ach')renderAch()}
+}
+
+/* ---------- Oberfläche ---------- */
+const $=s=>document.querySelector(s);
+let view='kosmos';
+function toast(h){const d=document.createElement('div');d.innerHTML=h;$('#toast').appendChild(d);setTimeout(()=>d.remove(),2600);while($('#toast').children.length>3)$('#toast').firstChild.remove()}
+function modal(h,btn,fn){$('#modalbody').innerHTML=h+'<button class="btn" id="mok">'+(btn||'Weiter')+'</button>';$('#modal').hidden=false;$('#mok').onclick=()=>{$('#modal').hidden=true;fn&&fn()}}
+function visibleTiers(){let v=1;for(let i=1;i<N;i++){if(S.g[i-1].n||S.g[i].n)v=i+1;else break}return v}
+let rows=[],rowCount=-1;
+function buildModes(){const w=$('#modes');w.querySelectorAll('.chip').forEach(c=>c.remove());MODES.forEach((m,k)=>{const b=document.createElement('button');b.className='chip'+(S.bm===k?' on':'');b.textContent=MODELBL[k];b.onclick=()=>{S.bm=k;buildModes();updList()};w.appendChild(b)})}
+function buildList(){
+  const vis=visibleTiers(),cnt=Math.min(N,vis+1);if(cnt===rowCount)return;rowCount=cnt;
+  const L=$('#list');L.innerHTML='';rows=[];
+  for(let i=0;i<cnt;i++){
+    const locked=i>=vis;
+    const d=document.createElement('div');d.className='tier'+(locked?' locked':'');
+    d.innerHTML='<canvas class="ico" width="104" height="104"></canvas><div style="min-width:0"><div class="nm">'+(locked?'???':TIERS[i].n)+' <span class="num"></span></div><div class="sub"></div><div class="prog"><i></i><span></span></div><div class="ms"></div></div><button class="buy"><small></small><b></b></button>';
+    const cv=d.querySelector('canvas'),cx=cv.getContext('2d');cx.fillStyle='#070a16';cx.fillRect(0,0,104,104);drawBody(cx,52,52,i===16?40:34,i,2.5,true);
+    const r={el:d,i,locked,cnt:d.querySelector('.nm span'),sub:d.querySelector('.sub'),bar:d.querySelector('.prog i'),ps:d.querySelector('.prog span'),ms:d.querySelector('.ms'),btn:d.querySelector('.buy'),bs:d.querySelector('.buy small'),bb:d.querySelector('.buy b'),cache:{}};
+    r.btn.onclick=()=>{const k=amount(i);if(buy(i,k)){buildList();updList();burst(i)}};
+    rows.push(r);L.appendChild(d);
+  }
+}
+function setTxt(r,key,el,v,html){if(r.cache[key]!==v){r.cache[key]=v;html?el.innerHTML=v:el.textContent=v}}
+function updList(){
+  for(const r of rows){const i=r.i,g=S.g[i],k=amount(i),c=costOf(i,k);
+    setTxt(r,'c',r.cnt,r.locked?'':'×'+g.n);
+    if(r.locked){setTxt(r,'s',r.sub,'Noch unentdeckt. Kaufe es, um es zu enthüllen.');setTxt(r,'p',r.ps,'');setTxt(r,'m',r.ms,TIERS[i].d)}
+    else{const ms=msInfo(g.n),ct=cycleT(i),pc=g.n?perCycle(i):TIERS[i].rev*M.tier[i]*M.glob;
+      setTxt(r,'s',r.sub,'<b class="num">+'+fmt(pc)+'</b> pro Zyklus · <span class="num">'+fmtT(ct)+'</span>',true);
+      setTxt(r,'p',r.ps,g.n?fmt(perSec(i))+'/s':'');
+      setTxt(r,'m',r.ms,ms.next?'Meilenstein '+g.n+'/'+ms.next+' → <em>'+ms.nextFx+'</em>':'<em>Alle Meilensteine erreicht</em>',true)}
+    setTxt(r,'bs',r.bs,'Kaufen ×'+k);setTxt(r,'bb',r.bb,fmt(c));
+    const dis=c>S.m;if(r.btn.disabled!==dis)r.btn.disabled=dis;
+  }
+}
+function updBars(){for(const r of rows){if(r.locked)continue;const g=S.g[r.i];const ct=cycleT(r.i);r.bar.style.transform='scaleX('+(g.n?(ct<0.12?1:g.p):0)+')'}}
+function updTop(){$('#mat').textContent=fmt(S.m);$('#mps').textContent=fmt(totalPS())+'/s';$('#sng').textContent=fmt(S.sing,true);
+  const b=$('#boost');if(boosting()){b.hidden=false;b.textContent='Materiesturm ×7 · '+Math.ceil((S.boostUntil-Date.now())/1000)+'s'}else b.hidden=true;
+  const n=UPS.filter(u=>!S.up[u.id]&&u.cost<=S.m).length,dot=$('#updot');dot.hidden=!n;dot.textContent=n>9?'9+':n;
+}
+function renderUps(){
+  const V=$('#v-ups');const open=UPS.filter(u=>!S.up[u.id]);const aff=open.filter(u=>u.cost<=S.m);
+  let h='<div class="row"><div class="grow"><h2>Upgrades</h2><p>'+Object.keys(S.up).length+' von '+UPS.length+' gekauft. Hier stehen die nächsten Upgrades, die günstigsten zuerst.</p></div><button class="btn ion" id="buyall"'+(aff.length?'':' disabled')+'>Alle kaufen</button></div>';
+  open.slice(0,14).forEach(u=>{h+='<div class="item"><div class="grow"><div class="t">'+u.name+'</div><div class="d">'+u.desc+'</div></div><button class="btn" data-u="'+u.id+'"'+(u.cost>S.m?' disabled':'')+'><span class="num">'+fmt(u.cost)+'</span></button></div>'});
+  if(!open.length)h+='<div class="panel"><p>Alle Upgrades gekauft. Ein Urknall setzt sie zurück.</p></div>';
+  V.innerHTML=h;
+  V.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const u=UPMAP[b.dataset.u];if(u.cost<=S.m){S.m-=u.cost;S.up[u.id]=1;recalc();renderUps()}});
+  const ba=$('#buyall');if(ba)ba.onclick=()=>{for(const u of UPS){if(!S.up[u.id]&&u.cost<=S.m){S.m-=u.cost;S.up[u.id]=1}}recalc();renderUps()};
+}
+let bangArm=0;
+function renderBang(){
+  const V=$('#v-bang'),gain=bangGain(),next=Math.pow(gain+1,3)*1e12;
+  let h='<div class="panel"><h2>Urknall</h2><p>Setzt Materie, Objekte und Upgrades zurück. Dafür bekommst du Singularitäten (jede +10 % auf alles, für immer) und genauso viele Quantenpunkte für Forschung.</p>'+
+  '<div class="kv" style="margin-top:8px"><span>Singularitäten</span><span>'+fmt(S.sing,true)+' (+'+fmt(S.sing*10,true)+' %)</span><span>Materie in diesem Universum</span><span>'+fmt(S.run)+'</span><span>Nächste Singularität bei</span><span>'+fmt(next)+'</span></div>'+
+  '<div class="row" style="margin-top:10px"><div class="grow"><span class="pill">Gewinn</span> <span class="big">+'+fmt(gain,true)+'</span></div><button class="btn violet" id="bangbtn"'+(gain<1?' disabled':'')+'>'+(bangArm>Date.now()?'Wirklich? Nochmal tippen':'Urknall auslösen')+'</button></div></div>'+
+  '<div class="row"><h3 class="grow">Forschung</h3><span class="pill">Quantenpunkte: <span class="num">'+fmt(S.qp,true)+'</span></span></div>';
+  RES.forEach(r=>{const l=lv(r.id),mx=l>=r.max,c=r.cost(l);
+    h+='<div class="item"><div class="grow"><div class="t">'+r.name+' <span class="pill'+(mx?' max':'')+'">Stufe '+l+'/'+r.max+'</span></div><div class="d">'+r.desc+'</div></div><button class="btn violet" data-r="'+r.id+'"'+(mx||c>S.qp?' disabled':'')+'>'+(mx?'Maximal':c+' QP')+'</button></div>'});
+  V.innerHTML=h;
+  $('#bangbtn').onclick=()=>{if(bangGain()<1)return;if(bangArm>Date.now()){doBang()}else{bangArm=Date.now()+4000;renderBang();setTimeout(()=>{if(view==='bang')renderBang()},4100)}};
+  V.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r=RES.find(x=>x.id===b.dataset.r),l=lv(r.id),c=r.cost(l);if(l<r.max&&c<=S.qp){S.qp-=c;S.res[r.id]=l+1;recalc();renderBang();toast(r.name+' → Stufe '+(l+1))}});
+}
+function doBang(){const g=bangGain();bangArm=0;S.sing+=g;S.qp+=g;S.bangs++;S.best=Math.max(S.best,S.run);S=fresh(S);recalc();rowCount=-1;buildList();flash=1.2;
+  toast('Ein neues Universum entsteht · +'+g+' Singularitäten');checkAch();save();switchView('kosmos')}
+function renderAch(){
+  const V=$('#v-ach'),n=achCount();
+  let h='<div class="panel"><h2>Erfolge</h2><p>'+n+' von '+ACH.length+' freigeschaltet. Jeder Erfolg erhöht die Produktion um 2 % (jetzt +'+(n*2)+' %).</p></div><div class="achgrid">';
+  ACH.forEach(a=>{h+='<div class="ach'+(S.ach[a.id]?' done':'')+'"><b>'+a.name+'</b>'+a.desc+'</div>'});
+  V.innerHTML=h+'</div>';
+}
+let resetArm=0;
+function renderOpt(){
+  const V=$('#v-opt');const play=(Date.now()-S.born)/1000;
+  let h='<div class="panel"><h2>Statistik</h2><div class="kv" style="margin-top:6px"><span>Materie gesamt</span><span>'+fmt(S.life)+'</span><span>Bestes Universum</span><span>'+fmt(Math.max(S.best,S.run))+'</span><span>Urknalle</span><span>'+S.bangs+'</span><span>Tipps</span><span>'+S.taps+'</span><span>Kometen</span><span>'+S.comets+'</span><span>Spielzeit</span><span>'+fmtT(play)+'</span><span>Offline-Limit</span><span>'+(4+2*lv('off'))+' h</span></div></div>'+
+  '<div class="panel"><h3 style="margin-top:0">Einstellungen</h3><div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ghost" id="o-sci">Zahlen: '+(S.sci?'1,23e15':'1,23aa')+'</button>'+(lv('auto')?'<button class="btn ghost" id="o-auto">Auto-Kauf: '+(S.autoOn?'an':'aus')+'</button>':'')+'</div></div>'+
+  '<div class="panel"><h3 style="margin-top:0">Spielstand sichern</h3><p>Kopiere den Code und bewahre ihn auf. Zum Laden einfügen und „Laden“ tippen.</p><textarea id="o-txt" spellcheck="false" aria-label="Spielstand-Code"></textarea><div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ion" id="o-exp">Code erzeugen &amp; kopieren</button><button class="btn ghost" id="o-imp">Laden</button></div></div>'+
+  '<div class="panel"><h3 style="margin-top:0">Neu beginnen</h3><p>Löscht alles, auch Singularitäten und Erfolge.</p><button class="btn danger" id="o-reset" style="margin-top:6px">'+(resetArm>Date.now()?'Sicher? Nochmal tippen':'Spiel zurücksetzen')+'</button></div>';
+  V.innerHTML=h;
+  $('#o-sci').onclick=()=>{S.sci=!S.sci;renderOpt();rows.forEach(r=>r.cache={})};
+  const au=$('#o-auto');if(au)au.onclick=()=>{S.autoOn=!S.autoOn;renderOpt()};
+  $('#o-exp').onclick=()=>{const t=$('#o-txt');t.value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));t.select();
+    try{navigator.clipboard.writeText(t.value).then(()=>toast('Code kopiert'),()=>toast('Code markiert – bitte manuell kopieren'))}catch(e){toast('Code markiert – bitte manuell kopieren')}};
+  $('#o-imp').onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($('#o-txt').value.trim()))));if(!o||!o.g)throw 0;load({save:JSON.stringify(o)});recalc();rowCount=-1;buildList();buildModes();toast('Spielstand geladen');switchView('kosmos')}catch(e){toast('Der Code ist ungültig. Bitte vollständig einfügen.')}};
+  $('#o-reset').onclick=()=>{if(resetArm>Date.now()){resetArm=0;S=fresh();recalc();rowCount=-1;buildList();buildModes();save();toast('Neues Spiel gestartet');switchView('kosmos')}else{resetArm=Date.now()+4000;renderOpt();setTimeout(()=>{if(view==='opt')renderOpt()},4100)}};
+}
+function switchView(v){view=v;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  ['kosmos','ups','bang','ach','opt'].forEach(x=>$('#v-'+x).hidden=x!==v);$('#views').scrollTop=0;
+  if(v==='ups')renderUps();if(v==='bang')renderBang();if(v==='ach')renderAch();if(v==='opt')renderOpt();if(v==='kosmos'){buildList();updList()}}
+
+/* ---------- Himmel / Grafik ---------- */
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function glow(c,x,y,r,rgb,a){const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,'rgba('+rgb+','+a+')');g.addColorStop(1,'rgba('+rgb+',0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
+function ball(c,x,y,r,c1,c2){const g=c.createRadialGradient(x-r*.35,y-r*.4,r*.08,x,y,r);g.addColorStop(0,c1);g.addColorStop(1,c2);c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
+function shade(c,x,y,r){const g=c.createRadialGradient(x-r*.5,y-r*.5,r*.4,x,y,r*1.05);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,10,.6)');c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
+const shapeCache={};
+function shapes(i){if(shapeCache[i])return shapeCache[i];const R=rng(i*977+13),o={};
+  o.pts=[];for(let k=0;k<260;k++){const arm=k%2,d=Math.pow(R(),.7),a=arm*Math.PI+d*5.2+(R()-.5)*.6;o.pts.push([a,d,R()])}
+  o.poly=[];for(let k=0;k<13;k++)o.poly.push(.72+R()*.28);
+  o.cr=[];for(let k=0;k<6;k++)o.cr.push([R()*2-1,R()*2-1,.1+R()*.18]);
+  o.blob=[];for(let k=0;k<6;k++)o.blob.push([R()*2-1,R()*2-1,.4+R()*.5,R()]);
+  return shapeCache[i]=o}
+function drawBody(c,x,y,r,i,t,icon){
+  const s=shapes(i);c.save();
+  switch(i){
+  case 0:{glow(c,x,y,r*2,'170,120,255',.55);ball(c,x,y,r*.75,'#e6d4ff','#4a1aa6');c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=Math.max(1,r*.06);for(let k=0;k<3;k++){c.beginPath();c.arc(x,y,r*.5,t*2+k*2.1,t*2+k*2.1+1.1);c.stroke()}break}
+  case 1:{glow(c,x,y,r*2,'255,140,60',.5);ball(c,x,y,r*.8,'#ffd9a0','#c8501a');const q=[['#ff5d6c'],['#5cf08f'],['#5cb6ff']];q.forEach((col,k)=>{const a=t*1.5+k*2.094;ball(c,x+Math.cos(a)*r*.36,y+Math.sin(a)*r*.36,r*.2,'#fff',col[0])});break}
+  case 2:{glow(c,x,y,r*1.6,'127,224,255',.3);c.strokeStyle='rgba(127,224,255,.6)';c.lineWidth=Math.max(1,r*.05);for(let k=0;k<3;k++){c.beginPath();c.ellipse(x,y,r*.95,r*.32,k*1.047+.3,0,7);c.stroke()}
+    ball(c,x,y,r*.28,'#ffd28a','#e0662a');for(let k=0;k<3;k++){const a=t*(2+k*.4)+k,rot=k*1.047+.3,ex=Math.cos(a)*r*.95,ey=Math.sin(a)*r*.32;ball(c,x+ex*Math.cos(rot)-ey*Math.sin(rot),y+ex*Math.sin(rot)+ey*Math.cos(rot),r*.1,'#fff','#7fe0ff')}break}
+  case 3:{glow(c,x,y,r*1.6,'90,160,255',.35);const a=t*.6;const P=[[0,0,.5,'#9fd0ff','#2457c7'],[Math.cos(a)*.62,Math.sin(a)*.62,.3,'#ffffff','#9aa6c8'],[Math.cos(a+1.85)*.62,Math.sin(a+1.85)*.62,.3,'#ffffff','#9aa6c8']];
+    c.strokeStyle='rgba(220,230,255,.8)';c.lineWidth=r*.12;P.slice(1).forEach(p=>{c.beginPath();c.moveTo(x,y);c.lineTo(x+p[0]*r,y+p[1]*r);c.stroke()});P.forEach(p=>ball(c,x+p[0]*r,y+p[1]*r,p[2]*r,p[3],p[4]));break}
+  case 4:{glow(c,x,y,r*1.8,'255,150,200',.35);s.pts.slice(0,70).forEach((p,k)=>{const d=p[1]*r*1.1,a=p[0]+t*.15;c.globalAlpha=.4+.6*Math.abs(Math.sin(t*2+k));c.fillStyle=k%3?'#ffd6ef':'#bfe9ff';c.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d*.8,Math.max(1,r*.06),Math.max(1,r*.06))});c.globalAlpha=1;break}
+  case 5:{c.translate(x,y);c.rotate(t*.2);c.beginPath();s.poly.forEach((v,k)=>{const a=k/s.poly.length*6.283;c.lineTo(Math.cos(a)*v*r*.85,Math.sin(a)*v*r*.7)});c.closePath();const g=c.createRadialGradient(-r*.3,-r*.3,r*.1,0,0,r);g.addColorStop(0,'#b8a690');g.addColorStop(1,'#3d342c');c.fillStyle=g;c.fill();
+    c.fillStyle='rgba(30,24,20,.5)';s.cr.slice(0,4).forEach(q=>{c.beginPath();c.arc(q[0]*r*.4,q[1]*r*.3,q[2]*r*.8,0,7);c.fill()});break}
+  case 6:{glow(c,x,y,r*1.4,'220,225,255',.25);ball(c,x,y,r*.85,'#f4f4fa','#6e7086');c.save();c.beginPath();c.arc(x,y,r*.85,0,7);c.clip();c.fillStyle='rgba(80,82,100,.35)';s.cr.forEach(q=>{c.beginPath();c.arc(x+q[0]*r*.6,y+q[1]*r*.6,q[2]*r,0,7);c.fill()});c.restore();shade(c,x,y,r*.85);break}
+  case 7:{glow(c,x,y,r*1.5,'110,200,255',.45);ball(c,x,y,r*.85,'#7fd4ff','#123e8a');c.save();c.beginPath();c.arc(x,y,r*.85,0,7);c.clip();c.fillStyle='#4fbf6a';s.blob.slice(0,4).forEach(b=>{const bx=((b[0]+t*.05+1)%2)-1;c.beginPath();c.ellipse(x+bx*r,y+b[1]*r*.6,b[2]*r*.45,b[2]*r*.3,b[3]*3,0,7);c.fill()});c.fillStyle='rgba(255,255,255,.5)';c.beginPath();c.ellipse(x,y-r*.78,r*.5,r*.14,0,0,7);c.fill();c.restore();shade(c,x,y,r*.85);break}
+  case 8:{const R2=r*.72;c.strokeStyle='rgba(230,200,150,.55)';c.lineWidth=r*.1;c.beginPath();c.ellipse(x,y,r*1.15,r*.3,-.3,Math.PI,6.283);c.stroke();c.save();c.beginPath();c.arc(x,y,R2,0,7);c.clip();
+    const cols=['#f5d7a1','#d99a5b','#f0c58a','#b9703a','#f7e2bd','#c98450','#e8b178'];for(let k=0;k<7;k++){c.fillStyle=cols[k];c.fillRect(x-R2,y-R2+k*R2*2/7+Math.sin(t+k)*1.2,R2*2,R2*2/7+1)}c.restore();shade(c,x,y,R2);
+    c.beginPath();c.ellipse(x,y,r*1.15,r*.3,-.3,0,Math.PI);c.stroke();break}
+  case 9:{glow(c,x,y,r*2.2,'255,200,80',.6);c.translate(x,y);c.rotate(t*.3);c.strokeStyle='rgba(255,220,130,.35)';c.lineWidth=r*.08;for(let k=0;k<12;k++){c.rotate(.5236);c.beginPath();c.moveTo(r*.8,0);c.lineTo(r*(1.15+.15*Math.sin(t*3+k)),0);c.stroke()}c.rotate(-t*.3);ball(c,0,0,r*.78,'#fffbe6','#ffaa14');break}
+  case 10:{glow(c,x,y,r*2.4,'255,90,50',.55);ball(c,x,y,r*.98,'#ffc0a0','#b8230f');c.save();c.beginPath();c.arc(x,y,r*.98,0,7);c.clip();c.fillStyle='rgba(120,10,0,.25)';s.blob.forEach(b=>{c.beginPath();c.arc(x+b[0]*r*.7,y+b[1]*r*.7,b[2]*r*.4*(1+.1*Math.sin(t+b[3]*6)),0,7);c.fill()});c.restore();break}
+  case 11:{c.translate(x,y);c.rotate(t*2.5);for(const sg of [1,-1]){const g=c.createLinearGradient(0,0,0,-sg*r*1.6);g.addColorStop(0,'rgba(160,230,255,.8)');g.addColorStop(1,'rgba(160,230,255,0)');c.fillStyle=g;c.beginPath();c.moveTo(0,0);c.lineTo(-r*.25,-sg*r*1.6);c.lineTo(r*.25,-sg*r*1.6);c.closePath();c.fill()}
+    c.rotate(-t*2.5);glow(c,0,0,r*1.1,'160,230,255',.7);ball(c,0,0,r*.32,'#ffffff','#7fd6ff');break}
+  case 12:{const cols=['255,90,170','90,220,220','120,110,255','255,170,90','200,90,255','90,160,255'];s.blob.forEach((b,k)=>glow(c,x+b[0]*r*.6+Math.sin(t*.3+k)*r*.05,y+b[1]*r*.45,b[2]*r*1.2,cols[k],.45));
+    c.fillStyle='#fff';s.cr.forEach(q=>{c.globalAlpha=.6+.4*Math.sin(t*2+q[2]*30);c.fillRect(x+q[0]*r*.8,y+q[1]*r*.6,Math.max(1,r*.05),Math.max(1,r*.05))});c.globalAlpha=1;break}
+  case 13:case 14:{const q=i===14;
+    if(q){for(const sg of [-1,1]){const g=c.createLinearGradient(x,y,x,y+sg*r*2);g.addColorStop(0,'rgba(170,220,255,.9)');g.addColorStop(1,'rgba(170,220,255,0)');c.fillStyle=g;c.beginPath();c.moveTo(x-r*.08,y);c.lineTo(x-r*.22,y+sg*r*2);c.lineTo(x+r*.22,y+sg*r*2);c.lineTo(x+r*.08,y);c.fill()}}
+    glow(c,x,y,r*1.9,q?'150,200,255':'255,140,50',.5);
+    c.save();c.translate(x,y);c.scale(1,.32);c.rotate(t*.8);const dg=c.createRadialGradient(0,0,r*.45,0,0,r*1.3);dg.addColorStop(0,q?'#ffffff':'#fff2c0');dg.addColorStop(.35,q?'#8fd0ff':'#ff9a2e');dg.addColorStop(1,'rgba(255,80,20,0)');c.fillStyle=dg;c.beginPath();c.arc(0,0,r*1.3,0,7);c.arc(0,0,r*.42,0,7,true);c.fill();c.restore();
+    c.fillStyle='#000';c.beginPath();c.arc(x,y,r*.42,0,7);c.fill();c.strokeStyle=q?'rgba(200,235,255,.9)':'rgba(255,220,160,.9)';c.lineWidth=Math.max(1,r*.04);c.beginPath();c.arc(x,y,r*.45,0,7);c.stroke();
+    c.save();c.beginPath();c.rect(x-r*1.4,y,r*2.8,r);c.clip();c.translate(x,y);c.scale(1,.32);c.fillStyle=dg;c.beginPath();c.arc(0,0,r*1.3,0,Math.PI);c.arc(0,0,r*.42,Math.PI,0,true);c.fill();c.restore();break}
+  case 15:{glow(c,x,y,r*1.5,'190,170,255',.35);c.translate(x,y);c.scale(1,.55);c.rotate(-t*.12);s.pts.forEach(p=>{const d=p[1]*r*1.2;c.fillStyle=p[2]>.8?'#ffd6a0':p[2]>.4?'#cfd8ff':'#9ab0ff';c.globalAlpha=.5+p[2]*.5;const sz=Math.max(1,r*.035);c.fillRect(Math.cos(p[0])*d,Math.sin(p[0])*d,sz,sz)});c.globalAlpha=1;glow(c,0,0,r*.4,'255,240,210',.9);break}
+  case 16:{glow(c,x,y,r*1.6,'150,130,255',.25);s.blob.forEach((b,k)=>{c.save();c.translate(x+b[0]*r*.75,y+b[1]*r*.55);c.rotate(b[3]*6+t*.05);c.scale(1,.45);glow(c,0,0,r*.35*b[2]+r*.1,k%2?'255,220,170':'190,200,255',.9);c.restore()});break}
+  }
+  c.restore();
+}
+const cv=$('#cv'),ctx=cv.getContext('2d');let W=0,H=0,DPR=1;
+function resize(){const r=cv.getBoundingClientRect();DPR=Math.min(2,window.devicePixelRatio||1);W=r.width;H=r.height;cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR)}
+const stars=Array.from({length:150},(_,k)=>{const R=rng(k+5);return{x:R(),y:R(),z:.3+R()*.7,p:R()*6}});
+let floaters=[],parts=[],pulse=0,flash=0;
+function topTier(){let t=0;for(let i=0;i<N;i++)if(S.g[i].n)t=i;return t}
+function burst(i){const cx=W/2,cy=H/2;for(let k=0;k<14;k++){const a=Math.random()*6.283,v=40+Math.random()*90;parts.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,l:1,c:i})}}
+function drawSky(t,dt){
+  const c=ctx;c.setTransform(DPR,0,0,DPR,0,0);c.clearRect(0,0,W,H);
+  for(const s of stars){const x=((s.x*W+t*6*s.z)%W),y=s.y*H;c.globalAlpha=(.35+.65*Math.abs(Math.sin(t*s.z+s.p)))*s.z;c.fillStyle='#dfe6ff';c.fillRect(x,y,s.z*1.6,s.z*1.6)}c.globalAlpha=1;
+  const cx=W/2,cy=H/2,base=Math.min(W,H)*.24,tt=topTier();
+  const owned=[];for(let i=0;i<N;i++)if(S.g[i].n&&i!==tt)owned.push(i);
+  const rx=Math.min(W*.44,base*3.2),ry=Math.min(H*.42,base*1.25);
+  c.strokeStyle='rgba(127,224,255,.12)';c.lineWidth=1;c.beginPath();c.ellipse(cx,cy,rx,ry,0,0,7);c.stroke();
+  const orb=owned.map((i,k)=>{const a=t*(.25+.03*(k%5))+k*(6.283/Math.max(1,owned.length));return{i,x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry}});
+  orb.filter(o=>o.y<cy).forEach(o=>drawBody(c,o.x,o.y,Math.max(7,base*.22),o.i,t));
+  const sc=1+pulse*.12;drawBody(c,cx,cy,base*sc,tt,t);
+  orb.filter(o=>o.y>=cy).forEach(o=>drawBody(c,o.x,o.y,Math.max(7,base*.22),o.i,t));
+  pulse=Math.max(0,pulse-dt*4);
+  parts=parts.filter(p=>(p.l-=dt*1.4)>0);parts.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;c.globalAlpha=p.l;c.fillStyle='#ffd89a';c.fillRect(p.x,p.y,2.5,2.5)});c.globalAlpha=1;
+  floaters=floaters.filter(f=>(f.l-=dt*.9)>0);c.font='700 15px "JetBrains Mono",monospace';c.textAlign='center';floaters.forEach(f=>{f.y-=dt*40;c.globalAlpha=Math.min(1,f.l*1.5);c.fillStyle='#000';c.fillText(f.s,f.x+1,f.y+1);c.fillStyle='#ffd89a';c.fillText(f.s,f.x,f.y)});c.globalAlpha=1;
+  if(flash>0){c.fillStyle='rgba(255,255,255,'+Math.min(1,flash)+')';c.fillRect(0,0,W,H);flash-=dt*1.2}
+  $('#skyname').textContent=TIERS[tt].n;
+}
+cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),v=tapValue();earn(v);S.taps++;pulse=1;floaters.push({x:e.clientX-r.left,y:e.clientY-r.top,s:'+'+fmt(v),l:1});
+  for(let k=0;k<5;k++){const a=Math.random()*6.283,s=30+Math.random()*60;parts.push({x:e.clientX-r.left,y:e.clientY-r.top,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:.8})}});
+
+/* Kometen */
+const comet=$('#comet');let cometNext=0,cometObj=null;
+function scheduleComet(){cometNext=Date.now()+(50+Math.random()*90)*1000/(1+0.4*lv('comet'))}
+function spawnComet(){const fromLeft=Math.random()<.5;cometObj={t0:performance.now(),dur:9000,y0:.15+Math.random()*.5,y1:.15+Math.random()*.6,l:fromLeft};comet.hidden=false}
+function moveComet(now){if(!cometObj)return;const k=(now-cometObj.t0)/cometObj.dur;if(k>=1){comet.hidden=true;cometObj=null;scheduleComet();return}
+  const x=cometObj.l?-50+k*(W+100):W+50-k*(W+100),y=(cometObj.y0+(cometObj.y1-cometObj.y0)*k)*H;const ang=Math.atan2((cometObj.y1-cometObj.y0)*H,cometObj.l?W+100:-(W+100));
+  comet.style.transform='translate('+(x-23)+'px,'+(y-23)+'px) rotate('+ang+'rad)'}
+comet.addEventListener('click',()=>{comet.hidden=true;cometObj=null;scheduleComet();S.comets++;const f=1+0.5*lv('comet');
+  if(Math.random()<.5){S.boostUntil=Math.max(Date.now(),S.boostUntil)+30000*f;toast('Komet eingefangen: <b>Materiesturm</b> ×7 für '+Math.round(30*f)+' s')}
+  else{const v=Math.max(50,totalPS(true)*120*f);earn(v);toast('Komet eingefangen: <b>+'+fmt(v)+'</b> Materie')}flash=.35;checkAch()});
+
+/* ---------- Start ---------- */
+function start(data){
+  const had=load(data);recalc();
+  if(had){const away=Math.min((Date.now()-S.last)/1000,(4+2*lv('off'))*3600);
+    if(away>30){const ps=totalPS(true),gain=ps*away;if(gain>0){earn(gain);setTimeout(()=>modal('<h2>Willkommen zurück</h2><p>Dein Universum ist '+fmtT(away)+' lang ohne dich gewachsen.</p><div class="big num" style="color:var(--star)">+'+fmt(gain)+'</div><p>Materie</p>','Einsammeln'),300)}}}
+  buildModes();buildList();updList();updTop();resize();scheduleComet();
+  if(!had)setTimeout(()=>modal('<h2>Kosmos Schmiede</h2><p>Kaufe deinen ersten Quark. Jedes Objekt erzeugt in Zyklen Materie. Mit Materie kaufst du mehr Objekte und entdeckst immer größere: vom Proton bis zum Galaxienhaufen.</p><p>Tippe auf den Himmel für Extra-Materie und fange vorbeifliegende Kometen ein.</p>','Los geht’s'),200);
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>switchView(b.dataset.v));
+  new ResizeObserver(resize).observe(cv);
+  let last=performance.now(),acc=0,acc2=0,acc3=0;
+  function frame(now){const dt=Math.min(1,(now-last)/1000);last=now;
+    if(dt>0){tick(dt);autoBuy(dt);}
+    acc+=dt;acc2+=dt;acc3+=dt;
+    if(acc>0.1){acc=0;updTop();if(view==='kosmos'){buildList();updList()}}
+    if(acc2>1){acc2=0;checkAch();if(view==='ups')renderUps();if(view==='bang'&&bangArm<Date.now())renderBang()}
+    if(acc3>5){acc3=0;save()}
+    if(!cometObj&&Date.now()>cometNext&&S.g[0].n)spawnComet();moveComet(now);
+    if(view==='kosmos')updBars();drawSky(now/1000,dt);requestAnimationFrame(frame)}
+  requestAnimationFrame(frame);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)save();else{const away=Math.min((Date.now()-S.last)/1000,(4+2*lv('off'))*3600);if(away>2){tick(Math.min(away,5));const rest=away-Math.min(away,5);if(rest>0)earn(totalPS(true)*rest)}last=performance.now()}});
+  window.addEventListener('pagehide',save);
+}
+window.claude?.hot?.snapshot?.(()=>({save:JSON.stringify(S)}));
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+})();
+</script>
+<!--BODY-END-->
+</html>

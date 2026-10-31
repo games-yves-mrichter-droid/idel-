@@ -26,3 +26,17 @@ Selbst bauen: `cd android && gradle assembleRelease` (benötigt Android SDK 34).
 - Offline-Einnahmen (bis 12 Stunden)
 - **Gratis-Menü:** Gold/Juwelen/Tickets kostenlos, Unendlich-Modus, alles freischalten
 - Spielstand wird lokal gespeichert, Export/Import möglich
+
+---
+
+# Kosmos Schmiede (neues Spiel)
+
+Ein Weltraum-Idle-Spiel im Ordner [`kosmos/`](kosmos/index.html): vom Quark bis zum Galaxienhaufen.
+Einfach `kosmos/index.html` im Browser öffnen – läuft offline, Spielstand wird lokal gespeichert.
+
+- 17 kosmische Objekte (Quark, Proton, Atom, Molekül, Sternenstaub, Asteroid, Mond, Planet, Gasriese, Stern, Roter Riese, Neutronenstern, Nebel, Schwarzes Loch, Quasar, Galaxie, Galaxienhaufen), jedes mit eigener animierter Grafik
+- Objekte erzeugen in Zyklen Materie; Meilensteine (10/25/50/100 → Tempo ×2, ab 150 → Ertrag ×3)
+- Kaufmengen ×1, ×10, ×100, bis zum nächsten Meilenstein oder Maximum
+- Tippen auf den Himmel bringt Extra-Materie, vorbeifliegende Kometen geben Boni (Materiesturm ×7)
+- 98 Upgrades, Urknall-Prestige mit Singularitäten (+10 % je Stück) und Forschung mit Quantenpunkten (u. a. Auto-Kauf)
+- Über 100 Erfolge (+2 % Produktion je Erfolg), Offline-Einnahmen, Export/Import des Spielstands
