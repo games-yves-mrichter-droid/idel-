@@ -43,3 +43,4 @@ Selbst bauen: `cd android-kosmos && gradle assembleRelease` (benötigt Android S
 - Tippen auf den Himmel bringt Extra-Materie, vorbeifliegende Kometen geben Boni (Materiesturm ×7)
 - 98 Upgrades, Urknall-Prestige mit Singularitäten (+10 % je Stück) und Forschung mit Quantenpunkten (u. a. Auto-Kauf)
 - Über 100 Erfolge (+2 % Produktion je Erfolg), Offline-Einnahmen, Export/Import des Spielstands
+- Sound: ruhige Weltraum-Ambientmusik und Effekte für Tippen, Kaufen, Meilensteine, Kometen, Erfolge und Urknall – alles live im Browser erzeugt, Lautstärke im Menü einstellbar, Stumm-Taste am Himmel
