@@ -111,7 +111,8 @@ nav button{position:relative}
 #battle{position:fixed;left:0;right:0;bottom:calc(60px + env(safe-area-inset-bottom));background:linear-gradient(#35245ff2,#24173ff7);border-top:2px solid #ffd25e;border-radius:22px 22px 0 0;padding:10px 12px 12px;transform:translateY(110%);transition:transform .25s;z-index:16}
 #battle.open{transform:none}
 #battle button.btn{padding:8px 4px;font-size:12px}
-#place{position:fixed;left:8px;right:8px;bottom:calc(68px + env(safe-area-inset-bottom));display:none;gap:6px;align-items:center;background:#1c1233ee;border:2px solid #ffd25e;border-radius:16px;padding:8px;z-index:17}
+#place button.btn{padding:8px 10px;font-size:13px}
+#place{position:fixed;left:8px;right:8px;bottom:calc(68px + env(safe-area-inset-bottom));display:none;flex-wrap:wrap;gap:6px;align-items:center;background:#1c1233ee;border:2px solid #ffd25e;border-radius:16px;padding:8px;z-index:17}
 #photo{position:fixed;left:0;right:0;bottom:calc(20px + env(safe-area-inset-bottom));display:none;justify-content:center;gap:14px;z-index:30}
 #photo button{width:58px;height:58px;border-radius:50%;border:3px solid #fff;background:#0007;color:#fff;font-size:24px}
 #photo button.snap{width:74px;height:74px;background:#fff;color:#000}
@@ -1191,14 +1192,15 @@ function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);c
 addEventListener('resize',resize);resize();
 const ptrs=new Map();let tap=null,pinch0=0,d0=0;
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(ptrs.size===1)tap={x:e.clientX,y:e.clientY,t:performance.now(),moved:0};
+  if(ptrs.size===1)tap={x:e.clientX,y:e.clientY,t:performance.now(),moved:0};if(ptrs.size===1){if(dragStart(e))return;lpStart(e)}else{clearTimeout(LP);DRAG=null}
   if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);d0=cam.wd;tap=null}});
 canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
   if(GAME&&GAME.type==='beeren'){berryDrag(e.clientX,e.clientY);return}
+  if(DRAG){dragMove(e);return}
   if(ptrs.size===1){cam.wth-=dx*.008;cam.wph=clamp(cam.wph-dy*.006,PHOTO?.12:.3,PHOTO?1.45:.98);if(tap){tap.moved+=Math.abs(dx)+Math.abs(dy)}}
   else if(ptrs.size===2){const[a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);if(pinch0>0)cam.wd=clamp(d0*pinch0/d,PHOTO?2.5:5,PHOTO?30:22)}});
-function up(e){ptrs.delete(e.pointerId);if(tap&&ptrs.size===0&&tap.moved<10&&performance.now()-tap.t<500)onTap(e.clientX,e.clientY);if(ptrs.size===0)tap=null}
-canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);tap=null});
+function up(e){ptrs.delete(e.pointerId);clearTimeout(LP);if(DRAG&&DRAG.id===e.pointerId){DRAG=null;sfx('pop');tap=null}if(tap&&ptrs.size===0&&tap.moved<10&&performance.now()-tap.t<500)onTap(e.clientX,e.clientY);if(ptrs.size===0)tap=null}
+canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);tap=null;DRAG=null;clearTimeout(LP)});
 canvas.addEventListener('wheel',e=>{cam.wd=clamp(cam.wd*(1+Math.sign(e.deltaY)*.1),5,22);e.preventDefault()},{passive:false});
 const ray=new THREE.Raycaster();
 function onTap(x,y){if(PHOTO||BATTLE)return;if(GAME)return gameTap(x,y);if(PL||PLEDIT)return placeTap(x,y);ray.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
@@ -1387,7 +1389,7 @@ function renderPage(){const pg=$('#page');let h='';
     h+=`<h2 style="margin-top:18px">⚗️ Zaubertränke</h2><div class="sub">Tränke für Energie und Erfahrung landen in deinem Beutel und werden im Wesen-Menü benutzt.</div>`+POTIONS.map(p=>`<div class="card row"><div style="font-size:30px">${p.e}</div><div class="grow"><b>${p.n}</b>${p.use&&(S.inv||{})[p.id]?` <span class="tag">${S.inv[p.id]}× im Beutel</span>`:''}<div style="font-size:12px;color:var(--muted)">${p.d}</div></div><button class="btn y" data-pot="${p.id}" data-p="${potPrice(p)}" ${S.gold<potPrice(p)?'disabled':''}>${fmt(potPrice(p))} 💰</button></div>`).join('');
     h+=`<h2 style="margin-top:18px">🏡 Deko für ${WORLD_DEF[S.world||'wald'].n}</h2><div class="sub">Stelle Deko auf – deine Wesen spielen damit (rutschen, schaukeln, hüpfen …) und jede Deko gibt einen Bonus. Wesen, die eine Deko mögen, haben zusätzlich bessere Laune und verdienen 10 % mehr Gold.</div>
       ${(()=>{const act=Object.keys(DECO).filter(k=>hasDeco(k,S.world||'wald'));return act.length?`<div class="card" style="font-size:12px;line-height:1.6"><b>✅ Aktive Boni hier</b><br>${act.map(k=>DECO[k].e+' '+DECO[k].bonus).join('<br>')}</div>`:''})()}
-      <button class="btn b" style="width:100%;margin-bottom:10px" data-deco="_edit">✋ Aufgestellte Deko verschieben</button>`+Object.entries(DECO).map(([k,d])=>`<div class="card row"><div style="font-size:30px">${d.e}</div><div class="grow"><b>${d.n}</b><div style="font-size:12px;color:#ffd25e">${d.bonus}</div><div style="font-size:12px;color:var(--muted)">Mögen: ${d.like.slice(0,4).map(x=>S.seen[x]!==undefined?SPECIES[x].n:'???').join(', ')}</div></div><button class="btn y" data-deco="${k}" data-p="${d.p}" ${S.gold<d.p?'disabled':''}>${fmt(d.p)} 💰</button></div>`).join('');
+      <button class="btn b" style="width:100%;margin-bottom:10px" data-deco="_edit">✋ Deko verschieben & Lager${Object.values(S.decoInv||{}).reduce((a,n)=>a+n,0)?' ('+Object.values(S.decoInv).reduce((a,n)=>a+n,0)+' eingelagert)':''}</button>`+Object.entries(DECO).map(([k,d])=>`<div class="card row"><div style="font-size:30px">${d.e}</div><div class="grow"><b>${d.n}</b><div style="font-size:12px;color:#ffd25e">${d.bonus}</div><div style="font-size:12px;color:var(--muted)">Mögen: ${d.like.slice(0,4).map(x=>S.seen[x]!==undefined?SPECIES[x].n:'???').join(', ')}</div></div><button class="btn y" data-deco="${k}" data-p="${d.p}" ${S.gold<d.p?'disabled':''}>${fmt(d.p)} 💰</button></div>`).join('');
     h+=`<h2 style="margin-top:18px">🏗️ Ausbau</h2><div class="sub">Mehr Platz für mehr Fabelwesen.</div>
       <div class="card row"><div class="grow"><b>🌲 Waldplatz +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.slots} Plätze</div></div><button class="btn y" data-up="slot" data-p="${slotPrice()}" ${S.gold<slotPrice()?'disabled':''}>${fmt(slotPrice())} 💰</button></div>
       ${S.nests<NEST_POS.length?`<div class="card row"><div class="grow"><b>🪺 Nest +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.nests} Nester – mehr Eier gleichzeitig ausbrüten</div></div><button class="btn y" data-up="nest" data-p="${nestPrice()}" ${S.gold<nestPrice()?'disabled':''}>${fmt(nestPrice())} 💰</button></div>`:''}`}
@@ -1425,7 +1427,7 @@ function renderPage(){const pg=$('#page');let h='';
 function tickShop(){$('#page').querySelectorAll('[data-p]').forEach(b=>b.disabled=S.gold<+b.dataset.p)}
 $('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[data-buy],[data-up],[data-bk],[data-m],[data-pot],[data-ach],[data-bt],[data-deco],[data-world],[data-wg],[data-season]');if(!t)return;const d=t.dataset;
   if(d.nat!==undefined){shopNat=+d.nat;renderPage()}
-  if(d.deco){if(d.deco==='_edit'){PLEDIT=true;goPage('insel');focusOn(V(0,.5,0),18);showPlaceBar()}else buyDeco(d.deco)}
+  if(d.deco){if(d.deco==='_edit'){enterEdit();focusOn(V(0,.5,0),17)}else buyDeco(d.deco)}
   if(d.world)worldsModal();
   if(d.season){try{if(d.season==='auto')localStorage.removeItem('fabelwesen-season');else localStorage.setItem('fabelwesen-season',d.season)}catch(e){}save();location.reload()}
   if(d.buy)buyEgg(d.buy,shopNat);if(d.pot)buyPotion(d.pot);if(d.ach)claimAch(d.ach);
@@ -1440,7 +1442,7 @@ $('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[da
     $('#impOk').onclick=()=>{try{const n=JSON.parse(decodeURIComponent(escape(atob($('#impT').value.trim()))));if(!n.creatures)throw 0;localStorage.setItem(KEY,JSON.stringify(n));location.reload()}catch(err){toast('Ungültiger Code')}}}
   if(d.m==='q'){save();try{localStorage.setItem('fabelwesen-q',HQ?'0':'1')}catch(e){}location.reload()}
   if(d.m==='reset')confirmModal('Neues Spiel starten?','Alle Fabelwesen und das Gold gehen verloren!',()=>{localStorage.removeItem(KEY);S=null;location.reload()})});
-window.onAndroidBack=()=>{if(GAME||BATTLE)return true;if(PHOTO){photoMode(false);return true}if(PL||PLEDIT){PL=null;PLEDIT=false;showPlaceBar();return true}if($('#modal').classList.contains('open')){closeModal();return true}if(curPage!=='insel'){goPage('insel');return true}if(selId!==null){closeSheet();return true}save();return false};
+window.onAndroidBack=()=>{if(GAME||BATTLE)return true;if(PHOTO){photoMode(false);return true}if(PL||PLEDIT){if(PL)finishSel(false);PLEDIT=false;showPlaceBar();return true}if($('#modal').classList.contains('open')){closeModal();return true}if(curPage!=='insel'){goPage('insel');return true}if(selId!==null){closeSheet();return true}save();return false};
 
 /* ================== Tageszeit (1 Spielstunde = 1 echte Minute) & Wetter ================== */
 const DN={h:12,e:1,night:0,rain:0,fog:0};
@@ -1856,21 +1858,68 @@ function makeDeco(t){const g=new THREE.Group(),wood=M(0x8a5a32,{sk:'wood'}),ston
 const DECOOBJ={};
 function placeDecoObj(d){const o=makeDeco(d.t);o.position.set(d.x,0,d.z);o.rotation.y=d.r||0;o.userData.deco=d.id;ensureWorld(d.w||'wald').add(o);DECOOBJ[d.id]=o;return o}
 const likedDeco=c=>(S.deco||[]).find(d=>(d.w||'wald')===(c.home||'wald')&&DECO[d.t].like.includes(c.sp));
-let PL=null,PLEDIT=false;
-function buyDeco(t){const D_=DECO[t];if(S.gold<D_.p)return toast('Nicht genug Gold!');S.gold-=D_.p;sfx('buy');goPage('insel');
-  const d={id:S.nextId++,t,x:cam.tgt.x,z:cam.tgt.z,r:0,w:S.world||'wald'};PL={d,o:placeDecoObj(d),isNew:1};focusOn(V(d.x,.5,d.z),14);showPlaceBar()}
-function showPlaceBar(){const b=$('#place');if(!PL&&!PLEDIT){b.style.display='none';return}b.style.display='flex';
-  b.innerHTML=PL?`<div class="grow" style="font-size:12px">${DECO[PL.d.t].e} Tippe auf den Boden zum Platzieren</div><button class="btn gr" data-pl="rot">↻</button>${PL.isNew?'':'<button class="btn gr" data-pl="del">🗑️</button>'}<button class="btn y" data-pl="ok">✓ Fertig</button>`
-    :`<div class="grow" style="font-size:12px">🏡 Tippe auf eine Deko, um sie zu verschieben</div><button class="btn y" data-pl="end">Fertig</button>`}
-function placeTap(x,y){const r=new THREE.Raycaster();r.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
-  if(!PL){const objs=Object.values(DECOOBJ).filter(o=>o.parent===WG[S.world||'wald']);const h=r.intersectObjects(objs,true)[0];if(!h)return;let o=h.object;while(o&&o.userData.deco===undefined)o=o.parent;
-    const d=S.deco.find(q=>q.id===o.userData.deco);if(d){PL={d,o};showPlaceBar()}return}
-  const p=new V3();if(r.ray.intersectPlane(new THREE.Plane(UP,0),p)){const l=Math.hypot(p.x,p.z);if(l>12){p.x*=12/l;p.z*=12/l}PL.d.x=p.x;PL.d.z=p.z;PL.o.position.set(p.x,0,p.z);burst('✨',PL.o.position.clone().add(new V3(0,.3,0)),3,{size:.3,spd:1,up:1})}}
-$('#place').addEventListener('click',e=>{const b=e.target.closest('[data-pl]');if(!b)return;const a=b.dataset.pl;
-  if(a==='rot'&&PL){PL.d.r=(PL.d.r||0)+Math.PI/4;PL.o.rotation.y=PL.d.r}
-  if(a==='del'&&PL){PL.o.parent.remove(PL.o);delete DECOOBJ[PL.d.id];S.deco=S.deco.filter(q=>q!==PL.d);S.gold+=Math.round(DECO[PL.d.t].p/2);toast(`🗑️ Verkauft (+${fmt(Math.round(DECO[PL.d.t].p/2))} 💰)`);PL=null}
-  if(a==='ok'&&PL){if(PL.isNew){S.deco=S.deco||[];S.deco.push(PL.d);toast(`${DECO[PL.d.t].e} ${DECO[PL.d.t].n} aufgestellt!`)}PL=null;if(!PLEDIT)PLEDIT=false}
-  if(a==='end'){PLEDIT=false;PL=null}save();refresh();showPlaceBar()});
+let PL=null,PLEDIT=false,DRAG=null;
+// Platzbedarf je Deko (Radius)
+const DECO_R={laterne:.5,feenhaus:1.3,brunnen:1.4,blumenbeet:1.2,bruecke:1.8,kessel:.8,kristall:.8,grab:1.3,bank:1,feuer:.8,statue:1.2,schaukel:1.2,rutsche:1.9,trampolin:1.1};
+const PRING=new THREE.Mesh(new THREE.RingGeometry(.86,1,48),new THREE.MeshBasicMaterial({color:0x6ee7a0,transparent:true,opacity:.75,depthWrite:false,side:THREE.DoubleSide}));
+PRING.rotation.x=-Math.PI/2;PRING.renderOrder=3;PRING.visible=false;scene.add(PRING);
+const PDISC=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:0x6ee7a0,transparent:true,opacity:.15,depthWrite:false}));PDISC.rotation.x=-Math.PI/2;PRING.add(PDISC);PDISC.rotation.x=0;
+function placeOk(d){const r=DECO_R[d.t]||1,w=d.w||'wald';if(Math.hypot(d.x,d.z)>13-r*.4)return'Zu nah am Waldrand';
+  if(w==='wald'&&Math.hypot(d.x+6,d.z+3.5)<2.6+r*.8)return'Hier ist der Teich';
+  if(NEST_POS.slice(0,S.nests).some(p=>Math.hypot(d.x-p[0],d.z-p[1])<.9+r*.8))return'Hier liegt ein Nest';
+  for(const o of S.deco||[]){if(o===d||(o.w||'wald')!==w)continue;if(Math.hypot(d.x-o.x,d.z-o.z)<(r+(DECO_R[o.t]||1))*.75)return'Zu nah an '+DECO[o.t].n}return''}
+function freeSpotFor(d){const c=cam.tgt;for(let i=0;i<200;i++){const a=i*2.4,rr=Math.sqrt(i)*.6;d.x=clamp(c.x+Math.cos(a)*rr,-11,11);d.z=clamp(c.z+Math.sin(a)*rr,-11,11);if(!placeOk(d))return}d.x=c.x;d.z=c.z}
+function snapD(d){if(!S.snap)return;d.x=Math.round(d.x*2)/2;d.z=Math.round(d.z*2)/2}
+function stopUsers(d){for(const id in W.cre){const w=W.cre[id];if(w.use&&w.use.d===d)endUse(w,crById(+id),0)}}
+function selectDeco(d,o,isNew,fromInv){if(PL&&PL.d!==d)finishSel(false);stopUsers(d);PL={d,o,isNew,fromInv,orig:{x:d.x,z:d.z,r:d.r||0}};sfx('pop');showPlaceBar()}
+function finishSel(confirm){if(!PL)return;const {d,o}=PL;o.position.y=0;
+  if(confirm){if(placeOk(d)){toast(placeOk(d));return false}if(PL.isNew){S.deco=S.deco||[];S.deco.push(d);toast(`${DECO[d.t].e} ${DECO[d.t].n} aufgestellt!`)}burst('✨',o.position.clone().add(new V3(0,.4,0)),6,{size:.35,spd:1.2,up:1.5});sfx('coin')}
+  else if(PL.isNew){o.parent.remove(o);delete DECOOBJ[d.id];if(PL.fromInv)S.decoInv[d.t]=(S.decoInv[d.t]||0)+1;else S.gold+=DECO[d.t].p}
+  else{d.x=PL.orig.x;d.z=PL.orig.z;d.r=PL.orig.r;o.position.set(d.x,0,d.z);o.rotation.y=d.r}
+  PL=null;save();refresh();return true}
+function enterEdit(){if(PLEDIT)return;PLEDIT=true;closeSheet();goPage('insel');cam.wph=Math.min(cam.wph,.6);cam.wd=Math.max(cam.wd,15);showPlaceBar()}
+function exitEdit(){if(PL&&finishSel(true)===false)return;PLEDIT=false;PL=null;showPlaceBar()}
+function buyDeco(t){const D_=DECO[t];if(S.gold<D_.p)return toast('Nicht genug Gold!');S.gold-=D_.p;sfx('buy');newPlacement(t,false)}
+function newPlacement(t,fromInv){enterEdit();const d={id:S.nextId++,t,x:0,z:0,r:0,w:S.world||'wald'};freeSpotFor(d);snapD(d);const o=placeDecoObj(d);selectDeco(d,o,true,fromInv);focusOn(V(d.x,.5,d.z),15);
+  toast('👆 Ziehe die Deko mit dem Finger an ihren Platz')}
+const decoHit=(x,y)=>{const r=new THREE.Raycaster();r.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
+  const objs=Object.values(DECOOBJ).filter(o=>o.parent===WG[S.world||'wald']);const h=r.intersectObjects(objs,true)[0];if(!h)return null;let o=h.object;while(o&&o.userData.deco===undefined)o=o.parent;
+  const d=[...(S.deco||[]),...(PL?[PL.d]:[])].find(q=>q.id===o.userData.deco);return d?{d,o}:null};
+const groundAt=(x,y)=>{const r=new THREE.Raycaster();r.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);const p=new V3();return r.ray.intersectPlane(new THREE.Plane(UP,0),p)?p:null};
+function moveSel(x,z){const d=PL.d;d.x=x;d.z=z;const l=Math.hypot(d.x,d.z);if(l>13){d.x*=13/l;d.z*=13/l}snapD(d);PL.o.position.x=d.x;PL.o.position.z=d.z}
+// Antippen im Bearbeiten-Modus
+function placeTap(x,y){const h=decoHit(x,y);if(h){if(!PL||PL.d!==h.d)selectDeco(h.d,h.o,false);return}if(!PL)return;const p=groundAt(x,y);if(p){moveSel(p.x,p.z);burst('✨',PL.o.position.clone().add(new V3(0,.3,0)),3,{size:.3,spd:1,up:1})}}
+// Ziehen mit dem Finger
+function dragStart(e){if(!(PLEDIT||PL)||ptrs.size!==1)return false;const h=decoHit(e.clientX,e.clientY);if(!h)return false;if(!PL||PL.d!==h.d)selectDeco(h.d,h.o,false);
+  const p=groundAt(e.clientX,e.clientY);DRAG={id:e.pointerId,off:p?V(PL.d.x-p.x,0,PL.d.z-p.z):V(0,0,0)};tap=null;return true}
+function dragMove(e){if(!DRAG||e.pointerId!==DRAG.id)return false;const p=groundAt(e.clientX,e.clientY);if(p)moveSel(p.x+DRAG.off.x,p.z+DRAG.off.z);return true}
+// Lange drücken auf eine Deko startet das Verschieben auch ohne Menü
+let LP=null;
+function lpStart(e){clearTimeout(LP);if(PLEDIT||PL||GAME||BATTLE||PHOTO||curPage!=='insel')return;const x=e.clientX,y=e.clientY,id=e.pointerId;
+  LP=setTimeout(()=>{if(!tap||tap.moved>10||ptrs.size!==1)return;const h=decoHit(x,y);if(!h)return;try{navigator.vibrate&&navigator.vibrate(30)}catch(_){}
+    enterEdit();selectDeco(h.d,h.o,false);const p=groundAt(x,y);DRAG={id,off:p?V(h.d.x-p.x,0,h.d.z-p.z):V(0,0,0)};tap=null},480)}
+function updPlace(){const on=!!PL;PRING.visible=on;if(!on)return;const d=PL.d,r=(DECO_R[d.t]||1)*1.05,err=placeOk(d);
+  PRING.position.set(d.x,.04,d.z);PRING.scale.setScalar(r);const col=err?0xff5a5a:0x6ee7a0;PRING.material.color.setHex(col);PDISC.material.color.setHex(col);
+  PL.o.position.y=(DRAG?.35:.12)+Math.sin(T*5)*.05;const b=$('#place').querySelector('[data-pl="ok"]');if(b)b.disabled=!!err;const m=$('#plmsg');if(m)m.textContent=err?'⚠️ '+err:(DRAG?'Loslassen zum Abstellen':'👆 Ziehen zum Verschieben')}
+function showPlaceBar(){const b=$('#place');if(!PL&&!PLEDIT){b.style.display='none';return}b.style.display='flex';const inv=Object.values(S.decoInv||{}).reduce((a,n)=>a+n,0);
+  b.innerHTML=PL?`<div style="width:100%;font-size:12px;display:flex;gap:6px;align-items:center"><b>${DECO[PL.d.t].e} ${DECO[PL.d.t].n}</b><span id="plmsg" class="grow" style="color:var(--muted)"></span></div>
+      <button class="btn gr" data-pl="rotl">↺</button><button class="btn gr" data-pl="rot">↻</button><button class="btn ${S.snap?'b':'gr'}" data-pl="snap">🧲 Raster</button>
+      ${PL.isNew?'':'<button class="btn gr" data-pl="store">📦</button><button class="btn gr" data-pl="del">🗑️</button>'}<button class="btn gr" data-pl="cancel">✕</button><button class="btn y grow" data-pl="ok">✓ Fertig</button>`
+    :`<div class="grow" style="font-size:12px">🏡 Tippe oder ziehe eine Deko.<br><span style="color:var(--muted)">Tipp: Lange auf eine Deko drücken startet das Verschieben jederzeit.</span></div><button class="btn b" data-pl="inv">📦 Lager${inv?' ('+inv+')':''}</button><button class="btn y" data-pl="end">Fertig</button>`}
+function invModal(){const inv=S.decoInv||{},ks=Object.keys(inv).filter(k=>inv[k]>0);
+  modal(`<h2 style="margin-top:0">📦 Deko-Lager</h2>${ks.length?ks.map(k=>`<div class="task" style="text-align:left"><div class="e">${DECO[k].e}</div><div class="i"><b>${DECO[k].n} × ${inv[k]}</b><span>${DECO[k].bonus}</span></div><button class="btn y" data-iv="${k}">Aufstellen</button></div>`).join(''):'<p style="color:var(--muted)">Das Lager ist leer. Mit 📦 kannst du aufgestellte Deko einlagern, ohne sie zu verkaufen.</p>'}<button class="btn gr" style="width:100%" onclick="closeModal()">Schließen</button>`);
+  $('#mbox').querySelectorAll('[data-iv]').forEach(b=>b.onclick=()=>{const k=b.dataset.iv;S.decoInv[k]--;closeModal();newPlacement(k,true)})}
+$('#place').addEventListener('click',e=>{const b=e.target.closest('[data-pl]');if(!b||b.disabled)return;const a=b.dataset.pl;
+  if((a==='rot'||a==='rotl')&&PL){PL.d.r=(PL.d.r||0)+(a==='rot'?-1:1)*Math.PI/(S.snap?4:8);PL.o.rotation.y=PL.d.r}
+  if(a==='snap'){S.snap=!S.snap;if(PL){snapD(PL.d);PL.o.position.x=PL.d.x;PL.o.position.z=PL.d.z}toast(S.snap?'🧲 Raster an':'🧲 Raster aus')}
+  if(a==='del'&&PL){const d=PL.d,g=Math.round(DECO[d.t].p/2);confirmModal(`${DECO[d.t].e} ${DECO[d.t].n} verkaufen?`,`Du bekommst ${fmt(g)} 💰 zurück. Mit 📦 kannst du sie stattdessen kostenlos einlagern.`,()=>{PL.o.parent.remove(PL.o);delete DECOOBJ[d.id];S.deco=S.deco.filter(q=>q!==d);S.gold+=g;PL=null;toast(`🗑️ Verkauft (+${fmt(g)} 💰)`);save();refresh();showPlaceBar()});return}
+  if(a==='store'&&PL){const d=PL.d;PL.o.parent.remove(PL.o);delete DECOOBJ[d.id];S.deco=S.deco.filter(q=>q!==d);S.decoInv=S.decoInv||{};S.decoInv[d.t]=(S.decoInv[d.t]||0)+1;PL=null;toast(`📦 ${DECO[d.t].n} eingelagert`)}
+  if(a==='cancel')finishSel(false);
+  if(a==='ok'&&PL)finishSel(true);
+  if(a==='inv')invModal();
+  if(a==='end')exitEdit();
+  save();refresh();showPlaceBar()});
+
 
 /* ================== Vorübergehende Wesen (wild, Rivalen) ================== */
 const TEMPS=[];
@@ -2044,7 +2093,7 @@ function updWorldFX(dt){if(WORLD_FX.foam)WORLD_FX.foam.material.opacity=.4+.25*M
 const hasDeco=(t,w)=>(S.deco||[]).some(d=>d.t===t&&(w===undefined||(d.w||'wald')===w));
 const USED={};
 const APPROACH={laterne:[.8,0,.6],feenhaus:[0,0,1.6],brunnen:[1.6,0,0],blumenbeet:[1.4,0,0],bruecke:[-2.2,0,0],kessel:[1.15,0,0],kristall:[1.3,0,0],grab:[0,0,1.3],bank:[0,0,.9],feuer:[1.4,0,.3],statue:[1.5,0,0],schaukel:[0,0,1.1],rutsche:[-1.75,0,0],trampolin:[1.5,0,0]};
-function tryUse(w,c){const home=c.home||'wald',list=(S.deco||[]).filter(d=>(d.w||'wald')===home&&DECOOBJ[d.id]&&!(USED[d.id]&&USED[d.id].use)&&(!PL||PL.d!==d));if(!list.length)return false;
+function tryUse(w,c){if(PLEDIT)return false;const home=c.home||'wald',list=(S.deco||[]).filter(d=>(d.w||'wald')===home&&DECOOBJ[d.id]&&!(USED[d.id]&&USED[d.id].use)&&(!PL||PL.d!==d));if(!list.length)return false;
   const liked=list.filter(d=>DECO[d.t].like.includes(c.sp)),near=list.filter(d=>Math.hypot(d.x-w.pos.x,d.z-w.pos.z)<14);
   const d=liked.length&&Math.random()<.6?pick(liked):near.length?pick(near):null;if(!d)return false;const o=DECOOBJ[d.id];o.updateMatrixWorld(true);
   const a=APPROACH[d.t]||[1.3,0,0];w.use={d,o,t:0,ph:'go',ap:o.localToWorld(V(...a)),n:0};USED[d.id]=w;w.act=null;w.state='idle';return true}
@@ -2171,7 +2220,7 @@ function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2
 let fpsN=0,fpsT=0,fpsDone=0,VOFF=0;
 function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;updDay(dt);updGame(dt);updSound(dt);updMusic();waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
   updInts(dt);
-  for(const id in W.cre)animCreature(id,W.cre[id],dt);TEMPS.forEach(t=>animCreature(t.c.id,t.w,dt,t.c));updProj(dt);updSeason(dt);updWorldFX(dt);
+  for(const id in W.cre)animCreature(id,W.cre[id],dt);TEMPS.forEach(t=>animCreature(t.c.id,t.w,dt,t.c));updProj(dt);updSeason(dt);updPlace();updWorldFX(dt);
   for(const e of S.eggs){const o=W.eggs[e.id];if(!o)continue;const b=o.userData.base;if(!b)continue;o.userData.wob=Math.max(0,(o.userData.wob||0)-dt*2);
     const ready=e.end<=now();o.position.set(b.x,b.y+(ready?Math.abs(Math.sin(T*4))*.12:0),b.z);o.rotation.z=Math.sin(T*(ready?9:2))*(ready?.12:.03)+Math.sin(T*30)*o.userData.wob*.2}
   for(let i=W.hatch.length-1;i>=0;i--){const h=W.hatch[i];h.t+=dt;h.o.rotation.z=Math.sin(h.t*35)*h.t*.25;h.o.scale.setScalar(1+h.t*.15);if(h.t>1.4){W.hatch.splice(i,1);finishHatch(h)}}
