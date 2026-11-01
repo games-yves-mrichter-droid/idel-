@@ -94,6 +94,12 @@ p{margin:4px 0;color:var(--dim);max-width:65ch}
 .btn.ion{background:linear-gradient(#a6ecff,#3fb4e0);color:#04202c}
 .btn.violet{background:linear-gradient(#e2c6ff,#9a5cf0);color:#1b0836}
 .btn.ghost{background:var(--hull2);color:var(--ink);border:1px solid var(--seam)}
+.btn.sw-on{background:linear-gradient(#a8f5c8,#3fbf7a);color:#06210f}
+.btn.sw-off{background:var(--hull2);color:var(--ink);border:1px solid var(--seam)}
+.chip{white-space:nowrap}
+@media (max-width:440px){.modes .lbl{display:none}.modes{justify-content:space-between}.chip{padding:4px 8px}}
+.chip.auto{margin-left:auto}
+.chip.auto.on{background:var(--life);border-color:var(--life);color:#06210f}
 .btn.danger{background:linear-gradient(#ff9aae,#e0425f);color:#2c0310}
 .btn:disabled{background:var(--hull2);color:var(--dim);cursor:default}
 .big{font:700 26px var(--f-num);color:#d8b4ff}
@@ -295,7 +301,9 @@ function toast(h){const d=document.createElement('div');d.innerHTML=h;$('#toast'
 function modal(h,btn,fn){$('#modalbody').innerHTML=h+'<button class="btn" id="mok">'+(btn||'Weiter')+'</button>';$('#modal').hidden=false;$('#mok').onclick=()=>{$('#modal').hidden=true;fn&&fn()}}
 function visibleTiers(){let v=1;for(let i=1;i<N;i++){if(S.g[i-1].n||S.g[i].n)v=i+1;else break}return v}
 let rows=[],rowCount=-1;
-function buildModes(){const w=$('#modes');w.querySelectorAll('.chip').forEach(c=>c.remove());MODES.forEach((m,k)=>{const b=document.createElement('button');b.className='chip'+(S.bm===k?' on':'');b.textContent=MODELBL[k];b.onclick=()=>{S.bm=k;buildModes();updList()};w.appendChild(b)})}
+function buildModes(){const w=$('#modes');w.querySelectorAll('.chip').forEach(c=>c.remove());MODES.forEach((m,k)=>{const b=document.createElement('button');b.className='chip'+(S.bm===k?' on':'');b.textContent=MODELBL[k];b.onclick=()=>{S.bm=k;buildModes();updList()};w.appendChild(b)});
+  if(lv('auto')){const a=document.createElement('button');a.className='chip auto'+(S.autoOn?' on':'');a.textContent='Auto '+(S.autoOn?'an':'aus');a.setAttribute('aria-pressed',S.autoOn);a.title='Automatischer Kauf ein- oder ausschalten';a.onclick=()=>setAuto(!S.autoOn);w.appendChild(a)}}
+function setAuto(on){S.autoOn=on;SND.play('click');buildModes();if(view==='bang')renderBang();if(view==='opt')renderOpt();toast('Automatischer Kauf '+(on?'eingeschaltet':'ausgeschaltet'))}
 function buildList(){
   const vis=visibleTiers(),cnt=Math.min(N,vis+1);if(cnt===rowCount)return;rowCount=cnt;
   const L=$('#list');L.innerHTML='';rows=[];
@@ -344,10 +352,11 @@ function renderBang(){
   '<div class="row" style="margin-top:10px"><div class="grow"><span class="pill">Gewinn</span> <span class="big">+'+fmt(gain,true)+'</span></div><button class="btn violet" id="bangbtn"'+(gain<1?' disabled':'')+'>'+(bangArm>Date.now()?'Wirklich? Nochmal tippen':'Urknall auslösen')+'</button></div></div>'+
   '<div class="row"><h3 class="grow">Forschung</h3><span class="pill">Quantenpunkte: <span class="num">'+fmt(S.qp,true)+'</span></span></div>';
   RES.forEach(r=>{const l=lv(r.id),mx=l>=r.max,c=r.cost(l);
-    h+='<div class="item"><div class="grow"><div class="t">'+r.name+' <span class="pill'+(mx?' max':'')+'">Stufe '+l+'/'+r.max+'</span></div><div class="d">'+r.desc+'</div></div><button class="btn violet" data-r="'+r.id+'"'+(mx||c>S.qp?' disabled':'')+'>'+(mx?'Maximal':c+' QP')+'</button></div>'});
+    h+='<div class="item"><div class="grow"><div class="t">'+r.name+' <span class="pill'+(mx?' max':'')+'">Stufe '+l+'/'+r.max+'</span></div><div class="d">'+r.desc+'</div></div>'+(r.id==='auto'&&mx?'<button class="btn '+(S.autoOn?'sw-on':'sw-off')+'" id="autosw" aria-pressed="'+S.autoOn+'">Auto: '+(S.autoOn?'An':'Aus')+'</button>':'<button class="btn violet" data-r="'+r.id+'"'+(mx||c>S.qp?' disabled':'')+'>'+(mx?'Maximal':c+' QP')+'</button>')+'</div>'});
   V.innerHTML=h;
   $('#bangbtn').onclick=()=>{if(bangGain()<1)return;if(bangArm>Date.now()){doBang()}else{bangArm=Date.now()+4000;renderBang();setTimeout(()=>{if(view==='bang')renderBang()},4100)}};
-  V.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r=RES.find(x=>x.id===b.dataset.r),l=lv(r.id),c=r.cost(l);if(l<r.max&&c<=S.qp){S.qp-=c;S.res[r.id]=l+1;recalc();renderBang();SND.play('research');toast(r.name+' → Stufe '+(l+1))}});
+  const asw=$('#autosw');if(asw)asw.onclick=()=>setAuto(!S.autoOn);
+  V.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r=RES.find(x=>x.id===b.dataset.r),l=lv(r.id),c=r.cost(l);if(l<r.max&&c<=S.qp){S.qp-=c;S.res[r.id]=l+1;if(r.id==='auto')S.autoOn=true;recalc();renderBang();buildModes();SND.play('research');toast(r.name+' → Stufe '+(l+1))}});
 }
 function doBang(){const g=bangGain();bangArm=0;S.sing+=g;S.qp+=g;S.bangs++;S.best=Math.max(S.best,S.run);S=fresh(S);recalc();rowCount=-1;buildList();flash=1.2;SND.play('bang');
   toast('Ein neues Universum entsteht · +'+g+' Singularitäten');checkAch();save();switchView('kosmos')}
@@ -371,7 +380,7 @@ function renderOpt(){
   $('#o-sfx').onchange=()=>SND.play('buy');
   $('#o-mute').onclick=()=>{setMute(!S.mute);renderOpt()};
   $('#o-sci').onclick=()=>{S.sci=!S.sci;renderOpt();rows.forEach(r=>r.cache={})};
-  const au=$('#o-auto');if(au)au.onclick=()=>{S.autoOn=!S.autoOn;renderOpt()};
+  const au=$('#o-auto');if(au)au.onclick=()=>setAuto(!S.autoOn);
   $('#o-exp').onclick=()=>{const t=$('#o-txt');t.value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));t.select();
     try{navigator.clipboard.writeText(t.value).then(()=>toast('Code kopiert'),()=>toast('Code markiert – bitte manuell kopieren'))}catch(e){toast('Code markiert – bitte manuell kopieren')}};
   $('#o-imp').onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($('#o-txt').value.trim()))));if(!o||!o.g)throw 0;load({save:JSON.stringify(o)});recalc();rowCount=-1;buildList();buildModes();setMute(S.mute);toast('Spielstand geladen');switchView('kosmos')}catch(e){toast('Der Code ist ungültig. Bitte vollständig einfügen.')}};
