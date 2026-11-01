@@ -558,7 +558,7 @@ function buildQuad(o,st,cute){
     LP.push(A.hoof?primC(V(e[0],-H+lr*.9,e[2]+lr*.1),V(e[0],-H+lr*.35,e[2]+lr*.3),lr*.95,lr*1.08,o.paw??0x2a2420):primE(V(e[0],-H+lr*.55,e[2]+lr*.6),V(lr*1.15,lr*.6,lr*1.5),o.paw??lc));
     p.add(blob(LP,{k:lr*.6,res:22,axis:'y',fur:1,fl:.6}));
     if(!A.hoof&&!cute)for(const a of[-.35,0,.35]){const cl=cone(0xe8e0d0,lr*.18,lr*.6,{r:.3});cl.rotation.x=Math.PI/2+.5;cl.rotation.y=a;at(cl,e[0]+a*lr*.9,-H+lr*.35,e[2]+lr*1.9);p.add(cl)}
-    p.userData.ph=(s>0)!==(hind===1)?0:Math.PI;g.add(p);P.legs.push(p)}
+    p.userData.ph=(s>0)!==(hind===1)?0:Math.PI;p.userData.hind=hind;g.add(p);P.legs.push(p)}
   // Hals und Kopf(e)
   const n=o.heads?o.heads[st]:1,hr=A.hr*(1+.42*baby),nk=A.nk*(.75+.25*k);
   const nb=V(0,H+ch*.55,zc+ch*.45),nd=V(0,Math.sin(A.na),Math.cos(A.na)),nu=V(0,Math.cos(A.na),-Math.sin(A.na));
@@ -839,7 +839,7 @@ function buildHuman(o,st,cute){
     inner.add(blob(HP,{k:lr*.18,res:24,axis:'y',skin:skinT,fur:1,fl:.5}));
     if(o.claws)for(let i=0;i<4;i++){const cl=cone(0xe8e0d0,lr*.08,lr*.35,{r:.3});cl.rotation.x=Math.PI*.95;at(cl,0,hx.y-lr*1.75,hx.z+lr*(-.1+.2*i));inner.add(cl)}
     if(o.flame){const f=flame(.35);at(f,0,hx.y-lr*1.4,hx.z+lr*.6);inner.add(f);P.flames.push(f)}
-    p.userData.ph=s>0?Math.PI:0;body.add(p);P.legs.push(p)}
+    p.userData.ph=s>0?Math.PI:0;p.userData.arm=s;body.add(p);P.legs.push(p)}
   // Beine mit Knie, Wade und Füßen/Stiefeln
   if(!robe&&!o.mermaid)for(const s of[-1,1]){const p=new THREE.Group();at(p,s*hipW*.95,legL,0);const pc=bot,shoe=o.barefoot?sk:(o.shoes??0x2a2420),boot=o.boots;
     const kn=V(0,-legL*.5,lr*.45),an=V(0,-legL+lr*.8,0);
@@ -890,7 +890,7 @@ function buildCreature(sp,st){
   const sc=(.52+.17*st)*(S_.size||1);r.g.scale.setScalar(sc);
   const box=new THREE.Box3().setFromObject(root);
   const bs=box.getSize(new V3());r.w=Math.max(bs.x,bs.z);
-  r.h=box.max.y;r.sc=sc;r.root=root;r.inner=r.g;
+  r.h=box.max.y;r.sc=sc;r.root=root;r.inner=r.g;r.by0=r.g.position.y;
   return r;
 }
 
@@ -1554,37 +1554,75 @@ function updInts(dt){intT-=dt;if(intT<=0){intT=rnd(5,10);startInts()}
 
 /* ================== Animation ================== */
 let last=performance.now(),T=0;
-function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,root=w.b.root;
-  w.timer-=dt;
-  const sel=+id===selId;
-  if(w.int){}
-  else if(sel){w.state='idle';const toCam=Math.atan2(camera.position.x-w.pos.x,camera.position.z-w.pos.z);w.yaw=lerpAng(w.yaw,toCam,dt*4)}
-  else if(w.state==='idle'&&w.timer<=0){w.state='walk';w.tgt=randSpot();w.timer=12}
-  else if(w.state==='walk'){const d=new V3().subVectors(w.tgt,w.pos);d.y=0;const L=d.length();
-    if(L<.2||w.timer<=0){w.state='idle';w.timer=rnd(2,6)}
-    else{const sp=(.7+w.st*.18)*(c.hunger<25?.6:1);const want=Math.atan2(d.x,d.z);w.yaw=lerpAng(w.yaw,want,dt*5);
-      const step=Math.min(L,sp*dt);w.pos.x+=Math.sin(w.yaw)*step;w.pos.z+=Math.cos(w.yaw)*step}}
-  const moving=w.int?(w.mv?1:0):(w.state==='walk'?1:0);w.walk+=dt*(moving?(w.int?13:9):0)*(w.sneak?.5:1);
+// Leerlauf-Aktionen je nach Körperbau
+const ACTS={quad:['look','sniff','sit','shake','spin','yawn','jump','wings'],bird:['look','sniff','jump','wings','look'],serp:['look','sniff','yawn','look'],
+  octo:['look','jump','shake'],wisp:['look','jump','spin'],shroom:['look','jump','shake','spin'],chest:['look','jump','shake'],human:['look','wave','stretch','jump','look','yawn']};
+const ACT_D={look:2.6,sniff:2.2,sit:4.5,shake:1.1,spin:1.6,yawn:2,jump:1.3,wings:1.8,wave:2.2,stretch:2.2};
+function startAct(w,c){const sp=SPECIES[c.sp],bt=sp.b.t;let list=(ACTS[bt]||ACTS.octo).filter(k=>!(k==='wings'&&!w.b.P.wings.length)&&!(k==='spin'&&bt==='quad'&&!w.b.P.tails.length));
+  if(c.hunger<25||c.happy<25)list=list.filter(k=>k!=='jump'&&k!=='spin');
+  if(sp.cute&&c.happy>70&&Math.random()<.3)list=['jump'];const k=pick(list);w.act={k,t:0,d:ACT_D[k]};w.timer=ACT_D[k]+rnd(.8,2.5)}
+function animCreature(id,w,dt){const c=crById(+id);if(!c)return;const P=w.b.P,root=w.b.root,inner=w.b.inner,bt=SPECIES[c.sp].b.t,hum=bt==='human';
+  w.timer-=dt;const sel=+id===selId,sp=(.7+w.st*.18)*(c.hunger<25?.6:1);let tgtSpd=0;
+  if(w.int){w.act=null}
+  else if(sel){w.state='idle';w.act=null;const toCam=Math.atan2(camera.position.x-w.pos.x,camera.position.z-w.pos.z);w.yaw=lerpAng(w.yaw,toCam,dt*4)}
+  else if(w.state==='idle'&&w.timer<=0){if(!w.act&&Math.random()<.5)startAct(w,c);else{w.act=null;w.state='walk';w.tgt=randSpot();w.timer=14}}
+  else if(w.state==='walk'){const dx=w.tgt.x-w.pos.x,dz=w.tgt.z-w.pos.z,L=Math.hypot(dx,dz);
+    if(L<.25||w.timer<=0){w.state='idle';w.timer=rnd(1.5,4)}
+    else{tgtSpd=sp*Math.min(1,L/.8);w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*3.5)}}
+  // weiches Beschleunigen/Abbremsen
+  w.spd=(w.spd||0)+(tgtSpd-(w.spd||0))*Math.min(1,dt*3);
+  if(!w.int&&w.spd>.01){const st=w.spd*dt;w.pos.x+=Math.sin(w.yaw)*st;w.pos.z+=Math.cos(w.yaw)*st}
+  const A=w.act;let ae=0;if(A){A.t+=dt;ae=Math.sin(Math.min(1,A.t/A.d)*Math.PI);if(A.t>=A.d)w.act=null}const ak=A&&w.act?A.k:'';
+  let m=w.int?(w.mv?1:0):clamp(w.spd/sp,0,1);if(ak==='spin'){m=1;w.yaw+=dt*7*ae}
+  w.walk+=dt*m*(w.int?13:9)*(w.sneak?.5:1);
+  // Kurvenneigung
+  const dy=((w.yaw-(w.py??w.yaw)+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;w.py=w.yaw;w.lean=(w.lean||0)+(clamp(-dy/Math.max(dt,1e-3)*.06,-.22,.22)*m-(w.lean||0))*Math.min(1,dt*5);
+  // Hüpfen mit Stauchen und Strecken
   w.pop=Math.min(1,w.pop+dt*2.2);const pop=w.pop<1?easeBack(w.pop):1;
-  w.hop=Math.max(0,w.hop-dt*2);const hop=Math.sin(w.hop*Math.PI)*.5;
-  root.position.set(w.pos.x,(P.hover?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*.06*moving+hop,w.pos.z);
+  if(ak==='jump'&&(A.t<dt*1.5||(A.t>.62&&A.t<.62+dt*1.5)))w.hop=1;
+  const ph0=w.hop;w.hop=Math.max(0,w.hop-dt*2);if(ph0>0&&w.hop===0)w.land=.2;w.land=Math.max(0,(w.land||0)-dt);
+  const hop=Math.sin(w.hop*Math.PI)*.5;let sq=1;if(w.hop>0)sq=1+.16*Math.sin((1-w.hop)*Math.PI);if(w.land>0)sq=1-.18*(w.land/.2);
+  const breathe=Math.sin(T*1.9+ +id)*.012;sq*=1+breathe;const sxz=1/Math.sqrt(sq);
+  root.position.set(w.pos.x,(P.hover?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*(hum?.035:.05)*m+hop,w.pos.z);
   if(w.lunge>0){w.lunge=Math.max(0,w.lunge-dt*3);const l=Math.sin(w.lunge*Math.PI)*.35*Math.max(.6,w.b.w*.5);root.position.x+=Math.sin(w.yaw)*l;root.position.z+=Math.cos(w.yaw)*l}
   if(w.shake>0){w.shake=Math.max(0,w.shake-dt);root.position.x+=Math.sin(T*70)*w.shake*.1}
   if(w.spin>0){w.spin=Math.max(0,w.spin-dt*.7);w.yaw+=dt*14*w.spin}
   w.boo=Math.max(0,(w.boo||0)-dt*2);
   root.rotation.y=w.yaw;root.scale.set(pop*(1+w.boo*.25),pop*(1+w.boo*.3)*(w.sneak?.88:1),pop*(1+w.boo*.25));if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
-  P.legs.forEach(l=>l.rotation.x=moving?Math.sin(w.walk+l.userData.ph)*.6:0);
-  P.wings.forEach(p=>p.rotation.z=p.userData.rest+(P.fast?Math.sin(T*28)*.35:Math.sin(T*(moving?8:2.5))*(moving?.45:.12))+hop*.8);
-  P.tails.forEach((t,i)=>t.rotation.y=Math.sin(T*3+i*.6)*.35);
-  P.heads.forEach((h,i)=>{h.rotation.x=(h.userData.px||0)+Math.sin(T*1.3+i)*.06;if(h.userData.ph!==undefined)h.rotation.y=Math.sin(T*1.1+h.userData.ph)*.25});
-  w.blink-=dt;const bl=w.blink<0&&w.blink>-.13;if(w.blink<-.13)w.blink=rnd(2,5);P.eyes.forEach(e=>e.scale.y=bl?.1:1);
+  // Körper: Schwanken, Neigen, Sitzen, Schütteln
+  w.sitA=(w.sitA||0)+((ak==='sit'?1:0)-(w.sitA||0))*Math.min(1,dt*4);const sit=w.sitA;
+  let roll=Math.sin(w.walk)*(hum?.035:.05)*m+w.lean+(P.hover?Math.sin(T*1.3+ +id)*.07:0);if(ak==='shake')roll+=Math.sin(T*42)*.22*ae;
+  let pitch=-sit*.32-(ak==='stretch'?.1*ae:0)+(ak==='yawn'&&!hum?-.08*ae:0);
+  inner.rotation.set(pitch,0,roll);inner.position.y=(w.b.by0||0)-sit*w.b.h*.1;inner.scale.set(w.b.sc*sxz,w.b.sc*sq,w.b.sc*sxz);
+  // Beine und Arme
+  P.legs.forEach(l=>{const u=l.userData;let r=Math.sin(w.walk+u.ph)*(u.arm?.45:.6)*m;if(u.hind)r-=sit*1.0;else if(!u.arm)r+=sit*.32;l.rotation.x=r;l.rotation.z=0;
+    if(u.arm&&ak==='wave'&&u.arm>0){l.rotation.x=-2.7*ae;l.rotation.z=Math.sin(T*12)*.35*ae}
+    if(u.arm&&(ak==='stretch'||(ak==='yawn'&&hum))){l.rotation.x=-2.9*ae;l.rotation.z=u.arm*.25*ae}});
+  // Flügel
+  P.wings.forEach(p=>p.rotation.z=p.userData.rest+(P.fast?Math.sin(T*28)*.35:ak==='wings'?Math.sin(T*11)*.75*ae+.3*ae:Math.sin(T*(m>.3?8:2.2))*(m>.3?.4*m:.06))+hop*.8);
+  // Schwänze: nachfederndes Wedeln, bei guter Laune stärker
+  const hap=c.happy/100,tf=(3+3*m)*(hap>.7?1.5:1);
+  P.tails.forEach((t,i)=>{t.rotation.y=Math.sin(T*tf+i*.6)*(.18+.3*hap)+(ak==='spin'?.5*ae:0);t.rotation.x=Math.sin(T*tf*.5+i)*.07-sit*.3});
+  // Kopf: umherschauen, neigen, nicken, schnuppern, gähnen
+  w.lookT=(w.lookT||0)-dt;if(w.lookT<=0){w.lookT=rnd(1.2,3.5);w.thy=m>.3?rnd(-.15,.15):rnd(-.55,.55);w.thz=Math.random()<.3?rnd(-.28,.28):0;w.thp=rnd(-.08,.1)}
+  let ty=w.thy||0,tz=w.thz||0,tp=(w.thp||0)+(c.hunger<25?.22:0);
+  if(sel){ty=0;tz=Math.sin(T*.8)*.12}
+  if(ak==='look'){ty=Math.sin(A.t*2.4)*.75;tz=0}
+  if(ak==='sniff'){tp=.55*ae+Math.sin(T*11)*.07*ae;ty*=.3}
+  if(ak==='yawn'){tp=-.45*ae;tz=.15*ae}
+  if(ak==='sit')tp-=.15*sit;
+  w.hy=(w.hy||0)+(ty-(w.hy||0))*Math.min(1,dt*3);w.hz=(w.hz||0)+(tz-(w.hz||0))*Math.min(1,dt*3);w.hp=(w.hp||0)+(tp-(w.hp||0))*Math.min(1,dt*3);
+  const nod=Math.sin(w.walk*2)*.05*m;
+  P.heads.forEach((h,i)=>{h.rotation.x=(h.userData.px||0)+w.hp+nod+(hum?0:sit*.3);h.rotation.y=(h.userData.ph!==undefined?Math.sin(T*1.1+h.userData.ph)*.2:0)+w.hy*(i?.7:1);h.rotation.z=w.hz});
+  w.blink-=dt;const bl=w.blink<0&&w.blink>-.13;if(w.blink<-.13)w.blink=rnd(2,5);P.eyes.forEach(e=>e.scale.y=bl||(ak==='yawn'&&ae>.5)?.1:1);
   if(P.breath){const br=Math.sin(T*1.9+ +id);P.breath.scale.set(1+br*.008,1+br*.006,1+br*.014)}
   P.flames.forEach((f,i)=>{const s=1+Math.sin(T*14+i*2)*.12;f.scale.set(s,1+Math.sin(T*11+i)*.2,s)});
   P.orbit.forEach(o=>{const a=T*o.sp+o.ph;o.m.position.set(Math.cos(a)*o.r,o.h+Math.sin(a*2)*.15,Math.sin(a)*o.r)});
-  if(P.lid)P.lid.rotation.x=-(.12+(sel?.5:.25)*Math.max(0,Math.sin(T*(moving?7:2.2)))+hop*.8);
-  P.segs.forEach(s=>s.m.position.x=Math.sin(T*(moving?6:2)-s.t*7)*.18*(1-s.t*.5));
-  P.tents.forEach(arr=>arr.forEach(s=>{const wv=Math.sin(T*2.5+s.a*2+s.j*.7)*.08*s.j;const dd=s.d+wv;s.m.position.set(Math.cos(s.a)*dd,s.rr*.8+(s.j>3?(s.j-3)*.1:0)+Math.max(0,wv)*.5,Math.sin(s.a)*dd)}));
-  if(SPECIES[c.sp].b.smoke){w.smoke-=dt;if(w.smoke<0){w.smoke=rnd(1.5,3.5);burst('💨',w.pos.clone().add(new V3(Math.sin(w.yaw)*w.b.sc*1.6,w.b.h*.85,Math.cos(w.yaw)*w.b.sc*1.6)),1,{size:.5,spd:.3,up:.8,g:.3,life:1.5})}}}
+  if(P.lid)P.lid.rotation.x=-(.12+(sel?.5:.25)*Math.max(0,Math.sin(T*(m>.3?7:2.2)))+hop*.8+(ak==='yawn'?.6*ae:0));
+  if(SPECIES[c.sp].b.smoke){w.smoke-=dt;if(w.smoke<0){w.smoke=rnd(1.5,3.5);burst('💨',w.pos.clone().add(new V3(Math.sin(w.yaw)*w.b.sc*1.6,w.b.h*.85,Math.cos(w.yaw)*w.b.sc*1.6)),1,{size:.5,spd:.3,up:.8,g:.3,life:1.5})}}
+  if(ak==='shake'&&Math.random()<dt*8)burst('💧',root.position.clone().add(new V3(0,w.b.h*.6,0)),1,{size:.25,spd:2,up:1.5});
+  if(ak==='yawn'&&A.t<dt*1.5)burst('💤',root.position.clone().add(new V3(0,w.b.h,0)),1,{size:.35,spd:.3,up:1})}
+
 function lerpAng(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*Math.min(1,t)}
 function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
 let fpsN=0,fpsT=0,fpsDone=0,VOFF=0;
