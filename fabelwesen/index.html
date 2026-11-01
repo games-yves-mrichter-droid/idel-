@@ -1524,7 +1524,7 @@ function updSound(dt){if(!AC||!SND)return;RAING.gain.value+=(DN.rain*.22-RAING.g
 
 /* ================== Minispiel: Glühwürmchen fangen ================== */
 let GAME=null;
-function startGame(c){if(c.task)return;if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;
+function startGame(c){if(c.task||GAME||BATTLE)return;if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;
   GAME={type:'feuer',c,t:25,score:0,gold:0,orbs:[],spawn:0};cst(c,'games');selId=null;$('#sheet').classList.remove('open');$('#strip').style.display='none';$('#ghud').style.display='block';
   focusOn(new V3(0,.5,0),17);toast('✨ Tippe auf die Glühwürmchen! Goldene zählen fünffach.');sfx('level')}
 function updGame(dt){if(!GAME)return;if(GAME.type!=='feuer')return({beeren:updBerry,rennen:updRace,verst:updHide})[GAME.type](dt);const G=GAME;G.t-=dt;G.spawn-=dt;
@@ -1737,7 +1737,7 @@ function updMusic(){if(!AC||!SND)return;if(!MG){MG=AC.createGain();MG.gain.value
 
 /* ================== Welten ================== */
 const WG={wald:world};
-const WORLD_TINT={strand:{top:0x2e86de,mid:0x9fd8ff,bot:0xfff0d0,fog:0xbfe2f5,a:.6,near:40,far:120},vulkan:{top:0x1a0806,mid:0x7a2410,bot:0xff7a30,fog:0x4a1a10,a:.8,near:18,far:62},wolken:{top:0x6aa8ff,mid:0xffe6f6,bot:0xffffff,fog:0xf0e8ff,a:.6,near:34,far:110}};
+const WORLD_TINT={strand:{top:0x2e86de,mid:0x9fd8ff,bot:0xfff0d0,fog:0xbfe2f5,a:.6,near:40,far:120},vulkan:{top:0x1a0806,mid:0x7a2410,bot:0xff7a30,fog:0x4a1a10,a:.8,near:18,far:62},wolken:{top:0x5a98f0,mid:0xf6d8ee,bot:0xfff0f8,fog:0xd8d0f0,a:.45,near:40,far:130}};
 const _wc=new THREE.Color();
 function applyWorldTint(){const t=WORLD_TINT[S.world||'wald'];if(!t)return;const a=t.a*(1-DN.night*.4);
   for(const k of['top','mid','bot'])SKY.uniforms[k].value.lerp(_wc.set(t[k]),a);scene.fog.color.lerp(_wc.set(t.fog),a);scene.fog.near=t.near*(1-DN.rain*.4);scene.fog.far=t.far*(1-DN.rain*.35)}
@@ -1765,8 +1765,8 @@ function buildVulkan(g){
   const mk=c=>{const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(12,12);return t};const bt=mk(base);bt.colorSpace=THREE.SRGBColorSpace;
   const gm=new THREE.MeshStandardMaterial({map:bt,emissiveMap:mk(cr),emissive:0xff5a1a,emissiveIntensity:1.3,roughness:.95});WORLD_FX.lavaG=gm;
   const gnd=new THREE.Mesh(new THREE.CircleGeometry(95,64),gm);gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;g.add(gnd);
-  const lm=new THREE.MeshStandardMaterial({color:0xff6a1a,emissive:0xff4a00,emissiveIntensity:1.6,roughness:.4});WORLD_FX.lava=lm;
-  for(const[x,z,r]of[[-6,-3.5,2.4],[-9,5,1.6],[8.5,-6,1.8],[10,4,1.3]]){const l=new THREE.Mesh(new THREE.CircleGeometry(r,32),lm);l.rotation.x=-Math.PI/2;l.position.set(x,.03,z);g.add(l);g.add(at(glow(0xff6a20,r*3.5,.6),x,.4,z));
+  const lm=new THREE.MeshStandardMaterial({color:0x6a1000,emissive:0xd02800,emissiveIntensity:.8,roughness:.4,emissiveMap:WORLD_FX.lavaG.emissiveMap});WORLD_FX.lava=lm;
+  for(const[x,z,r]of[[-6,-3.5,2.4],[-9,5,1.6],[8.5,-6,1.8],[10,4,1.3]]){const l=new THREE.Mesh(new THREE.CircleGeometry(r,32),lm);l.rotation.x=-Math.PI/2;l.position.set(x,.03,z);g.add(l);g.add(at(glow(0xff6a20,r*3,.35),x,.4,z));
     for(let i=0;i<10;i++){const a=i/10*Math.PI*2;g.add(at(E(0x2a2220,rnd(.25,.4),rnd(.15,.3),rnd(.25,.4),{sk:'stone'}),x+Math.cos(a)*(r+.2),.05,z+Math.sin(a)*(r+.2)))}}
   for(let i=0;i<55;i++){const a=rnd(0,6.3),d=rnd(12,45);if(d<17&&inSector(a))continue;const c=cone(pick([0x2a2220,0x3a2e28,0x1e1816]),rnd(.6,1.8),rnd(2,8),{sk:'stone'});c.position.set(Math.cos(a)*d,-.2,Math.sin(a)*d);c.rotation.z=rnd(-.2,.2);g.add(c)}
   for(let i=0;i<5;i++){const a=rnd(0,6.3);if(inSector(a))continue;const cl=new THREE.Group();for(let j=0;j<6;j++){const h=rnd(1,3),col=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,h,6),M(0x2e2826,{sk:'stone'}));col.position.set(rnd(-.7,.7),h/2,rnd(-.7,.7));col.castShadow=true;cl.add(col)}cl.position.set(Math.cos(a)*rnd(12,14),0,Math.sin(a)*rnd(12,14));g.add(cl)}
@@ -1774,7 +1774,7 @@ function buildVulkan(g){
   const N=220,geo=new THREE.BufferGeometry(),P=new Float32Array(N*3);for(let i=0;i<N;i++){P[i*3]=rnd(-18,18);P[i*3+1]=rnd(0,12);P[i*3+2]=rnd(-18,18)}geo.setAttribute('position',new THREE.BufferAttribute(P,3));
   const em=new THREE.Points(geo,new THREE.PointsMaterial({size:.22,map:GLOWT,color:0xff8a30,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));em.frustumCulled=false;g.add(em);WORLD_FX.embers=geo}
 function buildWolken(g){
-  const cm=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,emissive:0xf4f0ff,emissiveIntensity:.25});
+  const cm=new THREE.MeshStandardMaterial({color:0xe8e4f4,roughness:1,emissive:0xf4f0ff,emissiveIntensity:.06});
   const gnd=new THREE.Mesh(new THREE.CircleGeometry(16,64),cm);gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;g.add(gnd);
   const sg=new THREE.SphereGeometry(1,20,14),N=260,im=new THREE.InstancedMesh(sg,cm,N),mm=new THREE.Matrix4(),q=new THREE.Quaternion();
   for(let i=0;i<N;i++){const a=rnd(0,6.3),d=i<120?rnd(13,17):rnd(17,60),s=rnd(1.2,3.5)*(d>20?1.6:1);mm.compose(V(Math.cos(a)*d,rnd(-1.5,.2)-(d>20?3:0),Math.sin(a)*d),q,V(s,s*.55,s));im.setMatrixAt(i,mm)}im.receiveShadow=true;g.add(im);
@@ -1947,7 +1947,7 @@ function gameChooser(c){if(!W.cre[c.id])return toast(`${c.name} ist gerade nicht
     ['rennen','🏁','Wettrennen','Tippe so schnell du kannst, um '+esc(c.name)+' anzufeuern!'],['verst','🌳','Verstecken',''+esc(c.name)+' versteckt sich hinter einem Busch. Findest du es?']];
   modal(`<h2 style="margin-top:0">🎮 Minispiele</h2><p style="color:var(--muted);font-size:13px">Jedes Spiel kostet ⚡ 15 Energie und bringt Gold, Erfahrung und gute Laune.</p>${G.map(g=>`<div class="task" style="text-align:left;cursor:pointer" data-g="${g[0]}"><div class="e">${g[1]}</div><div class="i"><b>${g[2]}</b><span>${g[3]}</span></div></div>`).join('')}<button class="btn gr" style="width:100%" onclick="closeModal()">Abbrechen</button>`);
   $('#mbox').querySelectorAll('[data-g]').forEach(el=>el.onclick=()=>{closeModal();const t=el.dataset.g;if(t==='feuer')startGame(c);else gameBegin(c,t)})}
-function gameBegin(c,type){if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;[...INTS].forEach(endInt);const w=W.cre[c.id];
+function gameBegin(c,type){if(GAME||BATTLE)return;if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;[...INTS].forEach(endInt);const w=W.cre[c.id];
   GAME={type,c,w,t:type==='rennen'?60:type==='verst'?999:30,score:0,objs:[]};selId=null;$('#sheet').classList.remove('open');$('#strip').style.display='none';$('#ghud').style.display='block';
   w.int={game:1};w.mv=0;w.act=null;cst(c,'games');sfx('level');({beeren:startBerry,rennen:startRace,verst:startHide})[type]()}
 function gameFinish(label,score,mult){const G=GAME,c=G.c;GAME=null;$('#ghud').style.display='none';G.objs.forEach(o=>(o.parent||scene).remove(o));if(G.w){G.w.int=null;G.w.b.root.visible=true;G.w.state='idle';G.w.timer=1}
@@ -2020,7 +2020,7 @@ function savePhoto(url){const fl=$('#flash');fl.style.opacity=1;setTimeout(()=>f
 $('#photo').addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const a=b.dataset.ph;if(a==='x')photoMode(false);if(a==='snap')SNAP=true;if(a==='time'){window.__hour=DN.night>.5?12:23;envT=0;toast(DN.night>.5?'☀️ Tag':'🌙 Nacht')}})
 
 /* ================== Weltenspezifische Bewegung ================== */
-function updWorldFX(dt){if(WORLD_FX.foam)WORLD_FX.foam.material.opacity=.4+.25*Math.sin(T*1.3);if(WORLD_FX.lava)WORLD_FX.lava.emissiveIntensity=1.4+.4*Math.sin(T*2);if(WORLD_FX.lavaG)WORLD_FX.lavaG.emissiveIntensity=1.1+.4*Math.sin(T*1.3);
+function updWorldFX(dt){if(WORLD_FX.foam)WORLD_FX.foam.material.opacity=.4+.25*Math.sin(T*1.3);if(WORLD_FX.lava)WORLD_FX.lava.emissiveIntensity=.8+.25*Math.sin(T*2);if(WORLD_FX.lavaG)WORLD_FX.lavaG.emissiveIntensity=1.1+.4*Math.sin(T*1.3);
   if(WORLD_FX.embers&&WG.vulkan&&WG.vulkan.visible){const P=WORLD_FX.embers.attributes.position.array;for(let i=0;i<P.length;i+=3){P[i+1]+=dt*(1+(i%7)*.2);P[i]+=Math.sin(T+i)*dt*.3;if(P[i+1]>12)P[i+1]=0}WORLD_FX.embers.attributes.position.needsUpdate=true}
   (WORLD_FX.fires||[]).forEach((f,i)=>{const s=1+Math.sin(T*13+i)*.15;f.scale.set(s,1+Math.sin(T*9+i)*.25,s)});(WORLD_FX.swings||[]).forEach((s,i)=>s.rotation.x=Math.sin(T*1.6+i)*.35)}
 
