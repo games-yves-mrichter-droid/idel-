@@ -42,5 +42,6 @@ Selbst bauen: `cd android-kosmos && gradle assembleRelease` (benötigt Android S
 - Kaufmengen ×1, ×10, ×100, bis zum nächsten Meilenstein oder Maximum
 - Tippen auf den Himmel bringt Extra-Materie, vorbeifliegende Kometen geben Boni (Materiesturm ×7)
 - Über 150 Upgrades, Urknall-Prestige mit Singularitäten und 13 Forschungen mit Quantenpunkten (u. a. Auto-Kauf zum Ein-/Ausschalten, billigere Objekte, stärkerer Materiesturm, mehr Singularitäten)
+- Multiversum-Kollaps (zweites Prestige, ab dem Ursprung): setzt auch Singularitäten und Forschung zurück und gibt Urfunken (+100 % auf alles je Urfunke) sowie 8 Kollaps-Forschungen, u. a. dauerhafter Auto-Kauf und automatischer Urknall
 - Über 100 Erfolge (+2 % Produktion je Erfolg), Offline-Einnahmen, Export/Import des Spielstands
 - Sound: ruhige Weltraum-Ambientmusik und Effekte für Tippen, Kaufen, Meilensteine, Kometen, Erfolge und Urknall – alles live im Browser erzeugt, Lautstärke im Menü einstellbar, Stumm-Taste am Himmel

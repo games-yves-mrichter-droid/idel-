@@ -286,6 +286,17 @@ for(let k=0;k<40;k++)UPS.push({id:'g'+k,kind:'all',cost:1e6*Math.pow(1e4,k),name
 for(let k=0;k<20;k++)UPS.push({id:'c'+k,kind:'tap',cost:250*Math.pow(120,k),name:'Gravitationsimpuls '+ROMAN[k],desc:'Jeder Tipp bringt +2 % der Materie pro Sekunde'});
 UPS.sort((a,b)=>a.cost-b.cost);
 const UPMAP=Object.fromEntries(UPS.map(u=>[u.id,u]));
+/* Multiversum-Kollaps: zweites Prestige mit Urfunken */
+const COL=[
+ {id:'order',name:'Ewige Ordnung',desc:'Automatischer Kauf ist immer freigeschaltet, auch nach dem Kollaps',max:1,cost:()=>1},
+ {id:'forge',name:'Sternenschmiede',desc:'Alle Objekte ×10 pro Stufe',max:50,cost:l=>1+2*l},
+ {id:'seed',name:'Singularitätssaat',desc:'Jeder Kollaps startet mit Singularitäten (1.000 × Stufe²)',max:30,cost:l=>2+l*l},
+ {id:'heir',name:'Quantenerbe',desc:'+50 % Quantenpunkte beim Urknall pro Stufe',max:30,cost:l=>1+l},
+ {id:'chrono',name:'Zeitkristall',desc:'Alle Zyklen doppelt so schnell pro Stufe',max:10,cost:l=>Math.ceil(3*Math.pow(1.8,l))},
+ {id:'rain',name:'Kometenregen',desc:'Kometen erscheinen doppelt so oft pro Stufe',max:3,cost:l=>4*(l+1)},
+ {id:'memo',name:'Ur-Erinnerung',desc:'Nach dem Kollaps bleiben 10 % der Forschungsstufen pro Stufe erhalten',max:10,cost:l=>Math.ceil(5*Math.pow(1.6,l))},
+ {id:'autobang',name:'Kosmischer Rhythmus',desc:'Urknall löst automatisch aus, sobald er deine Singularitäten verdoppeln würde',max:1,cost:()=>10}
+];
 const RES=[
  {id:'dark',name:'Dunkle Materie',desc:'Alle Objekte +50 % pro Stufe',max:500,cost:l=>Math.ceil(Math.pow(1.3,l))},
  {id:'time',name:'Zeitdehnung',desc:'Alle Zyklen 15 % schneller pro Stufe',max:40,cost:l=>Math.ceil(2*Math.pow(1.6,l))},
@@ -308,6 +319,7 @@ TIERS.forEach((t,i)=>[1,25,100,250,500].forEach((c,j)=>ACH.push({id:'a'+i+'_'+c,
 [[50,'Fingerübung'],[500,'Trommelwirbel'],[5000,'Pulsar-Daumen']].forEach(([v,n])=>ACH.push({id:'tp'+v,name:n,desc:v+'× ins All getippt',test:()=>S.taps>=v}));
 [[1,'Es werde Licht'],[3,'Ewige Wiederkehr'],[10,'Zyklisches Universum'],[25,'Multiversum']].forEach(([v,n])=>ACH.push({id:'bb'+v,name:n,desc:v+'× Urknall ausgelöst',test:()=>S.bangs>=v}));
 [[1,'Sternschnuppe'],[10,'Kometenjäger'],[50,'Oortsche Wolke']].forEach(([v,n])=>ACH.push({id:'co'+v,name:n,desc:v+' Kometen eingefangen',test:()=>S.comets>=v}));
+[[1,'Großer Kollaps'],[3,'Ewiger Kreislauf'],[10,'Herr der Multiversen']].forEach(([v,n])=>ACH.push({id:'kc'+v,name:n,desc:v+'× Multiversum-Kollaps',test:()=>S.collapses>=v}));
 const MODES=[1,10,100,'next','max'], MODELBL=['×1','×10','×100','Ziel','Max'];
 
 /* ---------- Zahlen ---------- */
@@ -332,12 +344,14 @@ function fmtT(s){
 /* ---------- Zustand ---------- */
 const KEY='kosmosSchmiede.v1';
 function fresh(keep){
-  const s={v:2,m:5,run:0,life:0,sing:0,qp:0,g:TIERS.map(()=>({n:0,p:0})),up:{},res:{},ach:{},taps:0,bangs:0,comets:0,bm:0,sci:false,autoOn:true,mute:false,sfxVol:.7,musVol:.5,boostUntil:0,last:Date.now(),born:Date.now(),best:0};
-  if(keep)for(const k of ['life','sing','qp','res','ach','taps','bangs','comets','bm','sci','autoOn','mute','sfxVol','musVol','born','best'])s[k]=keep[k];
+  const s={v:2,uf:0,ufp:0,col:{},collapses:0,originSeen:false,abOn:true,m:5,run:0,life:0,sing:0,qp:0,g:TIERS.map(()=>({n:0,p:0})),up:{},res:{},ach:{},taps:0,bangs:0,comets:0,bm:0,sci:false,autoOn:true,mute:false,sfxVol:.7,musVol:.5,boostUntil:0,last:Date.now(),born:Date.now(),best:0};
+  if(keep)for(const k of ['life','sing','qp','res','ach','taps','bangs','comets','bm','sci','autoOn','mute','sfxVol','musVol','born','best','uf','ufp','col','collapses','originSeen','abOn'])s[k]=keep[k];
   if(keep)s.m=5*Math.pow(10,Math.min(30,lv('start',s)));
   return s;
 }
 function lv(id,s){return ((s||S).res[id])||0}
+function clv(id,s){return ((s||S).col&&(s||S).col[id])||0}
+function hasAuto(){return lv('auto')||clv('order')}
 let migrated=false;
 function load(data){
   let raw=data&&data.save;
@@ -358,8 +372,8 @@ function achCount(){return Object.keys(S.ach).length}
 function recalc(){
   M.tier=TIERS.map(()=>1);M.all=1;M.tapK=0;
   for(const id in S.up){const u=UPMAP[id];if(!u)continue;if(u.kind==='tier')M.tier[u.tier]*=3;else if(u.kind==='all')M.all*=2;else M.tapK++}
-  M.glob=M.all*(1+(0.1+0.01*lv('sing'))*S.sing)*(1+0.5*lv('dark'))*(1+(0.02+0.01*lv('achr'))*achCount());
-  M.speed=Math.pow(1.15,lv('time'));
+  M.glob=(1+S.uf)*Math.pow(10,clv('forge'))*M.all*(1+(0.1+0.01*lv('sing'))*S.sing)*(1+0.5*lv('dark'))*(1+(0.02+0.01*lv('achr'))*achCount());
+  M.speed=Math.pow(1.15,lv('time'))*Math.pow(2,clv('chrono'));
 }
 function boosting(){return Date.now()<S.boostUntil}
 function stormX(){return 7+lv('storm')}
@@ -374,7 +388,8 @@ function costOf(i,k){const t=TIERS[i],n=S.g[i].n;return disc()*t.cost*Math.pow(t
 function maxBuy(i){const t=TIERS[i],c=disc()*t.cost*Math.pow(t.r,S.g[i].n);return Math.max(0,Math.floor(Math.log(S.m*(t.r-1)/c+1)/Math.log(t.r)+1e-9))}
 function amount(i){const md=MODES[S.bm];if(md==='max')return Math.max(1,maxBuy(i));if(md==='next'){const nx=msInfo(S.g[i].n).next;return nx?nx-S.g[i].n:1}return md}
 function buy(i,k){const c=costOf(i,k);if(c>S.m||k<1)return false;S.m-=c;S.g[i].n+=k;return true}
-function bangGain(){if(S.run<1e12)return 0;return Math.floor(Math.pow(Math.log10(S.run)-11,2.5)*(1+0.15*lv('echo'))+1e-9)}
+function bangGain(){if(S.run<1e12)return 0;return Math.floor(Math.pow(Math.log10(S.run)-11,2.5)*(1+0.15*lv('echo'))*(1+0.05*S.uf)+1e-9)}
+function collapseGain(){if(!S.g[N-1].n)return 0;return Math.floor(Math.sqrt(S.sing/1000)+S.g[N-1].n/10)}
 
 /* ---------- Spielschleife ---------- */
 function tick(dt){
@@ -382,7 +397,7 @@ function tick(dt){
 }
 let autoAcc=0;
 function autoBuy(dt){
-  if(!lv('auto')||!S.autoOn)return;autoAcc+=dt;if(autoAcc<0.5)return;autoAcc=0;
+  if(!hasAuto()||!S.autoOn)return;autoAcc+=dt;if(autoAcc<0.5)return;autoAcc=0;
   for(let n=0;n<40;n++){let best=-1,bc=Infinity;
     for(let i=0;i<N;i++){if(i>0&&!S.g[i-1].n&&!S.g[i].n)break;const c=costOf(i,1);if(c<bc){bc=c;best=i}}
     if(best<0||bc>S.m*0.5)break;buy(best,1);}
@@ -391,6 +406,8 @@ function checkAch(){
   let got=false;
   for(const a of ACH){if(!S.ach[a.id]&&a.test()){S.ach[a.id]=1;got=true;toast('Erfolg: <b>'+a.name+'</b> · +'+(2+lv('achr'))+' % Produktion')}}
   if(got){SND.play('ach');recalc();if(view==='ach')renderAch()}
+  if(S.g[N-1].n&&!S.originSeen){S.originSeen=true;save();modal('<h2>Der Ursprung</h2><p>Du hast das letzte Objekt erreicht. Ab jetzt kannst du im Urknall-Tab das ganze Multiversum kollabieren lassen und Urfunken sammeln.</p>','Weiter')}
+  if(clv('autobang')&&S.abOn&&bangGain()>=Math.max(1,S.sing))doBang(true)
 }
 
 /* ---------- Oberfläche ---------- */
@@ -401,7 +418,7 @@ function modal(h,btn,fn){$('#modalbody').innerHTML=h+'<button class="btn" id="mo
 function visibleTiers(){let v=1;for(let i=1;i<N;i++){if(S.g[i-1].n||S.g[i].n)v=i+1;else break}return v}
 let rows=[],rowCount=-99;
 function buildModes(){const w=$('#modes');w.querySelectorAll('.chip').forEach(c=>c.remove());MODES.forEach((m,k)=>{const b=document.createElement('button');b.className='chip'+(S.bm===k?' on':'');b.textContent=MODELBL[k];b.onclick=()=>{S.bm=k;buildModes();updList()};w.appendChild(b)});
-  if(lv('auto')){const a=document.createElement('button');a.className='chip auto'+(S.autoOn?' on':'');a.textContent='Auto '+(S.autoOn?'an':'aus');a.setAttribute('aria-pressed',S.autoOn);a.title='Automatischer Kauf ein- oder ausschalten';a.onclick=()=>setAuto(!S.autoOn);w.appendChild(a)}}
+  if(hasAuto()){const a=document.createElement('button');a.className='chip auto'+(S.autoOn?' on':'');a.textContent='Auto '+(S.autoOn?'an':'aus');a.setAttribute('aria-pressed',S.autoOn);a.title='Automatischer Kauf ein- oder ausschalten';a.onclick=()=>setAuto(!S.autoOn);w.appendChild(a)}}
 function setAuto(on){S.autoOn=on;SND.play('click');buildModes();if(view==='bang')renderBang();if(view==='opt')renderOpt();toast('Automatischer Kauf '+(on?'eingeschaltet':'ausgeschaltet'))}
 function buildList(){
   let last=-1;for(let i=0;i<N;i++)if(S.g[i].n)last=i;const cnt=Math.max(1,Math.min(N,last+2));if(last===rowCount)return;rowCount=last;
@@ -430,7 +447,7 @@ function updList(){
   }
 }
 function updBars(){for(const r of rows){if(r.locked)continue;const g=S.g[r.i];const ct=cycleT(r.i);r.bar.style.transform='scaleX('+(g.n?(ct<0.12?1:g.p):0)+')'}}
-function updTop(){$('#mat').textContent=fmt(S.m);$('#mps').textContent=fmt(totalPS())+'/s';$('#sng').textContent=fmt(S.sing,true);
+function updTop(){$('#mat').textContent=fmt(S.m);$('#mps').textContent=fmt(totalPS())+'/s';$('#sng').textContent=fmt(S.sing,true)+(S.uf?' · '+fmt(S.uf,true)+' UF':'');
   const b=$('#boost');if(boosting()){b.hidden=false;b.textContent='Materiesturm ×'+stormX()+' · '+Math.ceil((S.boostUntil-Date.now())/1000)+'s'}else b.hidden=true;
   const n=UPS.filter(u=>!S.up[u.id]&&u.cost<=S.m).length,dot=$('#updot');dot.hidden=!n;dot.textContent=n>9?'9+':n;
 }
@@ -445,20 +462,41 @@ function renderUps(){
 }
 let bangArm=0;
 function renderBang(){
-  const V=$('#v-bang'),gain=bangGain(),next=Math.pow(10,11+Math.pow((gain+1)/(1+0.15*lv('echo')),.4));
-  let h='<div class="panel"><h2>Urknall</h2><p>Setzt Materie, Objekte und Upgrades zurück. Dafür bekommst du Singularitäten (jede +'+(10+lv('sing'))+' % auf alles, für immer) und genauso viele Quantenpunkte für Forschung.</p>'+
+  const V=$('#v-bang'),gain=bangGain(),next=Math.pow(10,11+Math.pow((gain+1)/((1+0.15*lv('echo'))*(1+0.05*S.uf)),.4));
+  let h='<div class="panel"><h2>Urknall</h2><p>Setzt Materie, Objekte und Upgrades zurück. Dafür bekommst du Singularitäten (jede +'+(10+lv('sing'))+' % auf alles, für immer) und '+(clv('heir')?'+'+(clv('heir')*50)+' % mehr':'genauso viele')+' Quantenpunkte für Forschung.</p>'+
   '<div class="kv" style="margin-top:8px"><span>Singularitäten</span><span>'+fmt(S.sing,true)+' (+'+fmt(S.sing*(10+lv('sing')),true)+' %)</span><span>Materie in diesem Universum</span><span>'+fmt(S.run)+'</span><span>Nächste Singularität bei</span><span>'+fmt(next)+'</span></div>'+
   '<div class="row" style="margin-top:10px"><div class="grow"><span class="pill">Gewinn</span> <span class="big">+'+fmt(gain,true)+'</span></div><button class="btn violet" id="bangbtn"'+(gain<1?' disabled':'')+'>'+(bangArm>Date.now()?'Wirklich? Nochmal tippen':'Urknall auslösen')+'</button></div></div>'+
+  (clv('autobang')?'<div class="row" style="margin-top:-2px"><span class="grow muted" style="font-size:12px;color:var(--dim)">Kosmischer Rhythmus: automatischer Urknall</span><button class="btn '+(S.abOn?'sw-on':'sw-off')+'" id="absw">'+(S.abOn?'An':'Aus')+'</button></div>':'')+
+  colHTML()+
   '<div class="row"><h3 class="grow">Forschung</h3><span class="pill">Quantenpunkte: <span class="num">'+fmt(S.qp,true)+'</span></span></div>';
   RES.forEach(r=>{const l=lv(r.id),mx=l>=r.max,c=r.cost(l);
     h+='<div class="item"><div class="grow"><div class="t">'+r.name+' <span class="pill'+(mx?' max':'')+'">Stufe '+l+'/'+r.max+'</span></div><div class="d">'+r.desc+'</div></div>'+(r.id==='auto'&&mx?'<button class="btn '+(S.autoOn?'sw-on':'sw-off')+'" id="autosw" aria-pressed="'+S.autoOn+'">Auto: '+(S.autoOn?'An':'Aus')+'</button>':'<button class="btn violet" data-r="'+r.id+'"'+(mx||c>S.qp?' disabled':'')+'>'+(mx?'Maximal':c+' QP')+'</button>')+'</div>'});
   V.innerHTML=h;
   $('#bangbtn').onclick=()=>{if(bangGain()<1)return;if(bangArm>Date.now()){doBang()}else{bangArm=Date.now()+4000;renderBang();setTimeout(()=>{if(view==='bang')renderBang()},4100)}};
   const asw=$('#autosw');if(asw)asw.onclick=()=>setAuto(!S.autoOn);
+  const absw=$('#absw');if(absw)absw.onclick=()=>{S.abOn=!S.abOn;SND.play('click');renderBang()};
+  const cb=$('#colbtn');if(cb)cb.onclick=()=>{if(collapseGain()<1)return;if(colArm>Date.now()){doCollapse()}else{colArm=Date.now()+4000;renderBang();setTimeout(()=>{if(view==='bang')renderBang()},4100)}};
+  V.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const r=COL.find(x=>x.id===b.dataset.c),l=clv(r.id),c=r.cost(l);if(l<r.max&&c<=S.ufp){S.ufp-=c;S.col[r.id]=l+1;recalc();renderBang();buildModes();SND.play('research');toast(r.name+' → Stufe '+(l+1))}});
   V.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r=RES.find(x=>x.id===b.dataset.r),l=lv(r.id),c=r.cost(l);if(l<r.max&&c<=S.qp){S.qp-=c;S.res[r.id]=l+1;if(r.id==='auto')S.autoOn=true;recalc();renderBang();buildModes();SND.play('research');toast(r.name+' → Stufe '+(l+1))}});
 }
-function doBang(){const g=bangGain();bangArm=0;S.sing+=g;S.qp+=g;S.bangs++;S.best=Math.max(S.best,S.run);S=fresh(S);recalc();rowCount=-99;buildList();flash=1.2;SND.play('bang');
-  toast('Ein neues Universum entsteht · +'+g+' Singularitäten');checkAch();save();switchView('kosmos')}
+let colArm=0;
+function colHTML(){
+  if(!S.originSeen&&!S.collapses)return '<div class="panel" style="opacity:.75"><h2>Multiversum-Kollaps</h2><p>Erreiche den <b>Ursprung</b> (Objekt 100), um das gesamte Multiversum kollabieren zu lassen.</p></div>';
+  const g=collapseGain();
+  let h='<div class="panel" style="border-color:#ffb65566;background:linear-gradient(160deg,#2a1a3a,var(--hull))"><h2>Multiversum-Kollaps</h2><p>Setzt <b>alles</b> zurück, auch Singularitäten, Quantenpunkte und Forschung. Dafür bekommst du <b>Urfunken</b>: Jeder Urfunke gibt dauerhaft +100 % auf alles und +5 % Singularitäten pro Urknall. Erfolge, Kollaps-Forschung und Einstellungen bleiben.</p>'+
+  '<div class="kv" style="margin-top:8px"><span>Urfunken</span><span>'+fmt(S.uf,true)+' (×'+fmt(1+S.uf,true)+')</span><span>Freie Urfunken</span><span>'+fmt(S.ufp,true)+'</span><span>Kollapse</span><span>'+S.collapses+'</span><span>Bedingung</span><span>'+(S.g[N-1].n?'Ursprung erreicht':'Ursprung kaufen')+'</span></div>'+
+  '<div class="row" style="margin-top:10px"><div class="grow"><span class="pill">Gewinn</span> <span class="big" style="color:var(--star)">+'+fmt(g,true)+'</span></div><button class="btn" id="colbtn"'+(g<1?' disabled':'')+'>'+(colArm>Date.now()?'Wirklich alles? Nochmal tippen':'Kollaps auslösen')+'</button></div><p style="font-size:12px">Gewinn = √(Singularitäten ÷ 1.000) + 1 pro 10 Ursprünge.</p></div>';
+  h+='<div class="row"><h3 class="grow">Kollaps-Forschung</h3><span class="pill">Urfunken: <span class="num">'+fmt(S.ufp,true)+'</span></span></div>';
+  COL.forEach(r=>{const l=clv(r.id),mx=l>=r.max,c=r.cost(l);h+='<div class="item" style="border-color:#ffb65544"><div class="grow"><div class="t">'+r.name+' <span class="pill'+(mx?' max':'')+'">Stufe '+l+'/'+r.max+'</span></div><div class="d">'+r.desc+'</div></div><button class="btn" data-c="'+r.id+'"'+(mx||c>S.ufp?' disabled':'')+'>'+(mx?'Maximal':c+' UF')+'</button></div>'});
+  return h}
+function doCollapse(){const g=collapseGain();if(g<1)return;colArm=0;
+  const keepRes={};const mf=clv('memo')*0.1;for(const k in S.res)if(mf>0){const v=Math.floor(S.res[k]*mf);if(v>0)keepRes[k]=v}
+  S.uf+=g;S.ufp+=g;S.collapses++;S.best=Math.max(S.best,S.run);const old=S;S=fresh(old);
+  S.sing=1000*clv('seed')*clv('seed');S.qp=0;S.res=keepRes;S.m=5*Math.pow(10,Math.min(30,lv('start')));
+  recalc();rowCount=-99;buildList();buildModes();flash=2.5;SND.play('collapse');
+  toast('Das Multiversum kollabiert · +'+g+' Urfunken');checkAch();save();switchView('kosmos')}
+function doBang(auto){const g=bangGain();bangArm=0;S.sing+=g;S.qp+=Math.floor(g*(1+0.5*clv('heir')));S.bangs++;S.best=Math.max(S.best,S.run);S=fresh(S);recalc();rowCount=-99;buildList();flash=1.2;SND.play('bang');
+  toast((auto?'Kosmischer Rhythmus: ':'')+'Ein neues Universum entsteht · +'+fmt(g,true)+' Singularitäten');if(!auto){checkAch();switchView('kosmos')}else if(view==='bang')renderBang();save()}
 function renderAch(){
   const V=$('#v-ach'),n=achCount();
   let h='<div class="panel"><h2>Erfolge</h2><p>'+n+' von '+ACH.length+' freigeschaltet. Jeder Erfolg erhöht die Produktion um '+(2+lv('achr'))+' % (jetzt +'+fmt(n*(2+lv('achr')),true)+' %).</p></div><div class="achgrid">';
@@ -470,7 +508,7 @@ function renderOpt(){
   const V=$('#v-opt');const play=(Date.now()-S.born)/1000;
   let h='<div class="panel"><h2>Statistik</h2><div class="kv" style="margin-top:6px"><span>Materie gesamt</span><span>'+fmt(S.life)+'</span><span>Bestes Universum</span><span>'+fmt(Math.max(S.best,S.run))+'</span><span>Urknalle</span><span>'+S.bangs+'</span><span>Tipps</span><span>'+S.taps+'</span><span>Kometen</span><span>'+S.comets+'</span><span>Spielzeit</span><span>'+fmtT(play)+'</span><span>Offline-Limit</span><span>'+(4+2*lv('off'))+' h</span></div></div>'+
   '<div class="panel"><h3 style="margin-top:0">Sound</h3><div class="slider"><label for="o-mus">Musik</label><input type="range" id="o-mus" min="0" max="100" value="'+Math.round(S.musVol*100)+'"><span id="o-musv">'+Math.round(S.musVol*100)+' %</span></div><div class="slider"><label for="o-sfx">Effekte</label><input type="range" id="o-sfx" min="0" max="100" value="'+Math.round(S.sfxVol*100)+'"><span id="o-sfxv">'+Math.round(S.sfxVol*100)+' %</span></div><button class="btn ghost" id="o-mute" style="margin-top:10px">Ton: '+(S.mute?'aus':'an')+'</button></div>'+
-  '<div class="panel"><h3 style="margin-top:0">Einstellungen</h3><div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ghost" id="o-sci">Zahlen: '+(S.sci?'1,23e15':'1,23aa')+'</button>'+(lv('auto')?'<button class="btn ghost" id="o-auto">Auto-Kauf: '+(S.autoOn?'an':'aus')+'</button>':'')+'</div></div>'+
+  '<div class="panel"><h3 style="margin-top:0">Einstellungen</h3><div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ghost" id="o-sci">Zahlen: '+(S.sci?'1,23e15':'1,23aa')+'</button>'+(hasAuto()?'<button class="btn ghost" id="o-auto">Auto-Kauf: '+(S.autoOn?'an':'aus')+'</button>':'')+'</div></div>'+
   '<div class="panel"><h3 style="margin-top:0">Spielstand sichern</h3><p>Kopiere den Code und bewahre ihn auf. Zum Laden einfügen und „Laden“ tippen.</p><textarea id="o-txt" spellcheck="false" aria-label="Spielstand-Code"></textarea><div class="row" style="margin-top:8px;flex-wrap:wrap"><button class="btn ion" id="o-exp">Code erzeugen &amp; kopieren</button><button class="btn ghost" id="o-imp">Laden</button></div></div>'+
   '<div class="panel"><h3 style="margin-top:0">Neu beginnen</h3><p>Löscht alles, auch Singularitäten und Erfolge.</p><button class="btn danger" id="o-reset" style="margin-top:6px">'+(resetArm>Date.now()?'Sicher? Nochmal tippen':'Spiel zurücksetzen')+'</button></div>';
   V.innerHTML=h;
@@ -692,7 +730,7 @@ cv.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect(),v=tapVa
 
 /* Kometen */
 const comet=$('#comet');let cometNext=0,cometObj=null;
-function scheduleComet(){cometNext=Date.now()+(50+Math.random()*90)*1000/(1+0.4*lv('comet'))}
+function scheduleComet(){cometNext=Date.now()+(50+Math.random()*90)*1000/(1+0.4*lv('comet'))/Math.pow(2,clv('rain'))}
 function spawnComet(){const fromLeft=Math.random()<.5;cometObj={t0:performance.now(),dur:9000,y0:.15+Math.random()*.5,y1:.15+Math.random()*.6,l:fromLeft};comet.hidden=false;SND.play('cometSpawn')}
 function moveComet(now){if(!cometObj)return;const k=(now-cometObj.t0)/cometObj.dur;if(k>=1){comet.hidden=true;cometObj=null;scheduleComet();return}
   const x=cometObj.l?-50+k*(W+100):W+50-k*(W+100),y=(cometObj.y0+(cometObj.y1-cometObj.y0)*k)*H;const ang=Math.atan2((cometObj.y1-cometObj.y0)*H,cometObj.l?W+100:-(W+100));
@@ -743,6 +781,8 @@ const SND=(()=>{
     ach(){[79,83,86,91].forEach((m,k)=>tone(hz(m),1.2,{vol:.07,at:k*.03}));tone(hz(67),1.2,{vol:.06,type:'triangle'})},
     cometSpawn(){noise(2.2,{f0:400,f1:3500,vol:.06,q:2,att:1.2})},
     comet(){noise(.6,{f0:6000,f1:1500,vol:.08,q:1.5,att:.02});[84,88,91,96,100].forEach((m,k)=>tone(hz(m),.7,{vol:.07,at:.05+k*.05}))},
+    collapse(){noise(2.5,{ft:'bandpass',f0:200,f1:6000,vol:.25,q:2,att:2.2});tone(80,2.5,{to:900,vol:.15,type:'sawtooth',att:2});
+      setTimeout(()=>{if(ok()){fx.bang();[36,43,48,55,60,67,72,79].forEach((m,k)=>tone(hz(m),4,{vol:.05,at:1.5+k*.15,att:.8}))}},2500)},
     bang(){tone(110,3,{to:28,vol:.5,att:.02});tone(55,3.5,{to:20,vol:.4,type:'triangle',att:.02});noise(3,{ft:'lowpass',f0:3000,f1:80,vol:.45,att:.01,q:.5});
       [48,55,60,64,67,72].forEach((m,k)=>tone(hz(m),3,{vol:.05,at:1.2+k*.12,att:.6,type:'triangle'}))},
     collect(){[67,72,76,79,84].forEach((m,k)=>tone(hz(m),.8,{vol:.09,at:k*.06}))},
