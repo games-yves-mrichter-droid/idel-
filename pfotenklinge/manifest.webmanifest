@@ -1,0 +1,10 @@
+{
+  "name": "Pfotenklinge Idle",
+  "short_name": "Pfotenklinge",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#10142e",
+  "theme_color": "#151b3d",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
