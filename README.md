@@ -26,3 +26,22 @@ Selbst bauen: `cd android && gradle assembleRelease` (benötigt Android SDK 34).
 - Offline-Einnahmen (bis 12 Stunden)
 - **Gratis-Menü:** Gold/Juwelen/Tickets kostenlos, Unendlich-Modus, alles freischalten
 - Spielstand wird lokal gespeichert, Export/Import möglich
+
+---
+
+# Sternenkrone (Prinzessinnen-Kampfspiel)
+
+Ein zweites Spiel im Ordner [`prinzessin/`](prinzessin/index.html): Märchenprinzessinnen kämpfen in Echtzeit gegen böse Märchenwesen, mit Animationen im Stil von Pokémon-Go-Arenakämpfen.
+
+**Starten:** `prinzessin/index.html` im Browser öffnen (Handy oder PC).
+
+**Steuerung**
+- Arena antippen (oder Leertaste): schneller Angriff, lädt Energie auf
+- Zur Seite wischen (oder «/» bzw. Pfeiltasten): ausweichen. Erscheint ein **!** über dem Gegner, kommt ein Spezialangriff
+- Volle Kreise unten (oder Taste 1/2): Spezialangriff. Danach schnell die Sterne antippen, das gibt Bonus-Schaden
+
+**Inhalt**
+- 5 Prinzessinnen: Aurelia (Licht), Nerina (Wasser), Florina (Natur), Kristalla (Frost), Flamina (Feuer). Die letzten beiden schaltest du im Abenteuer frei
+- 9 Gegner in 3 Kapiteln mit 12 Stufen: Kobold, böser Wolf, Sumpfmonster, Waldhexe, Frostgeist, Brückentroll, Feuerdrache, dunkle Fee und der Schattenkönig
+- Elemente mit Stärken und Schwächen, Erfahrungspunkte und Stufenaufstieg, bis zu 3 Sterne pro Stufe
+- Spielstand wird lokal im Browser gespeichert
