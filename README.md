@@ -31,13 +31,13 @@ Selbst bauen: `cd android && gradle assembleRelease` (benötigt Android SDK 34).
 
 # Kosmos Schmiede (neues Spiel)
 
-Ein Weltraum-Idle-Spiel im Ordner [`kosmos/`](kosmos/index.html): vom Quark bis zum Galaxienhaufen.
+Ein Weltraum-Idle-Spiel im Ordner [`kosmos/`](kosmos/index.html): 100 Stufen vom Quark bis zum Ursprung.
 Einfach `kosmos/index.html` im Browser öffnen – läuft offline, Spielstand wird lokal gespeichert.
 
 **Android-App:** Die fertige APK liegt unter [`release/KosmosSchmiede.apk`](release/KosmosSchmiede.apk) – herunterladen, antippen, installieren (Installation aus dieser Quelle erlauben). Sie läuft neben Onsen Idle als eigene App.
 Selbst bauen: `cd android-kosmos && gradle assembleRelease` (benötigt Android SDK 34).
 
-- 25 kosmische Objekte vom Quark bis zum Omniversum (u. a. Planet, Stern, Schwarzes Loch, Quasar, Galaxie, Galaxienhaufen, Superhaufen, Kosmisches Netz, Wurmloch, Weißes Loch, Kosmischer String, Universum, Multiversum), jedes mit eigener animierter Grafik
+- 100 kosmische Objekte in feinen Stufen vom Quark über Elektron, Atome, Kristalle, Kometen, Monde, viele Planeten- und Sternarten, Nebel, Schwarze Löcher, Galaxientypen, Haufen und Wurmlöcher bis zu Universum, Multiversum, Omniversum und dem Ursprung – jedes mit eigener animierter Grafik
 - Objekte erzeugen in Zyklen Materie; Meilensteine (10/25/50/100 → Tempo ×2, ab 150 → Ertrag ×3)
 - Kaufmengen ×1, ×10, ×100, bis zum nächsten Meilenstein oder Maximum
 - Tippen auf den Himmel bringt Extra-Materie, vorbeifliegende Kometen geben Boni (Materiesturm ×7)

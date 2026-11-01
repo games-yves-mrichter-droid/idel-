@@ -169,42 +169,120 @@ textarea{width:100%;min-height:70px;background:#070a16;color:var(--ink);border:1
 "use strict";
 let S;
 /* ---------- Daten ---------- */
+/* 100 Objekte: [Name, Beschreibung, Grundform, Farbfilter, Größe, Parameter] */
 const TIERS=[
- ['Quark','Teilchen, aus denen alles besteht.'],
- ['Proton','Drei Quarks, fest verbunden.'],
- ['Atom','Kern und Elektronenwolke.'],
- ['Molekül','Atome gehen Bindungen ein.'],
- ['Sternenstaub','Feine Körner zwischen den Sternen.'],
- ['Asteroid','Gestein, das durchs All taumelt.'],
- ['Mond','Ein treuer Begleiter.'],
- ['Planet','Ozeane, Kontinente, Wetter.'],
- ['Gasriese','Wirbelnde Bänder und Ringe.'],
- ['Stern','Kernfusion im Gleichgewicht.'],
- ['Roter Riese','Ein Stern im Spätherbst.'],
- ['Neutronenstern','Ein Teelöffel wiegt Milliarden Tonnen.'],
- ['Nebel','Kinderstube neuer Sterne.'],
- ['Schwarzes Loch','Nicht einmal Licht entkommt.'],
- ['Quasar','Hellster Leuchtturm im All.'],
- ['Galaxie','Hunderte Milliarden Sonnen.'],
- ['Galaxienhaufen','Tausende Galaxien, von Gravitation gebunden.'],
- ['Superhaufen','Haufen von Galaxienhaufen.'],
- ['Kosmisches Netz','Leuchtende Fäden zwischen riesigen Leeren.'],
- ['Wurmloch','Eine Abkürzung durch die Raumzeit.'],
- ['Weißes Loch','Was hineinfällt, kommt hier heraus.'],
- ['Kosmischer String','Ein Riss aus der Zeit des Urknalls.'],
- ['Universum','Alles, was ist – oder fast alles.'],
- ['Multiversum','Unzählige Blasen-Universen.'],
- ['Omniversum','Die Summe aller Möglichkeiten.']
-].map(([n,d],i)=>{
-  const cost=4*Math.pow(22,i)*(i?1.25:1), time=0.8*Math.pow(1.6,Math.min(i,16))*Math.pow(1.3,Math.max(0,i-16)), pay=8*Math.pow(1.7,i);
-  return {n,d,cost,time,rev:cost*time/pay,r:1.08+0.005*i};
+ ['Quark','Die kleinsten Bausteine der Materie.',0],
+ ['Elektron','Leicht, flink und negativ geladen.','lepton'],
+ ['Proton','Zwei up-Quarks und ein down-Quark.',1],
+ ['Neutron','Ladungslos und doch unverzichtbar.',1,'saturate(.15) brightness(1.1)'],
+ ['Atomkern','Protonen und Neutronen, dicht gepackt.','nucleus'],
+ ['Wasserstoff','Das häufigste Element im Kosmos.',2,null,1,1],
+ ['Helium','Entstanden in den ersten drei Minuten.',2,'hue-rotate(60deg)',1,2],
+ ['Kohlenstoff','Grundlage allen Lebens.',2,'hue-rotate(140deg)',1,3],
+ ['Eisen','Endstation der Kernfusion in Sternen.',2,'hue-rotate(200deg) saturate(1.4)',1,4],
+ ['Molekül','Atome gehen Bindungen ein.',3],
+ ['Kristall','Atome in perfekter Ordnung.','crystal'],
+ ['Eiskristall','Gefrorenes Wasser, sechsfach symmetrisch.','crystal','hue-rotate(-30deg) saturate(.5) brightness(1.3)'],
+ ['Sternenstaub','Feine Körner zwischen den Sternen.',4],
+ ['Staubwolke','Ein Schleier aus kosmischem Staub.',4,'hue-rotate(170deg)',1.2],
+ ['Meteoroid','Ein Splitter auf Wanderschaft.',5,null,.65],
+ ['Komet','Ein schmutziger Schneeball mit Schweif.','comet'],
+ ['Asteroid','Gestein, das durchs All taumelt.',5],
+ ['Zwergplanet','Zu klein für einen echten Planeten.',6,'sepia(.8) hue-rotate(-20deg)',.8],
+ ['Mond','Ein treuer Begleiter.',6],
+ ['Eismond','Unter dem Eis verbirgt sich ein Ozean.',6,'sepia(.3) hue-rotate(170deg) saturate(2)'],
+ ['Vulkanmond','Schwefel speiende Vulkane.',6,'sepia(1) saturate(3) hue-rotate(5deg)'],
+ ['Wüstenplanet','Endlose Dünen unter zwei Sonnen.',7,'hue-rotate(180deg) saturate(.9)'],
+ ['Lavaplanet','Glühende Ströme aus flüssigem Gestein.',7,'hue-rotate(160deg) saturate(2.2) brightness(.9)'],
+ ['Eisplanet','Gefroren bis in den Kern.',7,'saturate(.25) brightness(1.25)'],
+ ['Ozeanplanet','Eine Welt ganz aus Wasser.',7,'hue-rotate(-25deg) saturate(1.4)'],
+ ['Erdähnlicher Planet','Ozeane, Kontinente, Wetter.',7],
+ ['Supererde','Größer, schwerer, voller Leben.',7,'hue-rotate(25deg) saturate(1.3)',1.15],
+ ['Eisriese','Methan färbt ihn tiefblau.',8,'hue-rotate(170deg) saturate(1.2)'],
+ ['Gasriese','Wirbelnde Bänder und Stürme.',8],
+ ['Ringplanet','Ringe aus Eis und Gestein.',8,'saturate(.4) brightness(1.15)',1.1],
+ ['Heißer Jupiter','Ein Gasriese dicht an seinem Stern.',8,'hue-rotate(-25deg) saturate(2)'],
+ ['Doppelplanet','Zwei Welten umkreisen einander.','binaryP'],
+ ['Planetensystem','Ein Stern und seine Familie.','system'],
+ ['Brauner Zwerg','Zu klein für ein echtes Sternenfeuer.',9,'hue-rotate(-40deg) saturate(.8) brightness(.55)',.7],
+ ['Roter Zwerg','Klein, kühl und uralt.',9,'hue-rotate(-35deg) saturate(1.5)',.7],
+ ['Gelber Zwerg','Ein Stern wie unsere Sonne.',9],
+ ['Doppelstern','Zwei Sonnen im Tanz.','binaryStar'],
+ ['Weißer Stern','Heiß und strahlend hell.',9,'saturate(.15) brightness(1.2)'],
+ ['Blauer Riese','Lebt schnell und stirbt jung.',9,'hue-rotate(170deg) saturate(1.6)',1.2],
+ ['Roter Riese','Ein Stern im Spätherbst.',10],
+ ['Gelber Überriese','Hunderte Male größer als die Sonne.',10,'hue-rotate(35deg) saturate(1.3)',1.15],
+ ['Roter Überriese','Kurz vor dem großen Knall.',10,'saturate(1.4) brightness(.9)',1.3],
+ ['Planetarischer Nebel','Die abgestoßene Hülle eines Sterns.','ringNebula'],
+ ['Weißer Zwerg','Ein glühender Sternenrest.',9,'saturate(0) brightness(1.4)',.45],
+ ['Supernova','Ein Stern explodiert.','supernova'],
+ ['Neutronenstern','Ein Teelöffel wiegt Milliarden Tonnen.',11],
+ ['Pulsar','Ein kosmischer Leuchtturm.',11,'hue-rotate(70deg) saturate(1.5)'],
+ ['Magnetar','Das stärkste Magnetfeld im Universum.',11,'hue-rotate(140deg) saturate(2)'],
+ ['Offener Sternhaufen','Junge Sterne, gemeinsam geboren.','openCluster'],
+ ['Kugelsternhaufen','Hunderttausende uralte Sterne.','globular'],
+ ['Emissionsnebel','Leuchtendes Wasserstoffgas.',12,'hue-rotate(-40deg) saturate(1.3)'],
+ ['Reflexionsnebel','Staub, der Sternenlicht streut.',12,'hue-rotate(120deg)'],
+ ['Dunkelwolke','Kalter Staub verschluckt das Licht.',12,'brightness(.55) saturate(.6)',1.1],
+ ['Sternentstehungsgebiet','Kinderstube neuer Sterne.',12],
+ ['Stellares Schwarzes Loch','Der Rest eines riesigen Sterns.',13,null,.75],
+ ['Röntgendoppelstern','Ein Schwarzes Loch frisst seinen Begleiter.','xray'],
+ ['Mittelschweres Schwarzes Loch','Das fehlende Bindeglied.',13,'hue-rotate(-20deg) saturate(1.3)'],
+ ['Supermassereiches Schwarzes Loch','Millionen Sonnenmassen schwer.',13,'hue-rotate(180deg)',1.2],
+ ['Aktiver Galaxienkern','Ein erwachter Riese.',14,'hue-rotate(180deg) saturate(.8)'],
+ ['Quasar','Hellster Leuchtturm im All.',14],
+ ['Blazar','Sein Strahl zeigt genau auf uns.',14,'hue-rotate(70deg) saturate(1.6)'],
+ ['Zwerggalaxie','Ein kleiner Begleiter großer Galaxien.','irregular',null,.7],
+ ['Irreguläre Galaxie','Ohne feste Form.','irregular'],
+ ['Spiralgalaxie','Hunderte Milliarden Sonnen.',15],
+ ['Balkenspiralgalaxie','Ein Balken aus Sternen im Zentrum.','barred'],
+ ['Linsenförmige Galaxie','Eine Scheibe ohne Spiralarme.','elliptical',null,1,.35],
+ ['Elliptische Galaxie','Alt, rund und rötlich.','elliptical',null,1,.7],
+ ['Ringgalaxie','Geformt durch einen Zusammenstoß.','ringGal'],
+ ['Kollidierende Galaxien','Zwei Galaxien verschmelzen.','collide'],
+ ['Starburst-Galaxie','Sterne entstehen im Rekordtempo.',15,'hue-rotate(70deg) saturate(1.8)'],
+ ['Riesengalaxie','Ein Gigant im Zentrum eines Haufens.','elliptical','brightness(1.2)',1.25,.6],
+ ['Galaxiengruppe','Eine Handvoll Galaxien.',16,null,1,5],
+ ['Lokale Gruppe','Unsere kosmische Nachbarschaft.',16,null,1,9],
+ ['Galaxienhaufen','Tausende Galaxien, von Gravitation gebunden.',16],
+ ['Superhaufen','Haufen von Galaxienhaufen.',17],
+ ['Galaxienwand','Eine Mauer aus Galaxien.',17,'hue-rotate(60deg)'],
+ ['Kosmische Leere','Eine gewaltige Leere zwischen den Strukturen.','void'],
+ ['Kosmisches Netz','Leuchtende Fäden zwischen den Leeren.',18],
+ ['Großer Attraktor','Er zieht ganze Galaxienhaufen an.','attractor'],
+ ['Dunkle-Materie-Halo','Unsichtbar, aber überall.','halo'],
+ ['Gravitationswelle','Die Raumzeit selbst schwingt.','wave'],
+ ['Wurmloch','Eine Abkürzung durch die Raumzeit.',19],
+ ['Einstein-Rosen-Brücke','Zwei Orte, verbunden durch einen Tunnel.',19,'hue-rotate(110deg)'],
+ ['Weißes Loch','Was hineinfällt, kommt hier heraus.',20],
+ ['Kosmischer String','Ein Riss aus der Zeit des Urknalls.',21],
+ ['Quantenschaum','Die brodelnde Struktur des Raums.','foam'],
+ ['Falsches Vakuum','Ein Universum auf der Kippe.','vacuum'],
+ ['Inflatonfeld','Es trieb die kosmische Inflation an.','wave','hue-rotate(200deg) saturate(1.5)'],
+ ['Babyuniversum','Gerade erst entstanden.',22,'hue-rotate(40deg)',.75],
+ ['Universum','Alles, was ist – oder fast alles.',22],
+ ['Paralleluniversum','Fast wie unseres. Fast.',22,'hue-rotate(100deg)'],
+ ['Spiegeluniversum','Links ist rechts und rechts ist links.',22,'hue-rotate(200deg)'],
+ ['Blasenuniversum','Eine Blase im ewigen Schaum.','vacuum','hue-rotate(120deg)'],
+ ['Multiversum','Unzählige Blasen-Universen.',23],
+ ['Brane','Eine Membran in höheren Dimensionen.','brane'],
+ ['Hyperraum','Mehr Richtungen, als wir sehen können.','tesseract',null,1.7],
+ ['Megaversum','Ein Multiversum aus Multiversen.',23,'saturate(1.6) brightness(1.15)',1.15],
+ ['Omniversum','Die Summe aller Möglichkeiten.',24],
+ ['Ewigkeit','Jenseits von Raum und Zeit.',24,'saturate(.3) sepia(.6) brightness(1.2)'],
+ ['Ursprung','Der Punkt, an dem alles beginnt.','origin']
+].map(([n,d,k,f,z,p],i)=>{
+  const cost=4*Math.pow(18,i)*(i?1.25:1), time=Math.min(7200,0.8*Math.pow(1.22,i)), pay=8*Math.pow(1.55,i);
+  return {n,d,k,f:f||null,z:z||1,p:p||0,cost,time,rev:cost*time/pay,r:1.08+Math.min(0.002*i,0.07)};
 });
+/* Spielstände aus Version 1 (25 Objekte) auf die neuen Plätze abbilden */
+const OLDMAP=[0,2,5,9,12,16,18,25,28,35,39,45,50,54,59,63,73,74,77,81,83,84,89,93,97];
 const N=TIERS.length;
 const MS=[10,25,50,100,150,200,250,300,400,500,600,700,800,900,1000,1250,1500,1750,2000,2500,3000,3500,4000,5000,6000,7500,10000];
-const ROMAN=Array.from({length:40},(_,n)=>{n++;let r='';for(const [v,c] of [[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=v){r+=c;n-=v}return r.replace(/XXXX/,'XL')});
+const ROMAN=Array.from({length:60},(_,n)=>{n++;let r='';for(const [v,c] of [[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']])while(n>=v){r+=c;n-=v}return r.replace(/XXXX/,'XL')});
 const UPS=[];
 TIERS.forEach((t,i)=>{for(let k=0;k<4;k++)UPS.push({id:'t'+i+'_'+k,kind:'tier',tier:i,cost:t.cost*20*Math.pow(1e4,k+1),name:t.n+'-Resonanz '+ROMAN[k],desc:t.n+' erzeugt ×3 Materie'})});
-for(let k=0;k<30;k++)UPS.push({id:'g'+k,kind:'all',cost:1e6*Math.pow(1e4,k),name:'Kosmische Inflation '+ROMAN[k],desc:'Alle Objekte erzeugen ×2'});
+for(let k=0;k<40;k++)UPS.push({id:'g'+k,kind:'all',cost:1e6*Math.pow(1e4,k),name:'Kosmische Inflation '+ROMAN[k],desc:'Alle Objekte erzeugen ×2'});
 for(let k=0;k<20;k++)UPS.push({id:'c'+k,kind:'tap',cost:250*Math.pow(120,k),name:'Gravitationsimpuls '+ROMAN[k],desc:'Jeder Tipp bringt +2 % der Materie pro Sekunde'});
 UPS.sort((a,b)=>a.cost-b.cost);
 const UPMAP=Object.fromEntries(UPS.map(u=>[u.id,u]));
@@ -226,7 +304,7 @@ const RES=[
 const ACH=[];
 const TIERWORDS=['Erste Spur','Kleine Familie','Hundertschaft','Massenproduktion','Halbes Tausend'];
 TIERS.forEach((t,i)=>[1,25,100,250,500].forEach((c,j)=>ACH.push({id:'a'+i+'_'+c,name:t.n+': '+TIERWORDS[j],desc:'Besitze '+c+'× '+t.n,test:()=>S.g[i].n>=c})));
-[1e3,1e6,1e9,1e12,1e15,1e18,1e21,1e24,1e30,1e36,1e42,1e50,1e60,1e75,1e90,1e110,1e130,1e160,1e200,1e250].forEach((v,j)=>ACH.push({id:'l'+j,name:'Materiesammler '+ROMAN[j],desc:'Insgesamt '+fmt(v,true)+' Materie',test:()=>S.life>=v}));
+[1e3,1e6,1e9,1e12,1e15,1e18,1e21,1e24,1e30,1e36,1e42,1e50,1e60,1e75,1e90,1e110,1e130,1e160,1e200,1e250,1e300].forEach((v,j)=>ACH.push({id:'l'+j,name:'Materiesammler '+ROMAN[j],desc:'Insgesamt '+fmt(v,true)+' Materie',test:()=>S.life>=v}));
 [[50,'Fingerübung'],[500,'Trommelwirbel'],[5000,'Pulsar-Daumen']].forEach(([v,n])=>ACH.push({id:'tp'+v,name:n,desc:v+'× ins All getippt',test:()=>S.taps>=v}));
 [[1,'Es werde Licht'],[3,'Ewige Wiederkehr'],[10,'Zyklisches Universum'],[25,'Multiversum']].forEach(([v,n])=>ACH.push({id:'bb'+v,name:n,desc:v+'× Urknall ausgelöst',test:()=>S.bangs>=v}));
 [[1,'Sternschnuppe'],[10,'Kometenjäger'],[50,'Oortsche Wolke']].forEach(([v,n])=>ACH.push({id:'co'+v,name:n,desc:v+' Kometen eingefangen',test:()=>S.comets>=v}));
@@ -254,16 +332,21 @@ function fmtT(s){
 /* ---------- Zustand ---------- */
 const KEY='kosmosSchmiede.v1';
 function fresh(keep){
-  const s={m:5,run:0,life:0,sing:0,qp:0,g:TIERS.map(()=>({n:0,p:0})),up:{},res:{},ach:{},taps:0,bangs:0,comets:0,bm:0,sci:false,autoOn:true,mute:false,sfxVol:.7,musVol:.5,boostUntil:0,last:Date.now(),born:Date.now(),best:0};
+  const s={v:2,m:5,run:0,life:0,sing:0,qp:0,g:TIERS.map(()=>({n:0,p:0})),up:{},res:{},ach:{},taps:0,bangs:0,comets:0,bm:0,sci:false,autoOn:true,mute:false,sfxVol:.7,musVol:.5,boostUntil:0,last:Date.now(),born:Date.now(),best:0};
   if(keep)for(const k of ['life','sing','qp','res','ach','taps','bangs','comets','bm','sci','autoOn','mute','sfxVol','musVol','born','best'])s[k]=keep[k];
   if(keep)s.m=5*Math.pow(100,lv('start',s));
   return s;
 }
 function lv(id,s){return ((s||S).res[id])||0}
+let migrated=false;
 function load(data){
   let raw=data&&data.save;
   if(!raw){try{raw=localStorage.getItem(KEY)}catch(e){}}
-  try{if(raw){const o=JSON.parse(raw);const f=fresh();S=Object.assign(f,o);S.g=TIERS.map((_,i)=>Object.assign({n:0,p:0},o.g&&o.g[i]));return true}}catch(e){}
+  try{if(raw){const o=JSON.parse(raw);
+    if(!o.v){/* Version 1 → 2: Erfolge auf neue Plätze umrechnen, aktuelles Universum frisch starten, alles Dauerhafte behalten */
+      const ach={};for(const k in (o.ach||{})){const m=/^a(\d+)_(\d+)$/.exec(k);if(m){const ni=OLDMAP[+m[1]];if(ni!=null)ach['a'+ni+'_'+m[2]]=1}else ach[k]=1}
+      o.ach=ach;const keep=Object.assign(fresh(),o);keep.res=o.res||{};S=fresh(keep);S.best=Math.max(o.best||0,o.run||0);migrated=true;return true}
+    const f=fresh();S=Object.assign(f,o);S.g=TIERS.map((_,i)=>Object.assign({n:0,p:0},o.g&&o.g[i]));return true}}catch(e){}
   S=fresh();return false;
 }
 function save(){S.last=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -291,7 +374,7 @@ function costOf(i,k){const t=TIERS[i],n=S.g[i].n;return disc()*t.cost*Math.pow(t
 function maxBuy(i){const t=TIERS[i],c=disc()*t.cost*Math.pow(t.r,S.g[i].n);return Math.max(0,Math.floor(Math.log(S.m*(t.r-1)/c+1)/Math.log(t.r)+1e-9))}
 function amount(i){const md=MODES[S.bm];if(md==='max')return Math.max(1,maxBuy(i));if(md==='next'){const nx=msInfo(S.g[i].n).next;return nx?nx-S.g[i].n:1}return md}
 function buy(i,k){const c=costOf(i,k);if(c>S.m||k<1)return false;S.m-=c;S.g[i].n+=k;return true}
-function bangGain(){return Math.floor(Math.cbrt(S.run/1e12)*(1+0.15*lv('echo'))+1e-9)}
+function bangGain(){if(S.run<1e12)return 0;return Math.floor(Math.pow(Math.log10(S.run)-11,2.5)*(1+0.15*lv('echo'))+1e-9)}
 
 /* ---------- Spielschleife ---------- */
 function tick(dt){
@@ -327,7 +410,7 @@ function buildList(){
     const locked=i>0&&i===cnt-1&&!S.g[i].n;
     const d=document.createElement('div');d.className='tier'+(locked?' locked':'');
     d.innerHTML='<canvas class="ico" width="156" height="156"></canvas><div style="min-width:0"><div class="nm">'+(locked?'???':TIERS[i].n)+' <span class="num"></span></div><div class="sub"></div><div class="prog"><i></i><span></span></div><div class="ms"></div></div><button class="buy"><small></small><b></b></button>';
-    const cv=d.querySelector('canvas'),cx=cv.getContext('2d');const ig=cx.createRadialGradient(78,70,10,78,78,110);ig.addColorStop(0,'#141c3c');ig.addColorStop(1,'#05070f');cx.fillStyle=ig;cx.fillRect(0,0,156,156);drawBody(cx,78,78,[16,17,18,21].includes(i)?58:[22,23,24].includes(i)?56:50,i,2.5,true);
+    const cv=d.querySelector('canvas'),cx=cv.getContext('2d');const ig=cx.createRadialGradient(78,70,10,78,78,110);ig.addColorStop(0,'#141c3c');ig.addColorStop(1,'#05070f');cx.fillStyle=ig;cx.fillRect(0,0,156,156);drawBody(cx,78,78,50,i,2.5);
     const r={el:d,i,locked,cnt:d.querySelector('.nm span'),sub:d.querySelector('.sub'),bar:d.querySelector('.prog i'),ps:d.querySelector('.prog span'),ms:d.querySelector('.ms'),btn:d.querySelector('.buy'),bs:d.querySelector('.buy small'),bb:d.querySelector('.buy b'),cache:{}};
     r.btn.onclick=()=>{const k=amount(i),n0=S.g[i].n,ms0=msInfo(n0).next;if(buy(i,k)){SND.play(n0===0?'unlock':ms0&&S.g[i].n>=ms0?'milestone':'buy');buildList();updList();burst(i)}};
     rows.push(r);L.appendChild(d);
@@ -362,7 +445,7 @@ function renderUps(){
 }
 let bangArm=0;
 function renderBang(){
-  const V=$('#v-bang'),gain=bangGain(),next=Math.pow((gain+1)/(1+0.15*lv('echo')),3)*1e12;
+  const V=$('#v-bang'),gain=bangGain(),next=Math.pow(10,11+Math.pow((gain+1)/(1+0.15*lv('echo')),.4));
   let h='<div class="panel"><h2>Urknall</h2><p>Setzt Materie, Objekte und Upgrades zurück. Dafür bekommst du Singularitäten (jede +'+(10+lv('sing'))+' % auf alles, für immer) und genauso viele Quantenpunkte für Forschung.</p>'+
   '<div class="kv" style="margin-top:8px"><span>Singularitäten</span><span>'+fmt(S.sing,true)+' (+'+fmt(S.sing*(10+lv('sing')),true)+' %)</span><span>Materie in diesem Universum</span><span>'+fmt(S.run)+'</span><span>Nächste Singularität bei</span><span>'+fmt(next)+'</span></div>'+
   '<div class="row" style="margin-top:10px"><div class="grow"><span class="pill">Gewinn</span> <span class="big">+'+fmt(gain,true)+'</span></div><button class="btn violet" id="bangbtn"'+(gain<1?' disabled':'')+'>'+(bangArm>Date.now()?'Wirklich? Nochmal tippen':'Urknall auslösen')+'</button></div></div>'+
@@ -417,9 +500,11 @@ function ball(c,x,y,r,c1,c2,opt){if(r<=0)return;const g=c.createRadialGradient(x
 function shadeCol(hex){if(hex[0]!=='#')return hex;const n=parseInt(hex.slice(1),16),f=.28;return 'rgb('+Math.round((n>>16&255)*f)+','+Math.round((n>>8&255)*f)+','+Math.round((n&255)*f)+')'}
 function shade(c,x,y,r){const g=c.createRadialGradient(x-r*.45,y-r*.45,r*.35,x,y,r*1.05);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,'rgba(0,0,12,.7)');c.fillStyle=g;c.beginPath();c.arc(x,y,r,0,7);c.fill()}
 function atmo(c,x,y,r,rgb){const g=c.createRadialGradient(x,y,r*.92,x,y,r*1.18);g.addColorStop(0,'rgba('+rgb+',.55)');g.addColorStop(1,'rgba('+rgb+',0)');const o=c.globalCompositeOperation;c.globalCompositeOperation='lighter';c.fillStyle=g;c.beginPath();c.arc(x,y,r*1.18,0,7);c.fill();c.globalCompositeOperation=o}
-function spark(c,x,y,s,rgb,a){const o=c.globalCompositeOperation;c.globalCompositeOperation='lighter';c.strokeStyle='rgba('+rgb+','+a+')';c.lineWidth=Math.max(.6,s*.12);c.beginPath();c.moveTo(x-s,y);c.lineTo(x+s,y);c.moveTo(x,y-s);c.lineTo(x,y+s);c.stroke();glow(c,x,y,s*.6,rgb,a);c.globalCompositeOperation=o}
+function spark(c,x,y,s,rgb,a){if(s<=0)return;const o=c.globalCompositeOperation;c.globalCompositeOperation='lighter';c.lineWidth=Math.max(.6,Math.min(s*.12,1.2+s*.02));c.lineCap='round';
+  for(const [dx,dy] of [[1,0],[0,1]]){const g=c.createLinearGradient(x-dx*s,y-dy*s,x+dx*s,y+dy*s);g.addColorStop(0,'rgba('+rgb+',0)');g.addColorStop(.5,'rgba('+rgb+','+a+')');g.addColorStop(1,'rgba('+rgb+',0)');c.strokeStyle=g;c.beginPath();c.moveTo(x-dx*s,y-dy*s);c.lineTo(x+dx*s,y+dy*s);c.stroke()}
+  glow(c,x,y,s*.5,rgb,a);c.globalCompositeOperation=o}
 const shapeCache={};
-function shapes(i){if(shapeCache[i])return shapeCache[i];const R=rng(i*977+13),o={};
+function shapes(i){if(shapeCache[i])return shapeCache[i];let sd=typeof i==='number'?i*977+13:0;if(typeof i==='string')for(const ch of i)sd=sd*31+ch.charCodeAt(0)|0;const R=rng(sd),o={};
   o.pts=[];for(let k=0;k<700;k++){const arm=k%2,d=Math.pow(R(),.75),a=arm*Math.PI+d*5.6+(R()-.5)*(.35+d*.5);o.pts.push([a,d,R()])}
   o.halo=[];for(let k=0;k<120;k++){const a=R()*6.283,d=Math.pow(R(),2)*.5;o.halo.push([a,d,R()])}
   o.poly=[];for(let k=0;k<18;k++)o.poly.push(.74+R()*.26);
@@ -435,7 +520,7 @@ function shapes(i){if(shapeCache[i])return shapeCache[i];const R=rng(i*977+13),o
 function miniGal(c,x,y,r,rot,warm,t){c.save();c.translate(x,y);c.rotate(rot+t*.05);c.scale(1,.5);glow(c,0,0,r,warm?'255,215,170':'175,195,255',.55);glow(c,0,0,r*.35,'255,245,225',.9);
   const o=c.globalCompositeOperation;c.globalCompositeOperation='lighter';c.strokeStyle=warm?'rgba(255,220,180,.35)':'rgba(180,200,255,.4)';c.lineWidth=Math.max(.6,r*.12);
   for(const s of [0,Math.PI]){c.beginPath();for(let k=0;k<=12;k++){const a=s+k*.38,d=r*.15+k*r*.07;c.lineTo(Math.cos(a)*d,Math.sin(a)*d)}c.stroke()}c.globalCompositeOperation=o;c.restore()}
-function drawBody(c,x,y,r,i,t,icon){
+function drawBase(c,x,y,r,i,t,p){
   const s=shapes(i),small=r<16;c.save();
   switch(i){
   case 0:{glow(c,x,y,r*2.2,'170,120,255',.5);ball(c,x,y,r*.72,'#efe2ff','#6a2fd6');c.save();c.beginPath();c.arc(x,y,r*.72,0,7);c.clip();
@@ -443,8 +528,8 @@ function drawBody(c,x,y,r,i,t,icon){
     c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=Math.max(1,r*.05);for(let k=0;k<3;k++){c.beginPath();c.arc(x,y,r*.9,t*2+k*2.1,t*2+k*2.1+.9);c.stroke()}break}
   case 1:{glow(c,x,y,r*2.1,'255,140,60',.5);ball(c,x,y,r*.82,'#ffe2b0','#d65a1c');const q=['#ff4d63','#3ff08a','#4aa8ff'];q.forEach((col,k)=>{const a=t*1.5+k*2.094;glow(c,x+Math.cos(a)*r*.36,y+Math.sin(a)*r*.36,r*.35,'255,255,255',.25);ball(c,x+Math.cos(a)*r*.36,y+Math.sin(a)*r*.36,r*.2,'#ffffff',col)});break}
   case 2:{glow(c,x,y,r*1.7,'127,224,255',.32);c.lineWidth=Math.max(1,r*.045);
-    for(let k=0;k<3;k++){const rot=k*1.047+.3;c.strokeStyle='rgba(127,224,255,.55)';c.beginPath();c.ellipse(x,y,r*.95,r*.3,rot,0,7);c.stroke()}
-    glow(c,x,y,r*.6,'255,170,90',.6);ball(c,x,y,r*.26,'#ffe0a0','#e0662a');for(let k=0;k<3;k++){const a=t*(2+k*.4)+k,rot=k*1.047+.3,ex=Math.cos(a)*r*.95,ey=Math.sin(a)*r*.3,px=x+ex*Math.cos(rot)-ey*Math.sin(rot),py=y+ex*Math.sin(rot)+ey*Math.cos(rot);glow(c,px,py,r*.3,'127,224,255',.7);ball(c,px,py,r*.08,'#ffffff','#7fe0ff',{flat:1})}break}
+    const no=p||3;for(let k=0;k<no;k++){const rot=k*Math.PI/no+.3;c.strokeStyle='rgba(127,224,255,.55)';c.beginPath();c.ellipse(x,y,r*.95,r*.3,rot,0,7);c.stroke()}
+    glow(c,x,y,r*.6,'255,170,90',.6);ball(c,x,y,r*.26,'#ffe0a0','#e0662a');for(let k=0;k<no;k++){const a=t*(2+k*.4)+k,rot=k*Math.PI/no+.3,ex=Math.cos(a)*r*.95,ey=Math.sin(a)*r*.3,px=x+ex*Math.cos(rot)-ey*Math.sin(rot),py=y+ex*Math.sin(rot)+ey*Math.cos(rot);glow(c,px,py,r*.3,'127,224,255',.7);ball(c,px,py,r*.08,'#ffffff','#7fe0ff',{flat:1})}break}
   case 3:{glow(c,x,y,r*1.7,'90,160,255',.32);const a=t*.6;const P=[[0,0,.48,'#bfe0ff','#2a62d8'],[Math.cos(a)*.64,Math.sin(a)*.64,.3,'#ffffff','#a9b3d6'],[Math.cos(a+1.85)*.64,Math.sin(a+1.85)*.64,.3,'#ffffff','#a9b3d6']];
     c.lineCap='round';c.strokeStyle='rgba(220,230,255,.75)';c.lineWidth=r*.12;P.slice(1).forEach(p=>{c.beginPath();c.moveTo(x,y);c.lineTo(x+p[0]*r,y+p[1]*r);c.stroke()});P.forEach(p=>ball(c,x+p[0]*r,y+p[1]*r,p[2]*r,p[3],p[4]));break}
   case 4:{glow(c,x,y,r*1.9,'255,130,190',.3);glow(c,x+r*.3,y-r*.2,r*1.2,'130,190,255',.22);const n=small?60:180;
@@ -488,7 +573,7 @@ function drawBody(c,x,y,r,i,t,icon){
     for(let k=0;k<n;k++){const p=s.pts[k],d=p[1]*r*1.25;c.fillStyle=p[2]>.85?'rgba(255,190,220,.9)':p[1]<.3?'rgba(255,225,180,.8)':p[2]>.4?'rgba(200,215,255,.75)':'rgba(130,160,255,.7)';c.fillRect(Math.cos(p[0])*d,Math.sin(p[0])*d,z,z)}
     if(!small)s.halo.forEach(p=>{c.fillStyle='rgba(255,230,200,.5)';c.fillRect(Math.cos(p[0])*p[1]*r,Math.sin(p[0])*p[1]*r,z,z)});
     glow(c,0,0,r*.55,'255,225,180',.7);glow(c,0,0,r*.18,'255,255,240',1);break}
-  case 16:{glow(c,x,y,r*1.7,'140,120,255',.22);glow(c,x,y,r*1.1,'255,190,140',.12);s.gal.slice(0,small?8:16).forEach(g=>miniGal(c,x+g[0]*r*.85,y+g[1]*r*.85,r*g[2]*1.3,g[3],g[4]>.5,t));break}
+  case 16:{glow(c,x,y,r*1.7,'140,120,255',.22);glow(c,x,y,r*1.1,'255,190,140',.12);s.gal.slice(0,small?Math.min(8,p||16):(p||16)).forEach(g=>miniGal(c,x+g[0]*r*.85,y+g[1]*r*.85,r*g[2]*1.3,g[3],g[4]>.5,t));break}
   case 17:{glow(c,x,y,r*1.9,'120,110,255',.22);c.save();c.translate(x,y);c.rotate(t*.03);s.gal.forEach((g,k)=>{const fx=g[0]*r*1.1,fy=(g[1]*.5+Math.sin(g[0]*3)*.35)*r;if(small&&k%3)return;miniGal(c,fx,fy,r*g[2]*.75,g[3],g[4]>.6,t)});c.restore();break}
   case 18:{glow(c,x,y,r*1.6,'90,120,255',.2);c.globalCompositeOperation='lighter';const P=s.nodes.map((n,k)=>[x+n[0]*r*.95+Math.sin(t*.4+k)*r*.03,y+n[1]*r*.95+Math.cos(t*.35+k)*r*.03]);
     s.edges.forEach(([a,b],k)=>{const g=c.createLinearGradient(P[a][0],P[a][1],P[b][0],P[b][1]);const pu=.25+.2*Math.sin(t*1.5+k);g.addColorStop(0,'rgba(150,200,255,'+(pu+.2)+')');g.addColorStop(.5,'rgba(190,140,255,'+pu+')');g.addColorStop(1,'rgba(150,200,255,'+(pu+.2)+')');c.strokeStyle=g;c.lineWidth=Math.max(.8,r*.035);c.beginPath();c.moveTo(P[a][0],P[a][1]);c.quadraticCurveTo((P[a][0]+P[b][0])/2+r*.08,(P[a][1]+P[b][1])/2-r*.06,P[b][0],P[b][1]);c.stroke()});
@@ -512,9 +597,61 @@ function drawBody(c,x,y,r,i,t,icon){
     for(let ring=0;ring<3;ring++){const n=6+ring*4,rad=r*(.35+ring*.32),dir=ring%2?-1:1;for(let k=0;k<n;k++){const a=k/n*6.283+t*.25*dir,h=(k/n*360+t*30+ring*80)%360;c.fillStyle='hsla('+h+',90%,65%,.55)';c.beginPath();c.arc(Math.cos(a)*rad,Math.sin(a)*rad,r*(.13-ring*.025),0,7);c.fill()}}
     c.rotate(t*.1);for(let k=0;k<12;k++){c.rotate(.5236);c.strokeStyle='hsla('+(k*30+t*40)%360+',90%,75%,.3)';c.lineWidth=Math.max(.6,r*.02);c.beginPath();c.moveTo(r*.2,0);c.lineTo(r*1.3,0);c.stroke()}
     glow(c,0,0,r*.5,'255,255,255',.9);break}
+  case 'lepton':{glow(c,x,y,r*1.9,'110,220,255',.5);ball(c,x,y,r*.42,'#effcff','#1d93cf');c.strokeStyle='rgba(180,240,255,.55)';c.lineWidth=Math.max(1,r*.04);for(let k=0;k<2;k++){c.beginPath();c.arc(x,y,r*(.65+k*.2),t*(3-k*5)+k,t*(3-k*5)+k+1.4);c.stroke()}if(!small)spark(c,x,y,r*.9,'200,245,255',.5);break}
+  case 'nucleus':{glow(c,x,y,r*1.8,'255,120,90',.35);const B=s.nodes.slice(0,11).map((n,k)=>[n[0]*r*.42,n[1]*r*.42,k]).sort((a,b)=>a[1]-b[1]);c.translate(x,y);c.rotate(t*.3);B.forEach(([bx,by,k])=>ball(c,bx,by,r*.24,'#ffffff',k%2?'#e0483a':'#8c93a8'));break}
+  case 'crystal':{glow(c,x,y,r*1.7,'120,230,255',.35);c.translate(x,y);c.rotate(Math.sin(t*.5)*.15);const P=[];for(let k=0;k<6;k++){const a=k*1.0472-1.5708;P.push([Math.cos(a)*r*.55,Math.sin(a)*r*.9])}
+    const g=c.createLinearGradient(-r*.5,-r*.9,r*.5,r*.9);g.addColorStop(0,'rgba(220,250,255,.95)');g.addColorStop(.5,'rgba(90,200,240,.75)');g.addColorStop(1,'rgba(30,90,170,.9)');c.fillStyle=g;c.beginPath();P.forEach(p=>c.lineTo(p[0],p[1]));c.closePath();c.fill();
+    c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=Math.max(.7,r*.03);c.stroke();c.beginPath();P.forEach(p=>{c.moveTo(0,-r*.2);c.lineTo(p[0],p[1])});c.stroke();c.fillStyle='rgba(255,255,255,.25)';c.beginPath();c.moveTo(P[0][0],P[0][1]);c.lineTo(P[5][0],P[5][1]);c.lineTo(0,-r*.2);c.fill();
+    spark(c,r*.2,-r*.45,r*.35*(.6+.4*Math.sin(t*2.5)),'255,255,255',.9);break}
+  case 'comet':{c.translate(x,y);c.rotate(-.6);c.globalCompositeOperation='lighter';const tl=(w,L,col,a)=>{const g=c.createLinearGradient(0,0,L,0);g.addColorStop(0,'rgba('+col+','+a+')');g.addColorStop(1,'rgba('+col+',0)');c.fillStyle=g;c.beginPath();c.moveTo(0,-r*.15);c.quadraticCurveTo(L*.5,-w,L,-w*1.2);c.lineTo(L,w*.2);c.quadraticCurveTo(L*.5,w*.2,0,r*.15);c.fill()};
+    tl(r*.55,r*2.2,'255,235,200',.5);tl(r*.2,r*2.6,'120,200,255',.7);c.globalCompositeOperation='source-over';glow(c,0,0,r*.7,'200,240,255',.8);ball(c,0,0,r*.2,'#ffffff','#9fb8c8');break}
+  case 'binaryP':{const a=t*.5;const p1=[x+Math.cos(a)*r*.45,y+Math.sin(a)*r*.25],p2=[x-Math.cos(a)*r*.45,y-Math.sin(a)*r*.25];const D=[[p1,7,.55],[p2,6,.42]].sort((u,v)=>u[0][1]-v[0][1]);D.forEach(([p,k,z])=>drawBase(c,p[0],p[1],r*z,k,t));break}
+  case 'system':{drawBase(c,x,y,r*.38,9,t);c.strokeStyle='rgba(150,200,255,.25)';c.lineWidth=Math.max(.6,r*.02);[[.6,.22,1.2,'#7fd4ff'],[.85,.31,.8,'#e8a060'],[1.1,.4,.5,'#c8a0ff']].forEach(([rx,ry,sp,col],k)=>{c.beginPath();c.ellipse(x,y,r*rx,r*ry,0,0,7);c.stroke();const a=t*sp+k*2;ball(c,x+Math.cos(a)*r*rx,y+Math.sin(a)*r*ry,r*(.07+k*.025),'#ffffff',col)});break}
+  case 'binaryStar':{const a=t*.8,p1=[x+Math.cos(a)*r*.42,y+Math.sin(a)*r*.18],p2=[x-Math.cos(a)*r*.42,y-Math.sin(a)*r*.18];c.globalCompositeOperation='lighter';c.strokeStyle='rgba(255,220,180,.25)';c.lineWidth=r*.05;c.beginPath();c.moveTo(p1[0],p1[1]);c.quadraticCurveTo(x,y-r*.2,p2[0],p2[1]);c.stroke();c.globalCompositeOperation='source-over';
+    const D=[[p1,'255,200,90','#fff6d0','#ffb020',.34],[p2,'130,180,255','#ffffff','#5c9cff',.26]].sort((u,v)=>u[0][1]-v[0][1]);D.forEach(([p,g,c1,c2,z])=>{glow(c,p[0],p[1],r*z*3,g,.55);ball(c,p[0],p[1],r*z,c1,c2,{rim:.4})});break}
+  case 'supernova':{glow(c,x,y,r*2.2,'255,170,120',.35);c.globalCompositeOperation='lighter';for(let k=0;k<3;k++){const f=((t*.25+k/3)%1),rr=r*(.2+f*1.1);c.strokeStyle='rgba('+(k%2?'255,120,160':'255,200,120')+','+(.7*(1-f))+')';c.lineWidth=r*.12*(1-f)+1;c.beginPath();c.arc(x,y,rr,0,7);c.stroke()}
+    s.pts.slice(0,small?40:120).forEach((p,k)=>{const f=((t*.25+p[2])%1),d=r*(.2+f*1.2);c.fillStyle='rgba(255,230,200,'+(1-f)+')';c.fillRect(x+Math.cos(p[0]*3)*d,y+Math.sin(p[0]*3)*d,1.5,1.5)});glow(c,x,y,r*.6,'255,255,240',1);spark(c,x,y,r*1.3,'255,255,255',.6);break}
+  case 'ringNebula':{c.globalCompositeOperation='lighter';c.save();c.translate(x,y);c.scale(1,.8);for(let k=0;k<40;k++){const a=k/40*6.283;glow(c,Math.cos(a)*r*.62,Math.sin(a)*r*.62,r*.38,k%3?'90,210,220':'255,110,90',.16)}glow(c,0,0,r*.5,'120,170,255',.25);c.restore();
+    c.globalCompositeOperation='source-over';glow(c,x,y,r*.25,'255,255,255',.9);ball(c,x,y,r*.06,'#ffffff','#d0e0ff',{flat:1});break}
+  case 'openCluster':{glow(c,x,y,r*1.6,'120,160,255',.18);s.cr.concat(s.nodes).forEach((q,k)=>{const px=x+q[0]*r*.85,py=y+q[1]*r*.75,tw=.6+.4*Math.sin(t*2+k);if(small)glow(c,px,py,r*.15,'190,215,255',.8*tw);else spark(c,px,py,r*(.1+.12*((k*7)%3)/2)*tw,k%4?'190,215,255':'255,220,180',.9)});break}
+  case 'globular':{glow(c,x,y,r*1.4,'255,225,180',.35);c.globalCompositeOperation='lighter';const n=small?120:s.pts.length;for(let k=0;k<n;k++){const p=s.pts[k],d=Math.pow(p[2],1.6)*r,a=p[0]*7+p[1]*13;c.fillStyle=k%5?'rgba(255,235,205,.7)':'rgba(200,215,255,.8)';c.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d,1.3,1.3)}glow(c,x,y,r*.45,'255,245,225',.8);break}
+  case 'irregular':{glow(c,x,y,r*1.4,'150,170,255',.2);c.globalCompositeOperation='lighter';s.blob.forEach((b,k)=>glow(c,x+b[0]*r*.6,y+b[1]*r*.4,b[2]*r*.6,k%3?'170,190,255':'255,150,200',.3));const n=small?60:220;for(let k=0;k<n;k++){const p=s.pts[k],b=s.blob[k%10];c.fillStyle='rgba(215,225,255,.7)';c.fillRect(x+(b[0]*.6+Math.cos(p[0])*p[1]*.4)*r,y+(b[1]*.4+Math.sin(p[0])*p[1]*.3)*r,1.2,1.2)}break}
+  case 'barred':{c.save();c.translate(x,y);c.rotate(-t*.1);c.scale(1,.55);c.globalCompositeOperation='lighter';const n=small?140:s.pts.length;for(let k=0;k<n;k++){const p=s.pts[k],d=p[1]*r*1.2,a=p[0]+(p[1]<.25?0:0);const bx=p[1]<.28?(k%2?1:-1)*p[1]*r*1.6:Math.cos(a)*d,by=p[1]<.28?(p[2]-.5)*r*.12:Math.sin(a)*d;c.fillStyle=p[1]<.3?'rgba(255,220,170,.8)':'rgba(180,200,255,.7)';c.fillRect(bx,by,1.3,1.3)}
+    glow(c,0,0,r*.5,'255,220,170',.7);c.restore();break}
+  case 'elliptical':{const f=p||.6;c.save();c.translate(x,y);c.rotate(.3);c.scale(1,f);glow(c,0,0,r*1.25,'255,200,150',.35);glow(c,0,0,r*.75,'255,225,190',.55);glow(c,0,0,r*.28,'255,250,235',.95);c.restore();if(f<.5){c.save();c.translate(x,y);c.rotate(.3);c.strokeStyle='rgba(60,30,20,.35)';c.lineWidth=r*.06;c.beginPath();c.ellipse(0,0,r*.9,r*.9*f*.25,0,0,Math.PI);c.stroke();c.restore()}break}
+  case 'ringGal':{c.save();c.translate(x,y);c.scale(1,.6);c.rotate(t*.08);c.globalCompositeOperation='lighter';const n=small?120:400;for(let k=0;k<n;k++){const p=s.pts[k],a=p[0]*3,d=r*(.85+(p[2]-.5)*.22);c.fillStyle=p[2]>.7?'rgba(255,170,220,.85)':'rgba(150,200,255,.75)';c.fillRect(Math.cos(a)*d,Math.sin(a)*d,1.4,1.4)}glow(c,0,0,r*.3,'255,220,170',.9);c.restore();break}
+  case 'collide':{miniGal(c,x-r*.35,y-r*.08,r*.7,.4,false,t);miniGal(c,x+r*.38,y+r*.12,r*.55,-.8,true,t);c.globalCompositeOperation='lighter';c.strokeStyle='rgba(200,210,255,.3)';c.lineWidth=r*.08;c.beginPath();c.moveTo(x-r*.35,y-r*.08);c.bezierCurveTo(x,y-r*.5,x+r*.2,y+r*.5,x+r*.38,y+r*.12);c.stroke();break}
+  case 'void':{glow(c,x,y,r*1.7,'110,90,220',.18);s.gal.forEach((g,k)=>{const a=k/s.gal.length*6.283+t*.03,d=r*(.95+g[2]*.6);miniGal(c,x+Math.cos(a)*d,y+Math.sin(a)*d*.8,r*.14,g[3],g[4]>.5,t)});const g=c.createRadialGradient(x,y,0,x,y,r*.95);g.addColorStop(0,'rgba(0,0,6,.85)');g.addColorStop(1,'rgba(0,0,6,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r*.95,0,7);c.fill();break}
+  case 'attractor':{glow(c,x,y,r*.8,'255,210,160',.6);c.globalCompositeOperation='lighter';s.gal.slice(0,small?8:20).forEach((g,k)=>{const f=((t*.06+g[4])%1),d=r*(1.3-f*1.1),a=g[3]+f*2;const gx=x+Math.cos(a)*d,gy=y+Math.sin(a)*d*.7;c.strokeStyle='rgba(180,200,255,'+(.25*f)+')';c.lineWidth=1;c.beginPath();c.moveTo(gx,gy);c.lineTo(x,y);c.stroke();miniGal(c,gx,gy,r*.12*(1-f*.5),g[3],g[4]>.5,t)});break}
+  case 'halo':{const g=c.createRadialGradient(x,y,r*.2,x,y,r*1.2);g.addColorStop(0,'rgba(150,90,255,.05)');g.addColorStop(.75,'rgba(150,90,255,.22)');g.addColorStop(1,'rgba(150,90,255,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,r*1.2,0,7);c.fill();drawBase(c,x,y,r*.42,15,t);
+    c.strokeStyle='rgba(190,150,255,.3)';c.setLineDash([r*.06,r*.08]);c.lineWidth=Math.max(.6,r*.02);c.beginPath();c.arc(x,y,r*.98,t*.1,t*.1+6.283);c.stroke();c.setLineDash([]);break}
+  case 'wave':{c.globalCompositeOperation='lighter';for(let k=0;k<7;k++){const f=((t*.3+k/7)%1),rr=r*(.15+f*1.15);c.strokeStyle='rgba(140,200,255,'+(.55*(1-f))+')';c.lineWidth=Math.max(.7,r*.035);c.beginPath();for(let u=0;u<=48;u++){const a=u/48*6.283,w=1+.06*Math.sin(a*2-t*4);c.lineTo(x+Math.cos(a)*rr*w,y+Math.sin(a)*rr*w*.55)}c.stroke()}
+    const a=t*3;c.globalCompositeOperation='source-over';[[1,'#000'],[-1,'#000']].forEach(([sg])=>{const bx=x+sg*Math.cos(a)*r*.18,by=y+sg*Math.sin(a)*r*.1;glow(c,bx,by,r*.2,'255,180,120',.7);c.fillStyle='#000';c.beginPath();c.arc(bx,by,r*.07,0,7);c.fill()});break}
+  case 'foam':{glow(c,x,y,r*1.4,'160,120,255',.2);s.pts.slice(0,small?40:110).forEach((p,k)=>{const fl=.5+.5*Math.sin(t*4+k*1.7),bx=x+Math.cos(p[0])*p[1]*r,by=y+Math.sin(p[0])*p[1]*r*.85,br=r*(.04+p[2]*.08)*fl;c.strokeStyle='hsla('+(200+p[2]*120)+',90%,70%,'+(.3+.5*fl)+')';c.lineWidth=Math.max(.5,br*.25);c.beginPath();c.arc(bx,by,br,0,7);c.stroke()});break}
+  case 'vacuum':{const f=(t*.15)%1,br=r*(.55+f*.5);glow(c,x,y,br*1.3,'120,200,255',.25*(1-f)+.1);const g=c.createRadialGradient(x,y,br*.6,x,y,br);g.addColorStop(0,'rgba(120,190,255,.05)');g.addColorStop(.92,'rgba(150,220,255,.35)');g.addColorStop(1,'rgba(230,250,255,.9)');c.fillStyle=g;c.beginPath();c.arc(x,y,br,0,7);c.fill();glow(c,x-br*.3,y-br*.35,br*.3,'255,255,255',.4);if(!small)drawBase(c,x,y,br*.35,15,t);break}
+  case 'brane':{c.globalCompositeOperation='lighter';for(let L=0;L<3;L++){const oy=(L-1)*r*.45,hue=[190,280,330][L];for(let row=0;row<5;row++){c.strokeStyle='hsla('+hue+',90%,70%,'+(.15+row*.06)+')';c.lineWidth=Math.max(.6,r*.02);c.beginPath();for(let u=0;u<=30;u++){const fx=u/30*2-1,px=x+fx*r*1.1+row*r*.06,py=y+oy+row*r*.05+Math.sin(fx*4+t*1.5+L)*r*.08;u?c.lineTo(px,py):c.moveTo(px,py)}c.stroke()}}glow(c,x,y,r*.4,'255,255,255',.4);break}
+  case 'tesseract':{glow(c,x,y,r*1.5,'140,220,255',.2);const V=[];for(let k=0;k<16;k++)V.push([k&1?1:-1,k&2?1:-1,k&4?1:-1,k&8?1:-1]);const a=t*.5,b=t*.33;
+    const P=V.map(([X,Y,Z,Wd])=>{let x1=X*Math.cos(a)-Wd*Math.sin(a),w1=X*Math.sin(a)+Wd*Math.cos(a);let y1=Y*Math.cos(b)-Z*Math.sin(b),z1=Y*Math.sin(b)+Z*Math.cos(b);const k4=1.8/(3-w1),k3=1.6/(3.2-z1*k4);return[x+x1*k4*k3*r*.42,y+y1*k4*k3*r*.42]});
+    c.globalCompositeOperation='lighter';c.lineWidth=Math.max(.7,r*.025);for(let i2=0;i2<16;i2++)for(let j=0;j<4;j++){const k=i2^(1<<j);if(k>i2){c.strokeStyle='hsla('+(180+j*40)+',90%,70%,.6)';c.beginPath();c.moveTo(P[i2][0],P[i2][1]);c.lineTo(P[k][0],P[k][1]);c.stroke()}}P.forEach(p=>glow(c,p[0],p[1],r*.08,'220,250,255',.8));break}
+  case 'xray':{drawBase(c,x-r*.25,y,r*.6,13,t);const sx=x+r*.6,sy=y-r*.35;glow(c,sx,sy,r*.6,'130,180,255',.5);ball(c,sx,sy,r*.22,'#ffffff','#5c9cff',{rim:.4});c.globalCompositeOperation='lighter';c.strokeStyle='rgba(170,200,255,.55)';c.lineWidth=r*.06;c.beginPath();c.moveTo(sx-r*.15,sy+r*.1);c.quadraticCurveTo(x+r*.3,y+r*.1,x-r*.1,y);c.stroke();break}
+  case 'origin':{c.translate(x,y);glow(c,0,0,r*2.4,'255,240,210',.35);c.globalCompositeOperation='lighter';for(let k=0;k<5;k++){c.strokeStyle='hsla('+((k*72+t*25)%360)+',90%,75%,.45)';c.lineWidth=Math.max(.7,r*.025);c.beginPath();c.ellipse(0,0,r*(.4+k*.18),r*(.4+k*.18)*.35,t*.2*(k%2?-1:1)+k,0,7);c.stroke()}
+    c.rotate(t*.05);for(let k=0;k<24;k++){c.rotate(.2618);const L=r*(1.1+.3*Math.sin(t*2+k));const g=c.createLinearGradient(0,0,L,0);g.addColorStop(0,'rgba(255,250,235,.6)');g.addColorStop(1,'rgba(255,250,235,0)');c.strokeStyle=g;c.lineWidth=Math.max(.6,r*.02);c.beginPath();c.moveTo(0,0);c.lineTo(L,0);c.stroke()}glow(c,0,0,r*.35,'255,255,255',1);spark(c,0,0,r*1.5,'255,255,255',.8);break}
   }
   c.restore();
 }
+/* Objekt zeichnen: Grundform + optionaler Farbfilter (über eine Zwischenfläche, damit nur ein gefilterter Zeichenvorgang nötig ist) */
+const scratch=document.createElement('canvas'),sctx=scratch.getContext('2d');
+function drawBody(c,x,y,r,i,t){const T=TIERS[i];r*=T.z||1;
+  if(!T.f){drawBase(c,x,y,r,T.k,t,T.p);return}
+  const d=c.getTransform().a||1,box=r*6,px=Math.ceil(box*d);if(scratch.width<px||scratch.height<px){scratch.width=px;scratch.height=px}
+  sctx.setTransform(1,0,0,1,0,0);sctx.clearRect(0,0,px,px);sctx.setTransform(d,0,0,d,0,0);drawBase(sctx,box/2,box/2,r,T.k,t,T.p);
+  c.save();c.filter=T.f;c.drawImage(scratch,0,0,px,px,x-box/2,y-box/2,box,box);c.restore()}
+/* Umlaufende Objekte als kleine, regelmäßig aufgefrischte Bilder zeichnen – spart Rechenzeit auf dem Handy */
+const orbCache={};let orbBudget=0;
+function drawCached(c,x,y,r,i,t){const d=c.getTransform().a||1,box=r*6,px=Math.ceil(box*d);let e=orbCache[i];
+  if(!e||e.px!==px){e=orbCache[i]={cv:document.createElement('canvas'),px,t:-1};e.cv.width=e.cv.height=px}
+  if((t-e.t>.2&&orbBudget>0)||e.t<0){orbBudget--;e.t=t;const g=e.cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,px,px);g.setTransform(d,0,0,d,0,0);drawBody(g,box/2,box/2,r,i,t)}
+  c.drawImage(e.cv,x-box/2,y-box/2,box,box)}
 const cv=$('#cv'),ctx=cv.getContext('2d');let W=0,H=0,DPR=1,bg=null;
 /* Hintergrund: einmal pro Größenänderung gemalt – Nebelwolken, Milchstraßenband und tausend schwache Sterne */
 function paintBg(){bg=document.createElement('canvas');bg.width=Math.round(W*DPR);bg.height=Math.round(H*DPR);const c=bg.getContext('2d');c.scale(DPR,DPR);const R=rng(42);
@@ -534,13 +671,13 @@ function drawSky(t,dt){
   nextShoot-=dt;if(!shoot&&nextShoot<0){shoot={x:Math.random()*W*.8,y:Math.random()*H*.4,vx:220+Math.random()*160,vy:70+Math.random()*80,l:1};nextShoot=6+Math.random()*12}
   if(shoot){shoot.x+=shoot.vx*dt;shoot.y+=shoot.vy*dt;shoot.l-=dt*1.3;const g=c.createLinearGradient(shoot.x,shoot.y,shoot.x-shoot.vx*.25,shoot.y-shoot.vy*.25);g.addColorStop(0,'rgba(255,255,255,'+Math.max(0,shoot.l)+')');g.addColorStop(1,'rgba(160,200,255,0)');c.strokeStyle=g;c.lineWidth=1.4;c.beginPath();c.moveTo(shoot.x,shoot.y);c.lineTo(shoot.x-shoot.vx*.25,shoot.y-shoot.vy*.25);c.stroke();if(shoot.l<=0)shoot=null}
   const cx=W/2,cy=H/2,base=Math.min(W,H)*.24,tt=topTier();
-  const owned=[];for(let i=0;i<N;i++)if(S.g[i].n&&i!==tt)owned.push(i);
+  let owned=[];for(let i=0;i<N;i++)if(S.g[i].n&&i!==tt)owned.push(i);owned=owned.slice(-20);
   const rings=[{rx:Math.min(W*.44,base*3.2),ry:Math.min(H*.42,base*1.25),sp:.22},{rx:Math.min(W*.31,base*2.2),ry:Math.min(H*.3,base*.92),sp:-.3}];
   rings.forEach((g,k)=>{if(k&&owned.length<=12)return;const gr=c.createLinearGradient(cx-g.rx,cy,cx+g.rx,cy);gr.addColorStop(0,'rgba(127,224,255,.03)');gr.addColorStop(.5,'rgba(127,224,255,.16)');gr.addColorStop(1,'rgba(127,224,255,.03)');c.strokeStyle=gr;c.lineWidth=1;c.beginPath();c.ellipse(cx,cy,g.rx,g.ry,0,0,7);c.stroke()});
-  const outer=owned.length>12?owned.filter((_,k)=>k%2===0):owned,inner=owned.length>12?owned.filter((_,k)=>k%2===1):[];
+  orbBudget=4;const outer=owned.length>12?owned.filter((_,k)=>k%2===0):owned,inner=owned.length>12?owned.filter((_,k)=>k%2===1):[];
   const orb=[];[[outer,rings[0]],[inner,rings[1]]].forEach(([list,g])=>list.forEach((i,k)=>{const a=t*g.sp+k*(6.283/Math.max(1,list.length));orb.push({i,x:cx+Math.cos(a)*g.rx,y:cy+Math.sin(a)*g.ry,a,g})}));
   const osz=Math.max(7,base*(owned.length>12?.18:.22));
-  const drawOrb=o=>{c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(180,220,255,.12)';c.lineWidth=osz*.35;c.lineCap='round';c.beginPath();c.ellipse(cx,cy,o.g.rx,o.g.ry,0,o.g.sp>0?o.a-.35:o.a,o.g.sp>0?o.a:o.a+.35);c.stroke();c.restore();drawBody(c,o.x,o.y,osz,o.i,t)};
+  const drawOrb=o=>{c.save();c.globalCompositeOperation='lighter';c.strokeStyle='rgba(180,220,255,.12)';c.lineWidth=osz*.35;c.lineCap='round';c.beginPath();c.ellipse(cx,cy,o.g.rx,o.g.ry,0,o.g.sp>0?o.a-.35:o.a,o.g.sp>0?o.a:o.a+.35);c.stroke();c.restore();drawCached(c,o.x,o.y,osz,o.i,t)};
   orb.filter(o=>o.y<cy).forEach(drawOrb);
   const sc=1+pulse*.12;glow(c,cx,cy,base*1.6*sc,'140,170,255',.12+pulse*.25);drawBody(c,cx,cy,base*sc,tt,t);
   orb.filter(o=>o.y>=cy).forEach(drawOrb);
@@ -639,7 +776,8 @@ function start(data){
   if(had){const away=Math.min((Date.now()-S.last)/1000,(4+2*lv('off'))*3600);
     if(away>30){const ps=totalPS(true),gain=ps*away;if(gain>0){earn(gain);setTimeout(()=>modal('<h2>Willkommen zurück</h2><p>Dein Universum ist '+fmtT(away)+' lang ohne dich gewachsen.</p><div class="big num" style="color:var(--star)">+'+fmt(gain)+'</div><p>Materie</p>','Einsammeln',()=>SND.play('collect')),300)}}}
   buildModes();buildList();updList();updTop();resize();scheduleComet();$('#mute').innerHTML=S.mute?ICON_OFF:ICON_ON;
-  if(!had)setTimeout(()=>modal('<h2>Kosmos Schmiede</h2><p>Kaufe deinen ersten Quark. Jedes Objekt erzeugt in Zyklen Materie. Mit Materie kaufst du mehr Objekte und entdeckst immer größere: vom Proton bis zum Galaxienhaufen.</p><p>Tippe auf den Himmel für Extra-Materie und fange vorbeifliegende Kometen ein.</p>','Los geht’s'),200);
+  if(migrated)setTimeout(()=>modal('<h2>100 Objekte</h2><p>Das Universum ist gewachsen: Zwischen Quark und Omniversum liegen jetzt viele neue Stufen, und ganz am Ende wartet der Ursprung.</p><p>Dein Universum beginnt neu. Singularitäten, Quantenpunkte, Forschung und Erfolge bleiben erhalten.</p>','Los geht’s'),300);
+  if(!had)setTimeout(()=>modal('<h2>Kosmos Schmiede</h2><p>Kaufe deinen ersten Quark. Jedes Objekt erzeugt in Zyklen Materie. Mit Materie kaufst du mehr Objekte und entdeckst immer größere: 100 Stufen vom Quark bis zum Ursprung.</p><p>Tippe auf den Himmel für Extra-Materie und fange vorbeifliegende Kometen ein.</p>','Los geht’s'),200);
   document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>switchView(b.dataset.v));
   new ResizeObserver(resize).observe(cv);
   let last=performance.now(),acc=0,acc2=0,acc3=0;
