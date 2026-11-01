@@ -23,6 +23,18 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Ausbau:** Mehr Waldplätze und Nester kaufen.
 - **Lebendige Bewegungen:** Weiches Beschleunigen und Abbremsen, wippender und schwankender Gang, Neigen in Kurven, Stauchen und Strecken beim Hüpfen, nachfederndes Schwanzwedeln (stärker bei guter Laune), Umherschauen, Kopfneigen und Nicken. Dazu Leerlauf-Aktionen: hinsetzen, schnuppern, sich schütteln, gähnen, den eigenen Schwanz jagen, Freudensprünge, Flügelschlagen – und bei Menschenwesen winken und strecken. Hungrige Wesen lassen den Kopf hängen.
 - **Begegnungen auf der Wiese:** Die Wesen treffen sich von selbst. Zwei böse Wesen **kämpfen** (Angriffe, Blitze, Funken, Sieger und benommener Verlierer), zwei niedliche **spielen Fangen** (Kreise, Hüpfer, Herzen), und ein böses Wesen **schleicht sich an und erschreckt** ein niedliches („BUH!“, das niedliche flieht) oder **ärgert** es, indem es um es herumtanzt. Das bringt etwas Erfahrung und verändert die Laune.
+- **Schimmernde Wesen:** Selten (1:40) schlüpft ein Wesen in besonderer Farbe – z. B. ein goldener Wolpertinger oder ein schwarzes Einhorn. Eigene Seite im Fabelbuch.
+- **Züchten:** Zwei erwachsene Wesen legen ein Herzei. Das Junge ist eine Mischung (Art eines Elternteils mit Farbe des anderen). Bestimmte Paare bringen eines von 10 **Zucht-Wesen** hervor, die es nur so gibt: Alicorn, Feuerfuchs, Eisgreif, Höllenwolf, Seehydra, Nachtfürst, Pilzfee, Gefallener Engel, Sirene, Sonnendrache.
+- **Wesen-Kämpfe:** Wilde Wesen tauchen auf. Mit einem Team aus bis zu drei Wesen wird rundenbasiert gekämpft (Element-Angriffe Feuer, Wasser, Natur, Eis, Licht, Schatten mit Stärken und Schwächen, Heilen oder Erschrecken). Nach einem Sieg kann man das wilde Wesen einfangen.
+- **Minispiele:** Glühwürmchen fangen, Beeren fangen, Wettrennen und Verstecken.
+- **Wald gestalten:** 12 Dekorationen (Laterne, Feenhaus, Brunnen, Brücke, Hexenkessel, Drachenstatue …) frei platzieren. Wesen, die eine Deko mögen, haben bessere Laune und verdienen mehr.
+- **Freundschaften:** Wer oft spielt, wird Freund und bleibt gern zusammen; wer sich oft streitet, wird Rivale.
+- **Jahreszeiten:** Frühling (Blüten), Sommer, Herbst (bunte Blätter) und Winter (Schnee) nach dem Kalender, mit besonderen Jahreszeiten-Eiern (Schimmer-Chance 1:5).
+- **Weitere Welten:** Sonnenstrand, Vulkanhöhle und Wolkenschloss – freischaltbar, mit Lieblingswelten für bestimmte Wesen.
+- **Expeditionsberichte:** Wesen erzählen, was sie erlebt haben, und bringen manchmal Schätze, Tränke oder seltene Eier mit.
+- **Foto-Modus:** Kamera frei bewegen, Oberfläche ausblenden, Fotos in der Galerie speichern.
+- **Steckbrief:** Geburtstag, Lieblingsessen, Eltern, bester Freund, Rivale und Lebensgeschichte.
+- **Musik:** Ruhige Melodien, die sich bei Nacht und im Kampf ändern.
 - **Tag & Nacht:** Ein Spieltag dauert 24 Minuten – mit Sonnenauf- und -untergang, Mond und Sternen. Nachts verdienen böse Wesen +30 % Gold, tagsüber niedliche +20 %.
 - **Wetter:** Klar, Regen (+20 % Erfahrung, nasser Boden, Regentropfen) oder Nebel (böse Wesen +15 % Gold).
 - **Minispiel „Glühwürmchen fangen“:** 25 Sekunden lang leuchtende Glühwürmchen antippen – goldene zählen fünffach. Bringt Gold, Erfahrung und gute Laune.
@@ -31,7 +43,7 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Tägliche Belohnung:** Jeden Tag Gold, am 7. Tag in Folge ein Wachstumselixier.
 - **Geräusche:** Vogelgezwitscher am Tag, Grillen in der Nacht, Regen und Effektklänge (im Menü abschaltbar).
 
-## Die Fabelwesen (37)
+## Die Fabelwesen (37 + 10 Zucht-Wesen)
 | Seltenheit | Niedlich 💖 | Böse 😈 |
 |---|---|---|
 | Gewöhnlich | Wolpertinger, Irrlicht, Pilzling, Fee, Zwerg | Basilisk, Gargoyle, Mimic, Unglücksrabe, Kobold |

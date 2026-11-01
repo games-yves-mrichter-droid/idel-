@@ -1,6 +1,15 @@
 package de.fabelwesen.app;
 
 import android.app.Activity;
+import android.content.ContentValues;
+import android.os.Build;
+import android.os.Environment;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.webkit.JavascriptInterface;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.WebResourceRequest;
@@ -47,9 +56,34 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        // Fotos aus dem Foto-Modus in der Galerie speichern
+        web.addJavascriptInterface(new Bridge(), "Android");
         setContentView(web);
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl("https://" + HOST + "/www/index.html");
+    }
+
+    private class Bridge {
+        @JavascriptInterface
+        public void saveImage(String dataUrl) {
+            try {
+                byte[] bytes = Base64.decode(dataUrl.substring(dataUrl.indexOf(',') + 1), Base64.DEFAULT);
+                String name = "Fabelwesen_" + System.currentTimeMillis() + ".jpg";
+                if (Build.VERSION.SDK_INT >= 29) {
+                    ContentValues v = new ContentValues();
+                    v.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+                    v.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+                    v.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Fabelwesen");
+                    android.net.Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, v);
+                    if (uri == null) return;
+                    try (OutputStream os = getContentResolver().openOutputStream(uri)) { os.write(bytes); }
+                } else {
+                    File f = new File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), name);
+                    try (FileOutputStream os = new FileOutputStream(f)) { os.write(bytes); }
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     @Override
