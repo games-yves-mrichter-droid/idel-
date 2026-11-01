@@ -119,6 +119,11 @@ nav button{position:relative}
 body.photo #hud,body.photo #strip,body.photo #sheet,body.photo nav,body.photo #labels,body.photo #battle,body.photo #ghud,body.photo #place{display:none!important}
 body.photo #photo{display:flex}
 #flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .3s;z-index:60}
+#tut{position:fixed;left:8px;right:8px;top:calc(56px + env(safe-area-inset-top));display:none;gap:10px;align-items:flex-start;background:linear-gradient(#4a2f80f2,#35245ff2);border:2px solid #ff9fd6;border-radius:18px;padding:10px 12px;z-index:45;box-shadow:0 6px 20px #0006}
+.tuthl{animation:tuthl 1s ease-in-out infinite;position:relative;z-index:1}
+@keyframes tuthl{50%{box-shadow:0 0 0 4px #ffd25e,0 0 18px #ffd25e}}
+.lbl.dream{background:#ffffffee;color:#3b2470;border-color:#d8c8ff;border-radius:18px;font-size:16px}
+.lbl.boss{background:linear-gradient(#ff7a5a,#c02a2a);color:#fff;border-color:#ffd25e}
 #toast{position:fixed;left:50%;top:calc(56px + env(safe-area-inset-top));transform:translateX(-50%);background:#1c1233ee;border:2px solid var(--accent);border-radius:16px;padding:8px 14px;font-weight:700;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:50;max-width:90%;text-align:center}
 #toast.on{opacity:1}
 .row{display:flex;gap:8px;align-items:center}
@@ -129,7 +134,7 @@ body.photo #photo{display:flex}
 <canvas id="c"></canvas>
 <div id="labels"></div>
 <div id="hud"><div class="pill g" id="gold">💰 0</div><div class="pill" id="cnt">🐾 0/0</div><div class="pill" id="lvl">⭐ 0</div><div class="pill" id="tod">☀️</div><div class="pill" id="wbtn" style="pointer-events:auto;cursor:pointer">🌲</div><div class="pill" id="cambtn" style="pointer-events:auto;cursor:pointer">📷</div></div>
-<div id="battle"></div><div id="place"></div><div id="photo"><button data-ph="x">✕</button><button class="snap" data-ph="snap">📸</button><button data-ph="time">🌗</button></div><div id="flash"></div>
+<div id="battle"></div><div id="tut"></div><div id="place"></div><div id="photo"><button data-ph="x">✕</button><button class="snap" data-ph="snap">📸</button><button data-ph="time">🌗</button></div><div id="flash"></div>
 <div id="ghud"></div>
 <div id="strip"></div>
 <div id="sheet"></div>
@@ -289,7 +294,7 @@ const EGGS=[
   {id:'stern',n:'Sternenei',price:4500,time:180,odds:[0,0,82,18],c:0x9b6bff,s:0xffe066,glow:1,d:'Vom Himmel gefallen. Mindestens episch!'},
   {id:'drache',n:'Feuerei',price:18000,time:300,odds:[0,0,0,100],c:0xff6a3d,s:0x5d1a0a,spikes:1,glow:1,d:'Glühend heiß. Garantiert legendär!'}
 ];
-const EGG=Object.fromEntries(EGGS.map(e=>[e.id,e]));EGG.zucht={id:'zucht',n:'Herzei',c:0xffa0c8,s:0xff5a9a,glow:1};
+const EGG=Object.fromEntries(EGGS.map(e=>[e.id,e]));EGG.zucht={id:'zucht',n:'Herzei',c:0xffa0c8,s:0xff5a9a,glow:1};EGG.regenbogen={id:'regenbogen',n:'Regenbogen-Ei',c:0xfff4ff,s:0xb48cff,glow:1};
 
 // nat: 0 = alle, 1 = nur niedliche, 2 = nur böse
 const TASKS=[
@@ -315,7 +320,8 @@ function fresh(){return{gold:200,slots:6,nests:2,creatures:[],eggs:[],seen:{},ne
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY))||null}catch(e){S=null}
 if(!S){S=fresh();S.eggs.push({id:S.nextId++,type:'wald',sp:'wolpertinger',end:now()+6000})}
-function save(){S.t=now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function save(){S.t=now();let txt;try{txt=JSON.stringify(S)}catch(e){const seen=new WeakSet();txt=JSON.stringify(S,(k,v)=>{if(v&&typeof v==='object'){if(v.isObject3D||v.isMaterial||v.isVector3||v.isColor||v instanceof Node)return undefined;if(seen.has(v))return undefined;seen.add(v)}return v})}
+  try{localStorage.setItem(KEY,txt)}catch(e){try{localStorage.removeItem('fabelwesen-old');localStorage.setItem(KEY,txt)}catch(_){}}}
 window.save=save;
 const crById=id=>S.creatures.find(c=>c.id===id);
 const spOf=c=>SPECIES[c.sp];
@@ -935,8 +941,8 @@ const SHINY_P=1/40;
 const SHINY={wolpertinger:{gold:1},einhorn:{black:1},pegasus:{black:1},schattenwolf:{white:1},werwolf:{white:1},kitsune:{h:.55},phoenix:{h:.62},hoellendrache:{h:.35},
   kristalldrache:{h:-.15},zerberus:{h:.6},vampir:{gold:1},engel:{black:1},daemon:{h:.66},qilin:{black:1},fee:{h:.75},irrlicht:{h:.45},kraken:{gold:1},mimic:{gold:1}};
 function shinyOf(sp){if(SHINY[sp])return SHINY[sp];let h=0;for(const ch of sp)h=(h*31+ch.charCodeAt(0))%997;return{h:[.33,.5,.66,.8][h%4]}}
-const cv=c=>c&&(c.shiny||c.tint!==undefined)?{sh:c.shiny?1:0,tint:c.tint}:null;
-const vkey=v=>v?(v.sh?'S':'')+(v.tint!==undefined&&!v.sh?'T'+v.tint:''):'';
+const cv=c=>c&&(c.shiny||c.tint!==undefined||c.evo)?{sh:c.shiny?1:0,tint:c.tint,evo:c.evo?1:0}:null;
+const vkey=v=>v?(v.sh?'S':'')+(v.tint!==undefined&&!v.sh?'T'+v.tint:'')+(v.evo?'E':''):'';
 const HSVF='uniform vec3 uVH;uniform vec3 uVT;uniform float uVTA;\nvec3 rgb2hsv(vec3 c){vec4 K=vec4(0.,-1./3.,2./3.,-1.);vec4 p=mix(vec4(c.bg,K.wz),vec4(c.gb,K.xy),step(c.b,c.g));vec4 q=mix(vec4(p.xyw,c.r),vec4(c.r,p.yzx),step(p.x,c.r));float d=q.x-min(q.w,q.y);return vec3(abs(q.z+(q.w-q.y)/(6.*d+1e-10)),d/(q.x+1e-10),q.x);}\nvec3 hsv2rgb(vec3 c){vec3 p=abs(fract(c.xxx+vec3(1.,2./3.,1./3.))*6.-3.);return c.z*mix(vec3(1.),clamp(p-1.,0.,1.),c.y);}\n';
 const VM={};
 function varMat(m,v,sp,key){const k=m.uuid+key;if(VM[k])return VM[k];const c=m.clone();const prev=m.onBeforeCompile,base=m.customProgramCacheKey();
@@ -951,8 +957,9 @@ function buildCreature(sp,st,v){
   const sk=S_.b.skin;if(sk)r.g.traverse(m=>{if(m.isMesh&&m.material.userData.plain)m.material=M(m.material.color.getHex(),{sk})});
   r.g.traverse(o=>{if(o.isMesh)stylize(o.material)});
   if(v&&(v.sh||v.tint!==undefined)){const key=vkey(v);r.g.traverse(o=>{if(o.isMesh&&o.material.isMeshStandardMaterial)o.material=varMat(o.material,v,sp,key)})}
+  if(v&&v.evo){const col=EVO_COL[S_.el||'natur'];r.g.traverse(o=>{if(o.isMesh&&o.material.isMeshStandardMaterial)o.material=evoMat(o.material,col)});for(let i=0;i<4;i++){const m=new THREE.Group();m.add(glow(col,.9,.85));m.add(glow(0xffffff,.3,1));r.g.add(m);r.P.orbit.push({m,r:1.3+(i%2)*.3,h:.6+i*.35,ph:i*1.6,sp:1.2+i*.2})}}
   const root=new THREE.Group();root.add(r.g);
-  const sc=(.52+.17*st)*(S_.size||1);r.g.scale.setScalar(sc);
+  const sc=(.52+.17*st)*(S_.size||1)*(v&&v.evo?1.15:1);r.g.scale.setScalar(sc);
   const box=new THREE.Box3().setFromObject(root);
   const bs=box.getSize(new V3());r.w=Math.max(bs.x,bs.z);
   r.h=box.max.y;r.sc=sc;r.root=root;r.inner=r.g;r.by0=r.g.position.y;
@@ -1203,12 +1210,12 @@ function up(e){ptrs.delete(e.pointerId);clearTimeout(LP);if(DRAG&&DRAG.id===e.po
 canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',e=>{ptrs.delete(e.pointerId);tap=null;DRAG=null;clearTimeout(LP)});
 canvas.addEventListener('wheel',e=>{cam.wd=clamp(cam.wd*(1+Math.sign(e.deltaY)*.1),5,22);e.preventDefault()},{passive:false});
 const ray=new THREE.Raycaster();
-function onTap(x,y){if(PHOTO||BATTLE)return;if(GAME)return gameTap(x,y);if(PL||PLEDIT)return placeTap(x,y);ray.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
-  const objs=[...Object.values(W.cre).map(w=>w.b.root),...Object.values(W.eggs),...(WILD?[WILD.w.b.root]:[])];
+function onTap(x,y){if(PHOTO||BATTLE)return;if(GAME)return gameTap(x,y);if(PL||PLEDIT)return placeTap(x,y);if(starTap(x,y))return;ray.setFromCamera(new THREE.Vector2(x/innerWidth*2-1,-(y/innerHeight)*2+1),camera);
+  const objs=[...Object.values(W.cre).map(w=>w.b.root),...Object.values(W.eggs),...(WILD?[WILD.w.b.root]:[]),...(VIS?[VIS.w.b.root]:[]),...(RBEGG?[RBEGG]:[])];
   const hit=ray.intersectObjects(objs,true)[0];
   if(!hit){if(selId!==null)closeSheet();return}
   let o=hit.object;while(o&&!o.userData.pick)o=o.parent;if(!o)return;
-  const pk=o.userData.pick;if(pk.k==='wild')return battleStart();
+  const pk=o.userData.pick;if(pk.k==='wild')return battleStart();if(pk.k==='visitor')return visitorTap();if(pk.k==='rbegg')return takeRainbowEgg();
   if(pk.k==='c'){const c=crById(pk.id);if(c&&c.task&&c.task.end<=now())collect(c);else select(pk.id)}
   else tapEgg(pk.id)}
 
@@ -1225,7 +1232,7 @@ function addXP(c,x){if(c.lv>=MAXLV)return;c.xp+=x;let lvUp=false;const st0=stage
     if(w){burst('⭐',w.pos.clone().add(new V3(0,w.b.h,0)),10,{spd:2.5});floatAt(w,'Level '+c.lv+'!','#ffd25e')}sfx('level');
     if(st>st0){toast(`🎉 ${c.name} ist gewachsen und jetzt ${STAGES[st].n}!`);if(w){rebuild(c);const n=W.cre[c.id];burst('✨',n.pos.clone().add(new V3(0,1,0)),18,{spd:3,up:4})}}
     else toast(`⭐ ${c.name} hat Level ${c.lv} erreicht!`)}}
-function feed(c){const cost=feedCost(c);if(S.gold<cost)return toast('Nicht genug Gold!');if(c.hunger>=98)return toast(`${c.name} ist schon satt.`);
+function feed(c){const cost=feedCost(c);if(S.gold<cost)return toast('Nicht genug Gold!');if(c.hunger>=98){tutFlag('feed');return toast(`${c.name} ist schon satt.`)}tutFlag('feed');if(traitOf(c)==='verfressen')c.happy=Math.min(100,c.happy+15);
   S.gold-=cost;c.hunger=Math.min(100,c.hunger+35);c.happy=Math.min(100,c.happy+5);if(Math.random()<.3){c.happy=Math.min(100,c.happy+15);toast(`😋 ${c.name} bekommt ${favOf(c)} – das Lieblingsessen!`)}
   const w=W.cre[c.id];if(w){w.hop=1;burst(pick(['🍖','🍎','🍓','🥕']),w.pos.clone().add(new V3(0,w.b.h*.8,0)),5,{size:.45})}
   addXP(c,2);sfx('feed');refresh()}
@@ -1233,11 +1240,11 @@ const feedCost=c=>5+c.lv*2;
 function pet(c){const t=now();if(t<c.petAt)return;c.petAt=t+20000;c.happy=Math.min(100,c.happy+20);
   const w=W.cre[c.id];if(w){w.hop=1;burst(spOf(c).cute?'💖':pick(['😈','🔥','💢']),w.pos.clone().add(new V3(0,w.b.h*.9,0)),7,{size:.45,spd:1.5})}
   addXP(c,1);sfx('pet');refresh()}
-function startTask(c,t){if(c.task)return;if(c.energy<t.en)return toast(`${c.name} ist zu müde. Warte etwas!`);
+function startTask(c,t){if(c.task)return;tutFlag('task');if(c.energy<t.en)return toast(`${c.name} ist zu müde. Warte etwas!`);
   const r=taskReward(c,t);c.energy-=t.en;c.task={id:t.id,start:now(),end:now()+t.t*1000*(hasDeco('bruecke',c.home||'wald')?.9:1),g:r.g,x:r.x,night:DN.night>.5};sfx('pop');
   const w=W.cre[c.id];if(w)burst('💨',w.pos.clone().add(new V3(0,.4,0)),8,{size:.6,spd:2.5,up:1.5,g:0});
   toast(`${t.e} ${c.name}: ${t.n} gestartet`);sheetMode='info';syncWorld();refresh()}
-function collect(c){if(!c.task||c.task.end>now())return;const t=c.task;c.task=null;S.gold+=t.g;S.tasksDone++;if(t.night)S.nightTasks=(S.nightTasks||0)+1;sfx('coin');
+function collect(c){if(!c.task||c.task.end>now())return;tutFlag('collect');const t=c.task;c.task=null;S.gold+=t.g;S.tasksDone++;if(t.night)S.nightTasks=(S.nightTasks||0)+1;sfx('coin');
   const w=W.cre[c.id];if(w){burst('💰',w.pos.clone().add(new V3(0,w.b.h,0)),8,{spd:2});floatAt(w,'+'+fmt(t.g)+' 💰','#ffd25e')}
   cst(c,'tasks');addXP(c,t.x);if(selId===null)select(c.id);expeditionReport(c,t,TASKS.find(x=>x.id===t.id));refresh()}
 function tapEgg(id){const e=S.eggs.find(x=>x.id===id);if(!e)return;const o=W.eggs[id];
@@ -1250,7 +1257,7 @@ function finishHatch(h){const e=h.e;S.eggs=S.eggs.filter(x=>x.id!==e.id);LIVE.re
   for(const[g,v]of[[GEO.hTop,1],[GEO.hBot,-1]]){const m=mesh(g,M(EGG[e.type].c));m.scale.set(.42,.56,.42);m.position.copy(pos);
     m.userData={v:new V3(rnd(-1,1),2+v,rnd(-1,1)),r:new V3(rnd(-4,4),0,rnd(-4,4)),t:0};LIVE.add(m);W.shells.push(m)}
   burst('✨',pos.clone().add(new V3(0,.4,0)),16,{spd:3,up:4});sfx('hatch');
-  const sp=SPECIES[e.sp];const c={id:S.nextId++,sp:e.sp,name:pick(sp.names),lv:1,xp:0,hunger:80,energy:100,happy:80,task:null,petAt:0,born:now(),home:S.world||'wald'};if(e.sh)c.shiny=1;if(e.tint!==undefined&&!e.sh)c.tint=e.tint;if(e.par)c.par=e.par;if(c.shiny){S.shinySeen=S.shinySeen||{};S.shinySeen[c.sp]=1}
+  const sp=SPECIES[e.sp];const c={id:S.nextId++,sp:e.sp,name:pick(sp.names),lv:1,xp:0,hunger:80,energy:100,happy:80,task:null,petAt:0,born:now(),home:S.world||'wald',trait:pick(TRAIT_IDS)};if(e.sh)c.shiny=1;if(e.tint!==undefined&&!e.sh)c.tint=e.tint;if(e.par)c.par=e.par;if(c.shiny){S.shinySeen=S.shinySeen||{};S.shinySeen[c.sp]=1}
   S.creatures.push(c);S.hatched++;const isNew=S.seen[c.sp]===undefined;S.seen[c.sp]=Math.max(S.seen[c.sp]??0,0);
   const off=pos.clone().normalize().multiplyScalar(-1.6);const w=spawnCreature(c,pos.clone().add(off),true);w.yaw=Math.atan2(-pos.x,-pos.z);
   syncWorld();save();refresh();
@@ -1261,7 +1268,7 @@ function buyEgg(type,natSel){const e=EGG[type];const price=eggPrice(e,natSel);
   const roll=Math.random()*100;let r=0,acc=0;for(let i=0;i<4;i++){acc+=e.odds[i];if(roll<acc){r=i;break}}
   let pool=EGG_IDS.filter(id=>SPECIES[id].r===r&&(natSel===0||(natSel===1)===SPECIES[id].cute));
   if(!pool.length)pool=EGG_IDS.filter(id=>SPECIES[id].r===r);
-  S.eggs.push({id:S.nextId++,type,sp:e.pool?pick(e.pool):pick(pool),end:now()+e.time*1000*(hasDeco('feenhaus')?.8:1),sh:Math.random()<(e.pool?.2:SHINY_P)});
+  S.eggs.push({id:S.nextId++,type,sp:e.pool?pick(e.pool):pick(pool),end:now()+e.time*1000*(hasDeco('feenhaus')?.8:1),sh:Math.random()<(S.luck>0?(S.luck--,.25):e.pool?.2:SHINY_P)});
   syncWorld();save();refresh();toast(`🥚 ${e.n} liegt jetzt im Nest! Tippe es an, um es zu wärmen.`);
   goPage('insel');focusOn(W.eggs[S.eggs[S.eggs.length-1].id].userData.base,9)}
 const eggPrice=(e,n)=>Math.round(e.price*(n?1.3:1));
@@ -1270,9 +1277,9 @@ const nestPrice=()=>Math.round(300*Math.pow(2.4,S.nests-2));
 function release(c){const g=Math.round(25*RAR[spOf(c).r].m*c.lv);S.creatures=S.creatures.filter(x=>x!==c);S.gold+=g;closeSheet();syncWorld();refresh();toast(`👋 ${c.name} wurde freigelassen. +${fmt(g)} 💰`)}
 
 // Werte über Zeit verändern
-function simulate(c,sec){const h=c.home||'wald';c.energy=Math.min(100,c.energy+sec/4*(hasDeco('bank',h)?1.25:1));c.hunger=Math.max(0,c.hunger-sec/30*(hasDeco('brunnen',h)?.75:1));c.happy=Math.max(0,c.happy-sec/45*(likedDeco(c)?.5:1)*(favWorld(c)?.6:1)*(hasDeco('blumenbeet',h)?.75:1))}
+function simulate(c,sec){const h=c.home||'wald',t=traitOf(c),zz=W.cre[c.id]&&W.cre[c.id].sleeping;c.energy=Math.min(100,c.energy+sec/4*(hasDeco('bank',h)?1.25:1)*(t==='faul'?1.3:1)*(zz?2:1));c.hunger=Math.max(0,c.hunger-sec/30*(hasDeco('brunnen',h)?.75:1)*(t==='verfressen'?1.4:1)*(zz?.5:1));c.happy=Math.max(0,c.happy-sec/45*(likedDeco(c)?.5:1)*(favWorld(c)?.6:1)*(hasDeco('blumenbeet',h)?.75:1))}
 let lastSim=now();
-function tick(){updWeather();if(!S.nextWild)S.nextWild=now()+90000;if(!WILD&&!BATTLE&&!GAME&&now()>S.nextWild){S.nextWild=now()+rnd(3,6)*60000*(hasDeco('trampolin')?.55:1);spawnWild()}updWild();const t=now(),sec=(t-lastSim)/1000;lastSim=t;S.creatures.forEach(c=>simulate(c,sec));syncWorld();refreshTimers()}
+function tick(){updWeather();if(!S.bossNext)S.bossNext=now()+120000;spawnBoss();if(!S.nextVisit)S.nextVisit=now()+150000;if(!VIS&&now()>S.nextVisit)spawnVisitor();updVisitor();tickTut();if(!S.nextWild)S.nextWild=now()+90000;if(!WILD&&!BATTLE&&!GAME&&now()>S.nextWild){S.nextWild=now()+rnd(3,6)*60000*(hasDeco('trampolin')?.55:1);spawnWild()}updWild();const t=now(),sec=(t-lastSim)/1000;lastSim=t;S.creatures.forEach(c=>simulate(c,sec));syncWorld();refreshTimers()}
 
 /* ================== Labels & Texte ================== */
 const fmt=n=>n>=1e9?(n/1e9).toFixed(1)+'Mrd':n>=1e6?(n/1e6).toFixed(1)+'Mio':n>=1e4?(n/1e3).toFixed(1)+'K':String(Math.floor(n));
@@ -1287,7 +1294,10 @@ function updLabels(){for(const k in LBL)LBL[k].used=0;const t=now();
   for(const c of S.creatures){const w=W.cre[c.id];if(!w)continue;
     if(c.task&&c.task.end<=t){const d=lbl('c'+c.id);d.className='lbl ready';d.textContent='💰 Abholen';place(d,w.pos.clone().add(new V3(0,w.b.h+.35,0)))}
     else if(c.id===selId){const d=lbl('c'+c.id);d.className='lbl name';d.textContent=c.name+' · Lv '+c.lv;const hd=w.b.P.heads[0];const hp=hd?hd.getWorldPosition(new V3()):w.pos.clone();hp.y=Math.max(hp.y,w.pos.y)+w.b.h*.35+.35;place(d,hp)}}
-  if(WILD&&!BATTLE){const d=lbl('wild');d.className='lbl ready';d.textContent=`❗ Wild: ${WILD.c.shiny?'✨':''}${WILD.c.name} · Lv ${WILD.c.lv}`;place(d,WILD.w.pos.clone().add(new V3(0,WILD.w.b.h+.35,0)))}
+  for(const c of S.creatures){const w=W.cre[c.id];if(w&&w.sleeping&&w.dream&&c.id!==selId){const d=lbl('dr'+c.id);d.className='lbl dream';d.textContent='💭 '+w.dream;place(d,w.pos.clone().add(new V3(.3,w.b.h+.5,0)))}}
+  if(VIS){const d=lbl('vis');d.className='lbl ready';d.textContent=VIS.type==='haendler'?'🧳 Händler':VIS.type==='zauberer'?'🧙 Zauberer – Rätsel!':'😢 Verirrt – hilf mir!';place(d,VIS.w.pos.clone().add(new V3(0,VIS.w.b.h+.35,0)))}
+  if(RBEGG){const d=lbl('rb');d.className='lbl ready';d.textContent='🌈 Regenbogen-Ei';place(d,RBEGG.position.clone().add(new V3(0,.8,0)))}
+  if(WILD&&!BATTLE){const d=lbl('wild');d.className=WILD.boss?'lbl boss':'lbl ready';d.textContent=WILD.boss?`👑 BOSS: ${WILD.c.name} · Lv ${WILD.c.blv}`:`❗ Wild: ${WILD.c.shiny?'✨':''}${WILD.c.name} · Lv ${WILD.c.lv}`;place(d,WILD.w.pos.clone().add(new V3(0,WILD.w.b.h+.35,0)))}
   for(const k in LBL)if(!LBL[k].used){LBL[k].d.remove();delete LBL[k]}}
 function floatAt(w,txt,col){const d=document.createElement('div');d.className='float';d.textContent=txt;d.style.color=col||'#fff';lblBox.appendChild(d);place(d,w.pos.clone().add(new V3(0,w.b.h+.6,0)));setTimeout(()=>d.remove(),1500)}
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2600)}
@@ -1302,11 +1312,11 @@ function render1(obj,key){if(THUMB[key])return THUMB[key];thumbS.add(obj);const 
 const thumb=(sp,st,v)=>THUMB[sp+st+vkey(v)]||render1(buildCreature(sp,st,v).root,sp+st+vkey(v));
 const thumbC=c=>thumb(c.sp,stageOf(c.lv),cv(c));
 // Vorschaubilder: dauerhaft auf dem Handy merken (IndexedDB) und nach und nach im Hintergrund erstellen
-const THUMB_VER='t17'+(HQ?'h':'l')+'|';
+const THUMB_VER='t18'+(HQ?'h':'l')+'|';
 const TDB=(()=>{let db=null;const ready=new Promise(res=>{try{const r=indexedDB.open('fabelwesen-thumbs',1);r.onupgradeneeded=()=>r.result.createObjectStore('t');r.onsuccess=()=>{db=r.result;res(db)};r.onerror=()=>res(null)}catch(e){res(null)}});return{ready,get db(){return db}}})();
 function tdbPut(k,u){const db=TDB.db;if(!db)return;try{db.transaction('t','readwrite').objectStore('t').put(u,THUMB_VER+k)}catch(e){}}
 async function tdbLoad(){const db=await TDB.ready;if(!db)return;await new Promise(res=>{try{const rq=db.transaction('t','readwrite').objectStore('t').openCursor();
-  rq.onsuccess=()=>{const c=rq.result;if(!c)return res();const k=String(c.key);if(k.startsWith(THUMB_VER)){const kk=k.slice(THUMB_VER.length);if(!THUMB[kk])THUMB[kk]=c.value}else if(!k.startsWith('t17'))c.delete();c.continue()};rq.onerror=()=>res()}catch(e){res()}})}
+  rq.onsuccess=()=>{const c=rq.result;if(!c)return res();const k=String(c.key);if(k.startsWith(THUMB_VER)){const kk=k.slice(THUMB_VER.length);if(!THUMB[kk])THUMB[kk]=c.value}else c.delete();c.continue()};rq.onerror=()=>res()}catch(e){res()}})}
 const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const TQ=[],TPEND={};
 function thumbLazy(sp,st,v,front){const k=sp+st+vkey(v);if(THUMB[k])return`src="${THUMB[k]}"`;
@@ -1330,15 +1340,15 @@ function renderStrip(){const s=$('#strip');const sl=s.scrollLeft;
   s.scrollLeft=sl;s.style.display=curPage==='insel'&&!GAME&&!BATTLE?'flex':'none'}
 $('#strip').addEventListener('click',e=>{const el=e.target.closest('.cc');if(!el||!el.dataset.id)return;const c=crById(+el.dataset.id);if(c.task&&c.task.end<=now())collect(c);else select(c.id)});
 const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-function select(id){selId=id;sheetMode='info';const w=W.cre[id];if(w){focusOn(w.pos,Math.max(4.5,w.b.h*2.6+3.2));cam.wph=Math.min(cam.wph,.82)}else focusOn(new V3(0,.5,0),21);renderStrip();renderSheet();$('#sheet').classList.add('open')}
+function select(id){selId=id;if(S.tut===2)tickTut();sheetMode='info';const w=W.cre[id];if(w){focusOn(w.pos,Math.max(4.5,w.b.h*2.6+3.2));cam.wph=Math.min(cam.wph,.82)}else focusOn(new V3(0,.5,0),21);renderStrip();renderSheet();$('#sheet').classList.add('open')}
 function closeSheet(){selId=null;$('#sheet').classList.remove('open');focusOn(new V3(0,.5,0),21);renderStrip()}
 function focusOn(p,d){cam.wtgt.copy(p);cam.wtgt.y=Math.max(.5,p.y);cam.wd=d}
 function bar(cls,label,v,txt){return`<div class="bar ${cls}">${label}<span style="float:right" data-b="${cls}t">${txt??Math.floor(v)}</span><div class="t"><div class="f" data-b="${cls}" style="width:${clamp(v,0,100)}%"></div></div></div>`}
-function sheetStateKey(c){const t=now(),iv=S.inv||{};return[iv.energie,iv.wachstum,DN.night>.5,WX.type,sheetMode,c.id,c.lv,c.name,!!c.task,c.task&&c.task.end<=t,Math.floor(c.energy/5),S.gold>=feedCost(c),c.petAt>t,c.hunger<25].join('|')}
+function sheetStateKey(c){const t=now(),iv=S.inv||{};return[iv.mondstein,c.evo,iv.energie,iv.wachstum,DN.night>.5,WX.type,sheetMode,c.id,c.lv,c.name,!!c.task,c.task&&c.task.end<=t,Math.floor(c.energy/5),S.gold>=feedCost(c),c.petAt>t,c.hunger<25].join('|')}
 function renderSheet(){const el=$('#sheet');const c=crById(selId);if(!c){el.classList.remove('open');return}
   sheetKey=sheetStateKey(c);const sp=spOf(c),st=stageOf(c.lv),t=now();
   let h=`<button class="x" data-a="close">✕</button><div class="hdr"><img src="${thumbC(c)}"><div><div class="nm" data-a="rename">${esc(c.name)} ✏️</div>
-    <div><span class="tag" style="color:${RAR[sp.r].c}">${RAR[sp.r].n}</span><span class="tag">${sp.n}</span><span class="tag ${sp.cute?'cute':'evil'}">${sp.cute?'💖 niedlich':'😈 böse'}</span>${c.shiny?'<span class="tag" style="color:#ffd25e">✨ schimmernd</span>':''}<span class="tag">${(ELS[sp.el]||ELS.natur).e} ${(ELS[sp.el]||ELS.natur).n}</span></div>
+    <div><span class="tag" style="color:${RAR[sp.r].c}">${RAR[sp.r].n}</span><span class="tag">${spName(c)}</span><span class="tag ${sp.cute?'cute':'evil'}">${sp.cute?'💖 niedlich':'😈 böse'}</span>${traitTag(c)}${c.shiny?'<span class="tag" style="color:#ffd25e">✨ schimmernd</span>':''}<span class="tag">${(ELS[sp.el]||ELS.natur).e} ${(ELS[sp.el]||ELS.natur).n}</span></div>
     <div class="muted" style="font-size:12px;color:var(--muted);margin-top:2px">${STAGES[st].e} ${STAGES[st].n} · Level ${c.lv}${st<4?' · wächst ab Lv '+STAGES[st+1].lv:''}</div></div></div>
     <div class="bars">${bar('xp','✨ Erfahrung',c.lv>=MAXLV?100:c.xp/xpNeed(c.lv)*100,c.lv>=MAXLV?'MAX':Math.floor(c.xp)+'/'+xpNeed(c.lv))}${bar('hu','🍖 Hunger',c.hunger)}${bar('en','⚡ Energie',c.energy)}${bar('ha',sp.cute?'😊 Laune':'😈 Laune',c.happy)}</div>`;
   if(c.task){const tk=TASKS.find(x=>x.id===c.task.id);const done=c.task.end<=t;
@@ -1357,6 +1367,7 @@ function renderSheet(){const el=$('#sheet');const c=crById(selId);if(!c){el.clas
       <button class="btn v" data-a="tasks">📋 Aufgaben<small>Gold & XP</small></button></div>
       <div class="acts" style="margin-top:8px"><button class="btn b" data-a="game" ${c.energy<15?'disabled':''}>🎮 Spielen<small>⚡ 15 · Glühwürmchen</small></button>${['energie','wachstum'].map(id=>`<button class="btn gr" data-a="use" data-i="${id}" ${(S.inv||{})[id]?'':'disabled'}>${POT[id].e} ${id==='energie'?'Energie':'Wachstum'}<small>${(S.inv||{})[id]||0}× im Beutel</small></button>`).join('')}</div>
       <div class="acts" style="margin-top:8px"><button class="btn gr" data-a="profile">📜 Steckbrief<small>Geschichte</small></button><button class="btn" data-a="breed" ${canBreed(c)?'':'disabled'}>💞 Züchten<small>${stageOf(c.lv)<3?'ab Lv 22':(c.breedAt||0)>now()?'erholt sich':'Ei legen'}</small></button><button class="btn gr" data-a="move">${WORLD_DEF[c.home||'wald'].e} Umziehen<small>andere Welt</small></button></div>
+      ${canEvolve(c)?`<button class="btn y" data-a="evo" style="width:100%;margin-top:8px" ${(S.inv||{}).mondstein?'':'disabled'}>🌙 Verwandeln in ${evoName(c.sp)}<small>${(S.inv||{}).mondstein||0}× Mondstein im Beutel</small></button>`:''}
       ${c.hunger<25?'<div style="text-align:center;font-size:12px;color:#ffb36b;margin-top:8px">😫 '+esc(c.name)+' hat Hunger! Hungrige Wesen verdienen nur die Hälfte.</div>':''}
       <p style="font-size:12px;color:var(--muted);margin:10px 0 6px">${sp.d}</p>
       <button class="btn gr" data-a="release" style="width:100%;font-size:12px;padding:7px">👋 Freilassen (+${fmt(Math.round(25*RAR[sp.r].m*c.lv))} 💰)</button>`}
@@ -1368,6 +1379,7 @@ function tickSheet(){const c=crById(selId);if(!c)return;if(sheetStateKey(c)!==sh
   if(c.petAt>t)txt('pc',fmtT((c.petAt-t)/1000))}
 $('#sheet').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const c=crById(selId);if(!c)return;const a=b.dataset.a;
   if(a==='close')closeSheet();if(a==='feed')feed(c);if(a==='pet')pet(c);if(a==='tasks'){sheetMode='tasks';renderSheet()}if(a==='info'){sheetMode='info';renderSheet()}
+  if(a==='evo')evolve(c);
   if(a==='profile'){sheetMode='profile';renderSheet()}if(a==='breed')breedModal(c);if(a==='move')moveModal(c);
   if(a==='game')gameChooser(c);if(a==='use')usePotion(c,b.dataset.i);
   if(a==='task')startTask(c,TASKS.find(x=>x.id===b.dataset.t));if(a==='collect')collect(c);if(a==='rename')nameModal(c,false,true);
@@ -1381,7 +1393,7 @@ function modal(html){$('#mbox').innerHTML=html;$('#modal').classList.add('open')
 function closeModal(){$('#modal').classList.remove('open')}
 function nameModal(c,isNew,rename){const sp=spOf(c);
   modal(`${rename?'<h2 style="margin-top:0">Umbenennen</h2>':`<h2 style="margin:0">🐣 Geschlüpft!</h2>${c.shiny?'<div style="color:#ffd25e;font-weight:800;font-size:18px">✨ Ein schimmerndes Wesen! ✨</div>':''}${spOf(c).bred?'<div style="color:#ff9fd6;font-weight:800">💞 Ein Zucht-Wesen!</div>':''}<div style="color:var(--muted)">${isNew?'✨ Neues Wesen im Fabelbuch! ✨':''}</div>`}
-    <img class="big" src="${thumbC(c)}"><div><span class="tag" style="color:${RAR[sp.r].c}">${RAR[sp.r].n}</span><span class="tag">${sp.n}</span><span class="tag ${sp.cute?'cute':'evil'}">${sp.cute?'💖 niedlich':'😈 böse'}</span></div>
+    <img class="big" src="${thumbC(c)}"><div><span class="tag" style="color:${RAR[sp.r].c}">${RAR[sp.r].n}</span><span class="tag">${spName(c)}</span><span class="tag ${sp.cute?'cute':'evil'}">${sp.cute?'💖 niedlich':'😈 böse'}</span>${traitTag(c)}</div>${!rename&&TRAITS[traitOf(c)]?`<p style="font-size:12px;color:var(--muted);margin:6px 0 0">${TRAITS[traitOf(c)].d}</p>`:''}
     <input id="nmIn" maxlength="14" value="${esc(c.name)}"><button class="btn" style="width:100%" id="nmOk">${rename?'Speichern':'Willkommen!'}</button>`);
   $('#nmOk').onclick=()=>{const v=$('#nmIn').value.trim();if(v)c.name=v;closeModal();select(c.id);refresh()}}
 function confirmModal(title,txt,fn){modal(`<h3 style="margin-top:0">${title}</h3><p style="color:var(--muted)">${txt}</p><div class="row"><button class="btn gr grow" id="mNo">Abbrechen</button><button class="btn grow" id="mYes">Ja</button></div>`);
@@ -1438,7 +1450,7 @@ function renderPage(){const pg=$('#page');let h='';
       <div class="card row"><div class="grow"><b>🎵 Musik</b><div style="font-size:12px;color:var(--muted)">Ruhige Melodien, nachts und im Kampf anders</div></div><button class="btn b" data-m="mus">${MUS?'Aus':'An'}</button></div>
       <div class="card row"><div class="grow"><b>🔊 Geräusche</b><div style="font-size:12px;color:var(--muted)">Waldklänge, Regen und Effekte</div></div><button class="btn b" data-m="snd">${SND?'Aus':'An'}</button></div>
       <div class="card"><b>💾 Spielstand</b><div class="row" style="margin-top:8px"><button class="btn b grow" data-m="exp">Exportieren</button><button class="btn b grow" data-m="imp">Importieren</button></div>
-      <button class="btn gr" style="width:100%;margin-top:8px" data-m="reset">🗑️ Neues Spiel starten</button></div>`}
+      <button class="btn b" style="width:100%;margin-top:8px" data-m="tut">🧚 Tutorial nochmal ansehen</button><button class="btn gr" style="width:100%;margin-top:8px" data-m="reset">🗑️ Neues Spiel starten</button></div>`}
   pg.innerHTML=h}
 function tickShop(){$('#page').querySelectorAll('[data-p]').forEach(b=>b.disabled=S.gold<+b.dataset.p)}
 $('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[data-buy],[data-up],[data-bk],[data-m],[data-pot],[data-ach],[data-bt],[data-deco],[data-world],[data-wg],[data-season]');if(!t)return;const d=t.dataset;
@@ -1457,6 +1469,7 @@ $('#page').addEventListener('click',e=>{const t=e.target.closest('[data-nat],[da
   if(d.m==='imp'){modal(`<h3 style="margin-top:0">Spielstand importieren</h3><textarea id="impT" placeholder="Code hier einfügen"></textarea><button class="btn" style="width:100%" id="impOk">Laden</button>`);
     $('#impOk').onclick=()=>{try{const n=JSON.parse(decodeURIComponent(escape(atob($('#impT').value.trim()))));if(!n.creatures)throw 0;localStorage.setItem(KEY,JSON.stringify(n));location.reload()}catch(err){toast('Ungültiger Code')}}}
   if(d.m==='q'){save();try{localStorage.setItem('fabelwesen-q',HQ?'0':'1')}catch(e){}location.reload()}
+  if(d.m==='tut'){S.tut=0;goPage('insel');renderTut()}
   if(d.m==='reset')confirmModal('Neues Spiel starten?','Alle Fabelwesen und das Gold gehen verloren!',()=>{localStorage.removeItem(KEY);S=null;location.reload()})});
 window.onAndroidBack=()=>{if(GAME||BATTLE)return true;if(PHOTO){photoMode(false);return true}if(PL||PLEDIT){if(PL)finishSel(false);PLEDIT=false;showPlaceBar();return true}if($('#modal').classList.contains('open')){closeModal();return true}if(curPage!=='insel'){goPage('insel');return true}if(selId!==null){closeSheet();return true}save();return false};
 
@@ -1473,7 +1486,7 @@ let envT=0;const SD=new V3(),MD=new V3();
 function updDay(dt){const h=gameHour(),ang=(h-6)/24*Math.PI*2;SD.set(Math.cos(ang)*.8,Math.sin(ang),.45).normalize();MD.set(-SD.x,Math.max(.35,-SD.y),.3).normalize();
   const e=SD.y;DN.h=h;DN.e=e;DN.night=clamp((.05-e)/.25,0,1);
   const P=e>=.25?mixPal(PALS.day,PALS.day,0):e>=0?mixPal(PALS.dusk,PALS.day,e/.25):e>=-.2?mixPal(PALS.night,PALS.dusk,(e+.2)/.2):mixPal(PALS.night,PALS.night,0);
-  const want=WX.type==='regen'?1:0,wf=WX.type==='nebel'?1:0;DN.rain+=(want-DN.rain)*Math.min(1,dt*.3);DN.fog+=(wf-DN.fog)*Math.min(1,dt*.3);
+  const want=WX.type==='regen'||WX.type==='gewitter'?1:0,wf=WX.type==='nebel'?1:0;DN.rain+=(want-DN.rain)*Math.min(1,dt*.3);DN.fog+=(wf-DN.fog)*Math.min(1,dt*.3);
   const wr=DN.rain,gc=DN.night>.5?GREYN:GREY;
   SKY.uniforms.top.value.copy(P.top).lerp(gc,.55*wr);SKY.uniforms.mid.value.copy(P.mid).lerp(gc,.6*wr+.3*DN.fog);SKY.uniforms.bot.value.copy(P.bot).lerp(gc,.6*wr);
   SKY.uniforms.sunDir.value.copy(SD);SKY.uniforms.moonDir.value.copy(MD);SKY.uniforms.sunA.value=clamp(e*4,0,1)*(1-wr*.9);SKY.uniforms.night.value=DN.night*(1-wr*.8)*(1-DN.fog*.6);SKY.uniforms.uT.value=T;
@@ -1494,7 +1507,9 @@ const RAINM=(()=>{const N=MOB?1400:2400,P=new Float32Array(N*6),Ea=new Float32Ar
   const l=new THREE.LineSegments(g,m);l.frustumCulled=false;scene.add(l);return m})();
 const WX_T={klar:{e:'',n:'Klar'},regen:{e:'🌧️',n:'Regen'},nebel:{e:'🌫️',n:'Nebel'}};
 let WX={type:'klar',until:0};
-function updWeather(){if(!S.wx||S.wx.until<now()){const r=Math.random();S.wx={type:r<.6?'klar':r<.85?'regen':'nebel',until:now()+rnd(6,12)*60000}}WX=S.wx}
+function updWeather(){if(S.wx&&((S.wx.type==='sterne'&&DN.night<.3)||(S.wx.type==='regenbogen'&&DN.night>.6)))S.wx.until=0;
+  if(!S.wx||S.wx.until<now()){const r=Math.random(),n=DN.night>.5;const type=n?(r<.45?'klar':r<.6?'regen':r<.7?'nebel':r<.87?'sterne':'gewitter'):(r<.45?'klar':r<.62?'regen':r<.72?'nebel':r<.86?'regenbogen':'gewitter');
+    S.wx={type,until:now()+(WX_MSG[type]?rnd(4,7):rnd(6,12))*60000};if(WX_MSG[type]&&typeof refresh==='function'&&S.creatures.length)toast(WX_MSG[type])}WX=S.wx}
 function envBonus(c){const sp=spOf(c),r={g:1,x:1,notes:[]};
   if(DN.night>.5&&!sp.cute){r.g*=1.3;r.notes.push('🌙 Nacht: +30 % Gold für Böse')}
   if(DN.night<.5&&sp.cute){r.g*=1.2;r.notes.push('☀️ Tag: +20 % Gold für Niedliche')}
@@ -1502,6 +1517,8 @@ function envBonus(c){const sp=spOf(c),r={g:1,x:1,notes:[]};
   if(WX.type==='nebel'&&!sp.cute){r.g*=1.15;r.notes.push('🌫️ Nebel: +15 % Gold für Böse')}
   {const h=c.home||'wald';if(hasDeco('grab',h)&&!sp.cute){r.g*=1.1;r.notes.push('🪦 Gruselgrab: +10 % Gold')}if(hasDeco('schaukel',h)&&sp.cute){r.g*=1.1;r.notes.push('🎠 Schaukel: +10 % Gold')}
    if(hasDeco('feuer',h)&&DN.night>.5){r.g*=1.1;r.notes.push('🔥 Lagerfeuer: +10 % Gold')}if(hasDeco('kristall',h)){r.x*=1.1;r.notes.push('💎 Kristall: +10 % Erfahrung')}if(hasDeco('laterne',h)&&DN.night>.5){r.x*=1.15;r.notes.push('🏮 Laterne: +15 % Erfahrung')}}
+  {const t=traitOf(c);if(t==='aengstlich'){r.x*=1.15;r.notes.push('😨 Ängstlich: +15 % Erfahrung')}if(t==='vertraeumt'&&DN.night>.5){r.x*=1.15;r.notes.push('💭 Verträumt: +15 % Erfahrung')}if(t==='frech'){r.g*=1.1;r.notes.push('😜 Frech: +10 % Gold')}
+   if(c.evo){r.g*=1.5;r.notes.push('🌙 Endform: +50 % Gold')}if(WX.type==='gewitter'&&(sp.el==='licht'||c.sp==='donnervogel')){const k=c.sp==='donnervogel'?1.6:1.3;r.g*=k;r.x*=k;r.notes.push('⛈️ Gewitter: +'+Math.round((k-1)*100)+' % für Licht-Wesen')}}
   if(likedDeco(c)){r.g*=1.1;r.notes.push('🏡 Lieblingsdeko: +10 % Gold')}if(favWorld(c)){r.g*=1.2;r.notes.push('💖 Lieblingswelt: +20 % Gold')}return r}
 function todText(){const h=Math.floor(DN.h),m=Math.floor((DN.h%1)*60);return`${DN.night>.5?'🌙':DN.e<.25?'🌅':'☀️'} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${WX_T[WX.type].e?' '+WX_T[WX.type].e:''}`}
 
@@ -1559,7 +1576,7 @@ function updGame(dt){if(!GAME)return;if(GAME.type!=='feuer')return({beeren:updBe
 function gameTap(x,y){if(GAME.type==='rennen')return tapRace();if(GAME.type==='verst')return tapHide(x,y);if(GAME.type==='beeren')return berryDrag(x,y);let best=null,bd=55;for(const s of GAME.orbs){tmpV.copy(s.position).project(camera);const px=(tmpV.x*.5+.5)*innerWidth,py=(-tmpV.y*.5+.5)*innerHeight,d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=s}}
   if(!best)return;const g=best.userData.gold;GAME.score+=g?5:1;burst(g?'🌟':'✨',best.position,g?8:4,{size:.4,spd:2,up:2});sfx(g?'gold':'catch');scene.remove(best);GAME.orbs.splice(GAME.orbs.indexOf(best),1)}
 function endGame(){const G=GAME;GAME=null;G.orbs.forEach(s=>scene.remove(s));$('#ghud').style.display='none';const c=G.c;
-  const gold=Math.round(G.score*(5+c.lv*1.2)*RAR[spOf(c).r].m*(hasDeco('rutsche')?1.25:1)),xp=G.score*3;S.gold+=gold;c.happy=Math.min(100,c.happy+20);S.best=Math.max(S.best||0,G.score);
+  const gold=Math.round(G.score*(5+c.lv*1.2)*RAR[spOf(c).r].m*(hasDeco('rutsche')?1.25:1)*(traitOf(c)==='verspielt'?1.2:1)),xp=G.score*3;S.gold+=gold;c.happy=Math.min(100,c.happy+20);S.best=Math.max(S.best||0,G.score);
   addXP(c,xp);sfx('coin');refresh();
   modal(`<h2 style="margin-top:0">✨ Spiel vorbei!</h2><img class="big" src="${thumbC(c)}"><p>${esc(c.name)} und du habt <b>${G.score}</b> Glühwürmchen gefangen.</p>
     <p style="font-size:18px"><b>+${fmt(gold)} 💰 · +${xp} ✨</b></p><p style="color:var(--muted);font-size:12px">Rekord: ${S.best} · ${esc(c.name)} hat jetzt richtig gute Laune!</p><button class="btn" style="width:100%" id="gOk">Super!</button>`);
@@ -1614,6 +1631,14 @@ const ACH=[
   {id:'w1',e:'🗺️',n:'Weltenbummler',d:'Schalte eine neue Welt frei',v:()=>Object.keys(S.worlds||{wald:1}).length-1,goal:1,g:1000},
   {id:'dk5',e:'🏡',n:'Gestalter',d:'Stelle 5 Dekorationen auf',v:()=>(S.deco||[]).length,goal:5,g:800},
   {id:'fr1',e:'💕',n:'Beste Freunde',d:'Zwei Wesen werden Freunde',v:()=>Object.values(S.rel||{}).filter(v=>v>=3).length,goal:1,g:400},
+  {id:'boss1',e:'👑',n:'Bossbezwinger',d:'Besiege einen Tagesboss',v:()=>S.bossWins||0,goal:1,g:1500},
+  {id:'boss7',e:'🏰',n:'Heldenwoche',d:'Besiege 7 Tagesbosse',v:()=>S.bossWins||0,goal:7,g:10000},
+  {id:'evo1',e:'🌙',n:'Verwandlung',d:'Verwandle ein Wesen in seine Endform',v:()=>S.evoCount||0,goal:1,g:3000},
+  {id:'wish3',e:'🌠',n:'Sternenkind',d:'Wünsch dir 3 Dinge bei Sternschnuppen',v:()=>S.wishes||0,goal:3,g:800},
+  {id:'rb1',e:'🌈',n:'Regenbogenjäger',d:'Finde ein Regenbogen-Ei',v:()=>S.rbEggs||0,goal:1,g:800},
+  {id:'help1',e:'🍼',n:'Retter',d:'Hilf einem verirrten Baby',v:()=>S.helped||0,goal:1,g:500},
+  {id:'riddle3',e:'🧙',n:'Rätselmeister',d:'Löse 3 Rätsel des Zauberers',v:()=>S.riddles||0,goal:3,g:1500},
+  {id:'dream20',e:'💭',n:'Traumfänger',d:'Deine Wesen träumen 20 Träume',v:()=>S.dreams||0,goal:20,g:600},
   {id:'d7',e:'📅',n:'Treue Seele',d:'Hole 7 Tage am Stück die Tagesbelohnung',v:()=>S.daily?.streak||0,goal:7,g:2000}];
 const achReady=()=>ACH.filter(a=>!(S.ach||{})[a.id]&&a.v()>=a.goal).length;
 function claimAch(id){const a=ACH.find(x=>x.id===id);S.ach=S.ach||{};if(!a||S.ach[id]||a.v()<a.goal)return;S.ach[id]=1;S.gold+=a.g;sfx('gold');toast(`🏆 ${a.n}: +${fmt(a.g)} 💰`);refresh()}
@@ -1634,7 +1659,7 @@ function dailyCheck(){const today=new Date().toDateString();S.daily=S.daily||{la
 
 /* ================== Begegnungen: Kämpfen, Spielen, Erschrecken, Ärgern ================== */
 const INTS=[];let intT=5;
-function eligible(c){const w=W.cre[c.id];return w&&!w.int&&!w.use&&c.id!==selId&&!c.task&&w.pop>=1}
+function eligible(c){const w=W.cre[c.id];return w&&!w.int&&!w.use&&!w.sleeping&&!w.goSleep&&c.id!==selId&&!c.task&&w.pop>=1}
 function moveW(w,tx,tz,sp,dt){const dx=tx-w.pos.x,dz=tz-w.pos.z,d=Math.hypot(dx,dz);if(d>.05){const st=Math.min(d,sp*dt);w.pos.x+=dx/d*st;w.pos.z+=dz/d*st;w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*8);w.mv=1}else w.mv=0;return d}
 function faceW(w,o,dt){w.yaw=lerpAng(w.yaw,Math.atan2(o.pos.x-w.pos.x,o.pos.z-w.pos.z),dt*8)}
 const overW=(w,y)=>w.pos.clone().add(new V3(0,w.b.h*(y||1),0));
@@ -1645,7 +1670,7 @@ function startInts(){if(GAME||INTS.length>=2||curPage!=='insel')return;const lis
   const I={type,a:A,b:B,wa:W.cre[A.id],wb:W.cre[B.id],ph:'hin',t:0,n:0};I.wa.int=I.wb.int=I;INTS.push(I)}
 function endInt(I){if(I.ph!=='hin'&&I.t>1.5){const a=I.a,b=I.b;if(I.type==='spiel'){relAdd(a,b,1);cst(a,'plays');cst(b,'plays')}else{relAdd(a,b,-1);if(I.type==='kampf'){cst(a,'fights');cst(b,'fights')}else{cst(a,'scares');cst(b,'scared')}}}
   I.wa.int=I.wb.int=null;I.wa.mv=I.wb.mv=0;I.wa.state=I.wb.state='idle';I.wa.timer=rnd(2,4);I.wb.timer=rnd(2,4);INTS.splice(INTS.indexOf(I),1)}
-function updInts(dt){intT-=dt;if(intT<=0){intT=rnd(5,10);startInts()}
+function updInts(dt){intT-=dt;if(intT<=0){intT=DN.night>.5?rnd(3,6):rnd(5,10);startInts()}
   for(const I of[...INTS]){const{wa,wb,a,b}=I;
     if(W.cre[a.id]!==wa||W.cre[b.id]!==wb||a.id===selId||b.id===selId||a.task||b.task||GAME){endInt(I);continue}
     I.t+=dt;const ra=wa.b.w*.45,rb=wb.b.w*.45,mx=(wa.pos.x+wb.pos.x)/2,mz=(wa.pos.z+wb.pos.z)/2,gapD=wa.pos.distanceTo(wb.pos);
@@ -1693,7 +1718,7 @@ function favOf(c){if(!c.fav)c.fav=pick(spOf(c).cute?FAVS_CUTE:FAVS_EVIL);return 
 function profileHTML(c){const sp=spOf(c),el=ELS[sp.el]||ELS.natur,fr=bestRel(c,1),ri=bestRel(c,-1),cs=c.cs||{},d=new Date(c.born||Date.now());
   const L=(k,v)=>`<div class="row" style="font-size:13px;padding:3px 0;border-bottom:1px solid #ffffff10"><span style="color:var(--muted);width:44%">${k}</span><b class="grow">${v}</b></div>`;
   return`<div class="row" style="margin-bottom:6px"><b class="grow">📜 Steckbrief</b><button class="btn gr" data-a="info" style="padding:6px 12px">← Zurück</button></div>
-    ${L('Art',sp.n+(c.shiny?' ✨ schimmernd':''))}${L('Element',`${el.e} ${el.n}`)}${L('Angriffe',`💥 Angriff · ${el.e} ${el.mv} · ${sp.cute?'💚 Heilen':'👻 Erschrecken'}`)}
+    ${L('Art',spName(c)+(c.shiny?' ✨ schimmernd':'')+(c.evo?' 🌙 Endform':''))}${TRAITS[traitOf(c)]?L('Eigenschaft',TRAITS[traitOf(c)].e+' '+TRAITS[traitOf(c)].n+'<br><span style="font-weight:400;color:var(--muted);font-size:11px">'+TRAITS[traitOf(c)].d+'</span>'):''}${L('Element',`${el.e} ${el.n}`)}${L('Angriffe',`💥 Angriff · ${el.e} ${el.mv} · ${sp.cute?'💚 Heilen':'👻 Erschrecken'}`)}
     ${L('Geschlüpft am',d.toLocaleDateString('de-DE')+' um '+d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'}))}${L('Lieblingsessen',favOf(c))}
     ${c.par?L('Eltern',esc(c.par.join(' & '))):''}${L('Bester Freund',fr?esc(fr.name)+' 💞':'–')}${L('Rivale',ri?esc(ri.name)+' ⚡':'–')}${L('Zuhause',WORLD_DEF[c.home||'wald'].e+' '+WORLD_DEF[c.home||'wald'].n)}
     <b style="display:block;margin:10px 0 4px">Lebensgeschichte</b>
@@ -1735,9 +1760,11 @@ const STORY={beeren:['{n} hat einen Strauch voller {f} entdeckt und mehr genasch
   vulkan:['{n} hat dem Vulkan so lange gekitzelt, bis er rülpste.','Die Lava war warm und gemütlich – {n} hat darin gebadet.'],
   sterne:['{n} ist auf einer Sternschnuppe bis zum Mond geritten.','{n} hat mit den Sternbildern Verstecken gespielt.']};
 function expeditionReport(c,t,tk){const lines=STORY[tk.id]||['{n} ist von einem Abenteuer zurück.'];let txt=pick(lines).replaceAll('{n}',c.name).replaceAll('{f}',favOf(c));const extra=[];
-  if(Math.random()<.22){const g=Math.round(t.g*.5);S.gold+=g;extra.push(`💎 Dabei fand ${esc(c.name)} einen Schatz: +${fmt(g)} 💰`);cst(c,'finds')}
+  const nq=traitOf(c)==='neugierig'?1.6:1;if(WX.type==='regenbogen'&&tk.t>=45&&Math.random()<.2&&S.eggs.length<S.nests){S.eggs.push({id:S.nextId++,type:'regenbogen',sp:pick(EGG_IDS.filter(i=>SPECIES[i].r>=1)),end:now()+90000,sh:Math.random()<1/8});extra.push('🌈 Am Ende des Regenbogens fand '+esc(c.name)+' ein Regenbogen-Ei!');syncWorld()}
+  if(Math.random()<.22*nq){const g=Math.round(t.g*.5);S.gold+=g;extra.push(`💎 Dabei fand ${esc(c.name)} einen Schatz: +${fmt(g)} 💰`);cst(c,'finds')}
   if(Math.random()<.08){const p=pick(['energie','wachstum']);S.inv=S.inv||{};S.inv[p]=(S.inv[p]||0)+1;extra.push(`${POT[p].e} Mitgebracht: ${POT[p].n}`);cst(c,'finds')}
-  if(tk.t>=120&&Math.random()<.07){if(S.eggs.length<S.nests){S.eggs.push({id:S.nextId++,type:'mond',sp:pick(SP_IDS.filter(i=>!SPECIES[i].bred&&SPECIES[i].r>=1)),end:now()+60000,sh:Math.random()<SHINY_P});extra.push('🥚 Unglaublich: '+esc(c.name)+' hat ein seltenes Ei gefunden! Es liegt im Nest.');syncWorld()}
+  if(tk.t>=300&&Math.random()<.03){S.inv=S.inv||{};S.inv.mondstein=(S.inv.mondstein||0)+1;extra.push('🌙 Ein Mondstein! Damit kann sich ein uraltes Wesen verwandeln.')}
+  if(tk.t>=120&&Math.random()<.07*nq){if(S.eggs.length<S.nests){S.eggs.push({id:S.nextId++,type:'mond',sp:pick(SP_IDS.filter(i=>!SPECIES[i].bred&&SPECIES[i].r>=1)),end:now()+60000,sh:Math.random()<SHINY_P});extra.push('🥚 Unglaublich: '+esc(c.name)+' hat ein seltenes Ei gefunden! Es liegt im Nest.');syncWorld()}
     else{S.gold+=500;extra.push('🥚 Ein seltenes Ei! Weil kein Nest frei war, gab es 500 💰 dafür.')}cst(c,'finds')}
   if(tk.t<45&&!extra.length){toast('📜 '+txt);return}
   modal(`<h2 style="margin-top:0">📜 Bericht</h2><img class="big" src="${thumbC(c)}" style="width:110px;height:110px"><p>${esc(txt)}</p>${extra.map(e=>`<p style="color:#ffd25e;margin:6px 0"><b>${e}</b></p>`).join('')}
@@ -1957,19 +1984,19 @@ function updWild(){if(!WILD||BATTLE)return;if(now()>WILD.until){toast(`💨 Das 
 
 /* ================== Kämpfe ================== */
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-function fighter(c,w){const sp=spOf(c),rm=Math.sqrt(RAR[sp.r].m),max=Math.round((40+c.lv*7)*rm);return{c,w,hp:max,max,atk:(6+c.lv*1.6)*rm*(c.id>0&&hasDeco('statue',c.home||'wald')?1.1:1),el:sp.el||'natur',cute:sp.cute,uses:{el:3,sp:2},scared:0}}
+function fighter(c,w){const sp=spOf(c),rm=Math.sqrt(RAR[sp.r].m),L=c.blv??c.lv,t=traitOf(c),ev=c.evo?1.3:1,boss=c.boss?2.6:1,max=Math.round((40+L*7)*rm*ev*boss);return{c,w,hp:max,max,atk:(6+L*1.6)*rm*ev*(c.boss?.8:1)*(t==='mutig'?1.15:t==='aengstlich'?.9:1)*(WX.type==='gewitter'&&(sp.el==='licht'||c.sp==='donnervogel')?(c.sp==='donnervogel'?1.5:1.25):1)*(c.id>0&&hasDeco('statue',c.home||'wald')?1.1:1),el:sp.el||'natur',cute:sp.cute,uses:{el:3,sp:2},scared:0}}
 const movesOf=f=>[{k:'basic',n:'Angriff',e:'💥',pow:1},{k:'el',n:ELS[f.el].mv,e:ELS[f.el].e,pow:1.65,el:f.el},{k:'sp',n:f.cute?'Heilen':'Erschrecken',e:f.cute?'💚':'👻'}];
 const typeMult=(a,d)=>!a?1:(STRONG[a]||[]).includes(d)?1.5:(STRONG[d]||[]).includes(a)?.67:1;
 function battleStart(){if(!WILD||BATTLE)return;const ok=S.creatures.filter(c=>W.cre[c.id]&&!c.task&&c.energy>=15).sort((a,b)=>b.lv-a.lv);
   if(!ok.length)return toast('Keines deiner Wesen hier hat genug Energie zum Kämpfen.');const sel=new Set(ok.slice(0,3).map(c=>c.id));const wc=WILD.c,wsp=spOf(wc),wel=ELS[wsp.el];
-  const draw=()=>{modal(`<h2 style="margin-top:0">⚔️ Wildes ${wc.shiny?'✨ ':''}${wsp.n}</h2><img class="big" src="${thumbC(wc)}" style="width:120px;height:120px"><div><span class="tag" style="color:${RAR[wsp.r].c}">${RAR[wsp.r].n}</span><span class="tag">Lv ${wc.lv}</span><span class="tag">${wel.e} ${wel.n}</span></div>
-    <p style="font-size:13px;color:var(--muted)">Wähle bis zu 3 Wesen für dein Team (je ⚡ 15 Energie). Gewinnst du, kannst du das wilde Wesen einfangen!</p>
+  const boss=WILD.boss;const draw=()=>{modal(`<h2 style="margin-top:0">${boss?'👑 Boss: '+wc.name:`⚔️ Wildes ${wc.shiny?'✨ ':''}${wsp.n}`}</h2><img class="big" src="${thumbC(wc)}" style="width:120px;height:120px"><div><span class="tag" style="color:${RAR[wsp.r].c}">${RAR[wsp.r].n}</span><span class="tag">Lv ${wc.blv??wc.lv}</span><span class="tag">${wel.e} ${wel.n}</span></div>
+    <p style="font-size:13px;color:var(--muted)">${boss?'Ein mächtiger Tagesboss mit riesigen Lebenspunkten! Jede dritte Runde trifft sein Spezialangriff dein ganzes Team. Belohnung: 🌙 Mondstein, seltenes Ei und viel Gold.':'Wähle bis zu 3 Wesen für dein Team (je ⚡ 15 Energie). Gewinnst du, kannst du das wilde Wesen einfangen!'}</p>
     ${ok.map(c=>{const e=ELS[spOf(c).el];return`<div class="task" style="text-align:left;cursor:pointer;${sel.has(c.id)?'outline:2px solid #ffd25e':''}" data-tm="${c.id}"><img src="${thumbC(c)}" style="width:40px;height:40px"><div class="i"><b>${esc(c.name)}</b><span>Lv ${c.lv} · ${e.e} ${e.n} · ${typeMult(spOf(c).el,wsp.el)>1?'💪 stark dagegen':typeMult(spOf(c).el,wsp.el)<1?'⚠️ schwach dagegen':'neutral'}</span></div><div style="font-size:22px">${sel.has(c.id)?'✅':'⬜'}</div></div>`}).join('')}
     <div class="row"><button class="btn gr grow" id="bX">Später</button><button class="btn y grow" id="bGo" ${sel.size?'':'disabled'}>⚔️ Kämpfen!</button></div>`);
     $('#mbox').querySelectorAll('[data-tm]').forEach(el=>el.onclick=()=>{const id=+el.dataset.tm;if(sel.has(id))sel.delete(id);else if(sel.size<3)sel.add(id);draw()});
     $('#bX').onclick=closeModal;$('#bGo').onclick=()=>{closeModal();beginBattle([...sel].map(crById))}};draw()}
 function beginBattle(team){[...INTS].forEach(endInt);if(GAME)return;closeSheet();
-  const wf=fighter(WILD.c,WILD.w);BATTLE={wild:wf,team:team.map(c=>{c.energy-=15;return fighter(c,W.cre[c.id])}),act:0,busy:false,log:`Ein wildes ${wf.c.name} greift an!`};
+  const wf=fighter(WILD.c,WILD.w);BATTLE={wild:wf,team:team.map(c=>{c.energy-=15;return fighter(c,W.cre[c.id])}),act:0,busy:false,log:WILD.boss?`👑 ${wf.c.name} brüllt! Der Bosskampf beginnt!`:`Ein wildes ${wf.c.name} greift an!`,turn:0};
   [...BATTLE.team.map(f=>f.w),wf.w].forEach(w=>{w.int={battle:1};w.mv=0;w.act=null});placeBattle();focusOn(V(0,.8,1.5),9.5);cam.wth=0;cam.wph=.85;
   $('#strip').style.display='none';renderBattle();$('#battle').classList.add('open');sfx('level')}
 function placeBattle(){const B=BATTLE;B.team.forEach((f,i)=>{const act=i===B.act;f.w.pos.set(act?-2.2:-3.9,0,act?1.5:(i<B.act?0:3));f.w.yaw=Math.PI/2;f.w.b.root.visible=f.hp>0||act});
@@ -2004,20 +2031,27 @@ async function battleTurn(k){const B=BATTLE;if(!B||B.busy)return;
   if(k==='swap'){const n=B.team.findIndex((f,i)=>i!==B.act&&f.hp>0);B.act=n;placeBattle();B.log=`Los, ${esc(B.team[n].c.name)}!`;renderBattle();await wait(600)}
   else{await doMove(me,B.wild,movesOf(me).find(m=>m.k===k));if(B.wild.hp<=0){B.wild.w.spin=1;await wait(700);return endBattle('win')}}
   await wait(350);const cur=B.team[B.act];await doMove(B.wild,cur,enemyMove());
+  if(B.wild.c.boss&&++B.turn%3===0){B.log=`💥 ${esc(B.wild.c.name)} setzt seinen Spezialangriff ein – das ganze Team wird getroffen!`;B.wild.w.hop=1;B.wild.w.boo=1;sfx('crack');thunder(0);
+    for(const f of B.team){if(f.hp<=0)continue;const dm=Math.round(B.wild.atk*.5*rnd(.85,1.15));f.hp=Math.max(0,f.hp-dm);f.w.shake=.6;burst('💥',f.w.pos.clone().add(new V3(0,f.w.b.h*.5,0)),4,{size:.45,spd:2,up:2});floatAt(f.w,'-'+dm,'#ff8a8a')}renderBattle();await wait(900)}
   [...B.team,B.wild].forEach(f=>{if(f.scared>0)f.scared--});
   if(cur.hp<=0){cur.w.spin=1;B.log=`${esc(cur.c.name)} ist erschöpft!`;renderBattle();await wait(800);const n=B.team.findIndex(f=>f.hp>0);if(n<0)return endBattle('lose');B.act=n;placeBattle();B.log=`Los, ${esc(B.team[n].c.name)}!`}
   B.busy=false;renderBattle()}
 function endBattle(res){const B=BATTLE;if(!B)return;const W_=B.wild,wc=W_.c,wsp=spOf(wc);
   const finish=()=>{B.team.forEach(f=>{f.w.int=null;f.w.b.root.visible=true;f.w.state='idle';f.w.timer=1});BATTLE=null;$('#battle').classList.remove('open');killTemp(WILD);WILD=null;S.nextWild=now()+rnd(3,6)*60000*(hasDeco('trampolin')?.55:1);closeSheet();renderStrip();refresh()};
+  if(W_.c.boss&&res!=='win')S.bossNext=now()+180000;
   if(res==='flee'){finish();toast('🏃 Du bist geflohen. Das wilde Wesen verschwindet im Wald.');return}
   if(res==='lose'){B.team.forEach(f=>{f.c.happy=Math.max(0,f.c.happy-10);cst(f.c,'losses')});finish();modal(`<h2 style="margin-top:0">😵 Verloren…</h2><p>Das wilde ${wsp.n} war zu stark und ist davongezogen. Trainiere deine Wesen und versuch es nochmal!</p><button class="btn" style="width:100%" onclick="closeModal()">OK</button>`);return}
+  if(wc.boss){const gold=Math.round(400+wc.blv*70),xp=40+wc.blv*6;S.gold+=gold;S.inv=S.inv||{};S.inv.mondstein=(S.inv.mondstein||0)+1;S.inv.wachstum=(S.inv.wachstum||0)+1;S.bossDay=todayStr();S.bossWins=(S.bossWins||0)+1;S.battlesWon=(S.battlesWon||0)+1;
+    let egg='';if(S.eggs.length<S.nests){S.eggs.push({id:S.nextId++,type:'stern',sp:pick(EGG_IDS.filter(i=>SPECIES[i].r>=2)),end:now()+120000,sh:Math.random()<1/10});egg='🥚 Ein Sternenei (mindestens episch) liegt im Nest!'}else{S.gold+=2500;egg='🥚 Kein Nest frei – dafür +2.500 💰'}
+    B.team.forEach(f=>{addXP(f.c,xp);cst(f.c,'wins');f.c.happy=Math.min(100,f.c.happy+15)});sfx('gold');finish();syncWorld();
+    modal(`<h2 style="margin-top:0">👑 Boss besiegt!</h2><p>${esc(wc.name)} ist geschlagen und zieht sich zurück. Morgen kommt ein neuer Boss!</p><p style="line-height:1.8"><b>+${fmt(gold)} 💰 · +${xp} ✨ für jedes Wesen</b><br>🌙 1 Mondstein<br>🌟 1 Wachstumselixier<br>${egg}</p><button class="btn y" style="width:100%" onclick="closeModal()">Hurra!</button>`);return}
   const gold=Math.round((20+wc.lv*12)*RAR[wsp.r].m),xp=10+wc.lv*3;S.gold+=gold;B.team.forEach((f,i)=>{addXP(f.c,i===B.act?xp:Math.round(xp*.6));cst(f.c,'wins');f.c.happy=Math.min(100,f.c.happy+8)});
   S.battlesWon=(S.battlesWon||0)+1;sfx('gold');const chance=[.85,.7,.55,.35][wsp.r]*(wc.shiny?.85:1);
   modal(`<h2 style="margin-top:0">🏆 Gewonnen!</h2><img class="big" src="${thumbC(wc)}" style="width:120px;height:120px"><p><b>+${fmt(gold)} 💰 · +${xp} ✨</b></p><p>Das wilde ${wc.shiny?'✨ ':''}${wsp.n} ist erschöpft. Willst du es einfangen?</p>
     <div class="row"><button class="btn gr grow" id="cNo">Laufen lassen</button><button class="btn y grow" id="cYes">🪤 Einfangen (${Math.round(chance*100)} %)</button></div>`);
   $('#cNo').onclick=()=>{closeModal();finish()};
   $('#cYes').onclick=()=>{closeModal();if(S.creatures.length>=S.slots){toast('🌲 Kein Platz mehr! Kaufe mehr Waldplätze.');finish();return}
-    if(Math.random()<chance){const c={id:S.nextId++,sp:wc.sp,name:pick(wsp.names),lv:wc.lv,xp:0,hunger:70,energy:60,happy:60,task:null,petAt:0,born:now(),home:S.world||'wald',cs:{caught:1}};if(wc.shiny){c.shiny=1;S.shinySeen=S.shinySeen||{};S.shinySeen[c.sp]=1}
+    if(Math.random()<chance){const c={id:S.nextId++,sp:wc.sp,name:pick(wsp.names),lv:wc.lv,xp:0,hunger:70,energy:60,happy:60,task:null,petAt:0,born:now(),home:S.world||'wald',cs:{caught:1},trait:pick(TRAIT_IDS)};if(wc.shiny){c.shiny=1;S.shinySeen=S.shinySeen||{};S.shinySeen[c.sp]=1}
       const isNew=S.seen[c.sp]===undefined;S.seen[c.sp]=Math.max(S.seen[c.sp]??0,stageOf(c.lv));S.creatures.push(c);S.caught=(S.caught||0)+1;finish();setTimeout(()=>nameModal(c,isNew),400);sfx('gold')}
     else{finish();toast(`💨 Oh nein! Das ${wsp.n} hat sich losgerissen und ist entkommen.`)}}}
 $('#battle').addEventListener('click',e=>{const b=e.target.closest('[data-mv]');if(b&&!b.disabled)battleTurn(b.dataset.mv)});
@@ -2031,7 +2065,7 @@ function gameChooser(c){if(!W.cre[c.id])return toast(`${c.name} ist gerade nicht
 function gameBegin(c,type){if(GAME||BATTLE)return;if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;[...INTS].forEach(endInt);const w=W.cre[c.id];
   GAME={type,c,w,t:type==='rennen'?60:type==='verst'?999:30,score:0,objs:[]};selId=null;$('#sheet').classList.remove('open');$('#strip').style.display='none';$('#ghud').style.display='block';
   w.int={game:1};w.mv=0;w.act=null;cst(c,'games');sfx('level');({beeren:startBerry,rennen:startRace,verst:startHide})[type]()}
-function gameFinish(label,score,mult){mult=(mult||1)*(hasDeco('rutsche')?1.25:1);const G=GAME,c=G.c;GAME=null;$('#ghud').style.display='none';G.objs.forEach(o=>(o.parent||scene).remove(o));if(G.w){G.w.int=null;G.w.b.root.visible=true;G.w.state='idle';G.w.timer=1}
+function gameFinish(label,score,mult){mult=(mult||1)*(hasDeco('rutsche')?1.25:1)*(GAME&&traitOf(GAME.c)==='verspielt'?1.2:1);const G=GAME,c=G.c;GAME=null;$('#ghud').style.display='none';G.objs.forEach(o=>(o.parent||scene).remove(o));if(G.w){G.w.int=null;G.w.b.root.visible=true;G.w.state='idle';G.w.timer=1}
   if(G.rival)killTemp(G.rival);const gold=Math.max(0,Math.round(score*(5+c.lv*1.2)*RAR[spOf(c).r].m*(mult||1))),xp=Math.max(0,Math.round(score*3*(mult||1)));S.gold+=gold;c.happy=Math.min(100,c.happy+20);addXP(c,xp);sfx('coin');refresh();
   S.best=Math.max(S.best||0,G.type==='feuer'?score:0);
   modal(`<h2 style="margin-top:0">${label}</h2><img class="big" src="${thumbC(c)}"><p style="font-size:18px"><b>+${fmt(gold)} 💰 · +${xp} ✨</b></p><p style="color:var(--muted);font-size:12px">${esc(c.name)} hat jetzt richtig gute Laune!</p><button class="btn" style="width:100%" id="gOk">Super!</button>`);
@@ -2156,6 +2190,160 @@ function updUse(w,c,dt){const u=w.use,o=u.o;if(!o.parent||!o.parent.visible){end
     case'statue':faceTo(w,ctr,dt);w.useP=t>.4&&t<2.2?.35:0;if(t>.5&&!u.b){u.b=1;burst('✨',w.pos.clone().add(new V3(0,w.b.h,0)),4,{size:.35})}if(t>2.6)endUse(w,c,1);break;
     default:faceTo(w,ctr,dt);w.useAct='look';if(t>2.5)endUse(w,c,1)}}
 
+/* ================== Charakter-Eigenschaften ================== */
+const TRAITS={verspielt:{e:'🎈',n:'Verspielt',d:'Spielt und hüpft viel. Minispiele +20 % Belohnung.'},faul:{e:'😴',n:'Faul',d:'Ruht sich gern aus, macht Nickerchen und läuft gemütlich. Energie lädt 30 % schneller.'},
+  mutig:{e:'🦁',n:'Mutig',d:'Stürzt sich in jeden Kampf: +15 % Angriff.'},aengstlich:{e:'😨',n:'Ängstlich',d:'Erschrickt leicht und hat manchmal Albträume. Lernt dafür fleißig: +15 % Erfahrung.'},
+  verfressen:{e:'🍰',n:'Verfressen',d:'Wird schneller hungrig, freut sich aber doppelt über Futter.'},neugierig:{e:'🔍',n:'Neugierig',d:'Erkundet und schnuppert gern überall. Findet auf Expeditionen öfter Schätze.'},
+  vertraeumt:{e:'💭',n:'Verträumt',d:'Schläft und träumt viel. Nachts +15 % Erfahrung.'},frech:{e:'😜',n:'Frech',d:'Treibt gern Unfug und schneidet Grimassen. +10 % Gold.'}};
+const TRAIT_IDS=Object.keys(TRAITS);
+function traitOf(c){if(!c||c.id<0)return'';if(!c.trait)c.trait=pick(TRAIT_IDS);return c.trait}
+const traitTag=c=>{const t=TRAITS[traitOf(c)];return t?`<span class="tag">${t.e} ${t.n}</span>`:''};
+
+/* ================== Endform (Verwandlung mit Mondstein) ================== */
+const EVO_PRE={licht:'Sternen-',feuer:'Flammen-',wasser:'Gezeiten-',natur:'Ur-',eis:'Frost-',schatten:'Mitternachts-'},EVO_COL={licht:0xfff0a0,feuer:0xff7a2a,wasser:0x5ad0ff,natur:0x8aff9a,eis:0xc8f4ff,schatten:0xb48cff};
+const evoName=sp=>EVO_PRE[SPECIES[sp].el||'natur']+SPECIES[sp].n;
+const spName=c=>c&&c.evo?evoName(c.sp):SPECIES[c.sp].n;
+const EM={};
+function evoMat(m,col){const k=m.uuid+'|evo';if(EM[k])return EM[k];const c=m.clone(),prev=m.onBeforeCompile,base=m.customProgramCacheKey();
+  c.onBeforeCompile=function(sh,r){if(prev)prev.call(this,sh,r);sh.uniforms.uEC={value:new THREE.Color(col)};sh.uniforms.uT2=grassT;
+    sh.fragmentShader='uniform vec3 uEC;uniform float uT2;\n'+sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n{float fr=pow(1.-abs(dot(normal,normalize(vViewPosition))),2.2);totalEmissiveRadiance+=uEC*fr*(.28+.14*sin(uT2*2.5));}')};
+  c.customProgramCacheKey=()=>base+'|evo';return EM[k]=c}
+function canEvolve(c){return stageOf(c.lv)>=4&&!c.evo}
+function evolve(c){S.inv=S.inv||{};if(!S.inv.mondstein)return toast('Du brauchst einen 🌙 Mondstein (vom Boss, Händler oder Zauberer).');const w=W.cre[c.id];if(!w)return;
+  S.inv.mondstein--;closeSheet();w.int={evo:1};w.act=null;focusOn(w.pos,Math.max(6,w.b.h*3+3));let t=0;sfx('level');
+  const iv=setInterval(()=>{t+=.05;w.yOff=Math.sin(Math.min(1,t/2.6)*Math.PI)*1.3;w.yaw+=.05+t*.12;if(Math.random()<.5)burst(pick(['✨','🌟','💫']),w.pos.clone().add(new V3(rnd(-.6,.6),w.b.h*rnd(.2,1)+w.yOff,rnd(-.6,.6))),1,{size:.4,spd:1,up:1});
+    if(t>=2.6){clearInterval(iv);const fl=$('#flash');fl.style.opacity=.9;setTimeout(()=>fl.style.opacity=0,200);w.int=null;w.yOff=0;c.evo=1;S.evoCount=(S.evoCount||0)+1;S.evoSeen=S.evoSeen||{};S.evoSeen[c.sp]=1;
+      rebuild(c);const n=W.cre[c.id];if(n){n.pop=0;burst('✨',n.pos.clone().add(new V3(0,1,0)),24,{spd:4,up:5})}sfx('gold');refresh();
+      modal(`<h2 style="margin-top:0">🌙 Verwandlung!</h2><img class="big" src="${thumbC(c)}"><p><b>${esc(c.name)}</b> ist jetzt ein <b>${evoName(c.sp)}</b>!</p><p style="color:var(--muted);font-size:13px">Verwandelte Wesen leuchten, verdienen 50 % mehr Gold und sind im Kampf 30 % stärker.</p><button class="btn" style="width:100%" onclick="closeModal()">Wunderbar!</button>`)}},50)}
+
+/* ================== Wetter-Ereignisse ================== */
+Object.assign(WX_T,{gewitter:{e:'⛈️',n:'Gewitter'},sterne:{e:'🌠',n:'Sternschnuppennacht'},regenbogen:{e:'🌈',n:'Regenbogen'}});
+const WX_MSG={gewitter:'⛈️ Ein Gewitter zieht auf! Licht-Wesen und der Donnervogel werden stärker.',sterne:'🌠 Sternschnuppennacht! Tippe auf eine Sternschnuppe und wünsch dir etwas.',regenbogen:'🌈 Ein Regenbogen! Am Ende des Regenbogens liegt ein seltenes Ei – such es auf der Wiese!'};
+let FLASH=0,boltT=rnd(3,6),starT=2,RBEGG=null;const STARS=[];
+const RAINBOW=(()=>{const g=new THREE.Group();[0xff4a4a,0xff9a3a,0xffe04a,0x5ae05a,0x4ab0ff,0x6a5aff,0xb45aff].forEach((c,i)=>{g.add(new THREE.Mesh(new THREE.TorusGeometry(46-i*1.3,.65,8,80,Math.PI),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:0,depthWrite:false,fog:false})))});
+  g.position.set(5,-6,-70);g.rotation.y=.25;scene.add(g);return g})();
+const BOLTM=new THREE.LineBasicMaterial({color:0xf0f4ff,transparent:true,opacity:0,fog:false});const BOLT=new THREE.Line(new THREE.BufferGeometry(),BOLTM);BOLT.frustumCulled=false;scene.add(BOLT);
+function thunder(d){if(!AC||!SND)return;const s=AC.createBufferSource();s.buffer=NOISE;const f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=160;const g=AC.createGain(),t=AC.currentTime+d;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.7,t+.08);g.gain.exponentialRampToValueAtTime(.001,t+2.4);s.connect(f);f.connect(g);g.connect(MASTER);s.start(t,rnd(0,1),2.5)}
+function rainbowEggSpawn(){if(RBEGG)return;const o=new THREE.Group(),cols=[0xff6a6a,0xffc04a,0x7ae07a,0x5ab0ff,0xb48cff];o.add(E(0xffffff,.42,.56,.42,{em:0xffffff,ei:.25,r:.3}));
+  for(let i=0;i<5;i++){const b=mesh(GEO.tor,M(cols[i],{em:cols[i],ei:.5}));b.scale.set(.43-Math.abs(i-2)*.04,.43-Math.abs(i-2)*.04,.25);b.rotation.x=Math.PI/2;b.position.y=(i-2)*.16;o.add(b)}
+  o.add(glow(0xffffff,2.2,.6));const a=rnd(0,6.3),d=rnd(4,8.5);o.position.set(Math.cos(a)*d,.55,Math.sin(a)*d);o.userData.pick={k:'rbegg'};LIVE.add(o);RBEGG=o}
+function takeRainbowEgg(){if(!RBEGG)return;if(S.eggs.length>=S.nests)return toast('🪺 Alle Nester sind belegt! Lass zuerst ein Ei schlüpfen.');
+  const r=rarRoll([0,50,40,10]),pool=EGG_IDS.filter(i=>SPECIES[i].r===r);S.eggs.push({id:S.nextId++,type:'regenbogen',sp:pick(pool),end:now()+90000*(hasDeco('feenhaus')?.8:1),sh:Math.random()<1/8});
+  burst('🌈',RBEGG.position,8,{size:.45,spd:2,up:2});LIVE.remove(RBEGG);RBEGG=null;S.rbEggs=(S.rbEggs||0)+1;sfx('gold');syncWorld();refresh();toast('🌈 Regenbogen-Ei gefunden! Es liegt jetzt im Nest.')}
+function spawnStar(){const a=rnd(0,6.3),r=rnd(45,60),s=V(Math.cos(a)*r,rnd(28,42),Math.sin(a)*r),dir=V(-Math.sin(a),-.35,Math.cos(a)).normalize().multiplyScalar(rnd(22,30)*(Math.random()<.5?1:-1));dir.y=-Math.abs(dir.y)-6;
+  const g=new THREE.Group();const parts=[];for(let i=0;i<8;i++){const sp=glow(0xfff6d0,i?2.2-i*.22:3.2,i?.8-i*.09:1);g.add(sp);parts.push(sp)}scene.add(g);STARS.push({g,parts,p:s,v:dir,t:0,life:1.8,wished:0})}
+function starTap(x,y){for(const st of STARS){if(st.wished||st.t>st.life)continue;tmpV.copy(st.p).project(camera);if(tmpV.z>1)continue;const px=(tmpV.x*.5+.5)*innerWidth,py=(-tmpV.y*.5+.5)*innerHeight;
+  if(Math.hypot(px-x,py-y)<70){st.wished=1;wishModal();return true}}return false}
+function wishModal(){S.wx.wishes=(S.wx.wishes||0);if(S.wx.wishes>=3)return toast('🌠 Du hast heute Nacht schon drei Wünsche frei gehabt.');S.wx.wishes++;sfx('gold');
+  const W_=[['gold','💰 Reichtum','Ein Haufen Gold fällt vom Himmel.'],['xp','✨ Weisheit','Alle Wesen in dieser Welt bekommen viel Erfahrung.'],['luck','🍀 Glück','Die nächsten 3 Eier haben eine Schimmer-Chance von 1:4.'],['joy','💖 Freude','Alle Wesen sind satt, ausgeruht und glücklich.'],['stone','🌙 Mondstaub','Mit etwas Glück wird daraus ein Mondstein (40 %).']];
+  const opts=W_.sort(()=>Math.random()-.5).slice(0,3);
+  modal(`<h2 style="margin-top:0">🌠 Wünsch dir was!</h2><p style="color:var(--muted);font-size:13px">Wunsch ${S.wx.wishes} von 3 in dieser Nacht</p>${opts.map(o=>`<div class="task" style="text-align:left;cursor:pointer" data-ws="${o[0]}"><div class="i"><b>${o[1]}</b><span>${o[2]}</span></div></div>`).join('')}`);
+  $('#mbox').querySelectorAll('[data-ws]').forEach(b=>b.onclick=()=>{const k=b.dataset.ws;closeModal();S.wishes=(S.wishes||0)+1;
+    if(k==='gold'){const g=Math.round(200+avgLv()*45);S.gold+=g;toast(`💰 +${fmt(g)} Gold!`)}
+    if(k==='xp')S.creatures.filter(c=>W.cre[c.id]).forEach(c=>addXP(c,Math.ceil(xpNeed(c.lv)*.35)));
+    if(k==='luck'){S.luck=3;toast('🍀 Die nächsten 3 Eier bringen Glück!')}
+    if(k==='joy'){S.creatures.forEach(c=>{c.hunger=100;c.energy=100;c.happy=100});toast('💖 Alle Wesen sind überglücklich!')}
+    if(k==='stone'){if(Math.random()<.4){S.inv=S.inv||{};S.inv.mondstein=(S.inv.mondstein||0)+1;toast('🌙 Ein Mondstein! Damit kann sich ein uraltes Wesen verwandeln.')}else{S.gold+=300;toast('✨ Nur Sternenstaub … aber er ist 300 💰 wert.')}}
+    sfx('level');refresh()})}
+function updEvents(dt){const ty=WX.type;
+  RAINBOW.children.forEach(m=>m.material.opacity+=((ty==='regenbogen'?.5:0)-m.material.opacity)*Math.min(1,dt*.5));
+  if(ty==='regenbogen'&&!RBEGG&&!S.wx.egg){S.wx.egg=1;rainbowEggSpawn()}if(ty!=='regenbogen'&&RBEGG&&DN.night>.6){LIVE.remove(RBEGG);RBEGG=null}
+  if(RBEGG){RBEGG.rotation.y+=dt;RBEGG.position.y=.55+Math.abs(Math.sin(T*3))*.15}
+  if(ty==='gewitter'&&(S.world||'wald')!=='wolken'){boltT-=dt;if(boltT<=0){boltT=rnd(4,10);FLASH=.35;const a=rnd(0,6.3),r=rnd(30,55),x=Math.cos(a)*r,z=Math.sin(a)*r,pts=[];let p=V(x,45,z);
+      for(let i=0;i<12;i++){pts.push(p.clone());p=p.clone().add(V(rnd(-2.5,2.5),-45/12,rnd(-2.5,2.5)))}pts.push(V(p.x,0,p.z));BOLT.geometry.setFromPoints(pts);BOLTM.opacity=1;
+      const fl=$('#flash');fl.style.opacity=.3;setTimeout(()=>fl.style.opacity=0,90);thunder(rnd(.2,1))}}
+  BOLTM.opacity=Math.max(0,BOLTM.opacity-dt*5);
+  if(FLASH>0){FLASH=Math.max(0,FLASH-dt);renderer.toneMappingExposure+=FLASH*5;HEMI.intensity+=FLASH*10}
+  if(ty==='sterne'&&DN.night>.5){starT-=dt;if(starT<=0){starT=rnd(2.5,5.5);spawnStar()}}
+  for(let i=STARS.length-1;i>=0;i--){const s=STARS[i];s.t+=dt;s.p.addScaledVector(s.v,dt);s.parts.forEach((p,j)=>{p.position.copy(s.p).addScaledVector(s.v,-j*.035);p.material.opacity=Math.max(0,(j?.8-j*.09:1)*(1-s.t/s.life))});
+    if(s.t>s.life){scene.remove(s.g);STARS.splice(i,1)}}}
+
+/* ================== Boss-Kämpfe ================== */
+const BOSSES=[{sp:'hoellendrache',n:'Uralt-Drache'},{sp:'hexe',n:'Waldhexe'},{sp:'troll',n:'Riesentroll'},{sp:'kraken',n:'Krakenkönig'},{sp:'schattenwolf',n:'Schattenkönig'},{sp:'hydra',n:'Hydra-Mutter'},{sp:'daemon',n:'Dämonenfürst'}];
+const todayStr=()=>new Date().toDateString();
+function spawnBoss(){if(WILD||BATTLE||GAME||!S.creatures.length||S.bossDay===todayStr()||(S.bossNext||0)>now())return;
+  const B=BOSSES[Math.floor(Date.now()/864e5)%BOSSES.length],blv=clamp(Math.round(avgLv()+2),6,MAXLV);
+  const c={id:-9,sp:B.sp,name:B.n,lv:40,blv,boss:1,hunger:80,happy:80,energy:100};const T_=makeTemp(c,V(0,0,-5));const b=T_.w.b,k=1.7;b.sc*=k;b.h*=k;b.w*=k;b.cs.scale.multiplyScalar(k);
+  b.root.add(at(glow(0xff3a3a,b.w*1.6,.3),0,b.h*.45,0));b.root.userData.pick={k:'wild'};WILD={...T_,until:Infinity,boss:1};
+  toast(`👑 Der Tagesboss ist erschienen: ${B.n}! Tippe ihn an, wenn dein Team bereit ist.`);sfx('crack');thunder(0)}
+
+/* ================== Besucher ================== */
+Object.assign(SPECIES,{haendler:{n:'Händler',npc:1,cute:true,r:0,el:'natur',names:['Händler Bruno'],d:'',b:{t:'human',H:1.7,build:1.1,skinC:0xf0c8a8,hair:{s:'short',c:0x6a4a2a},beard:0x6a4a2a,top:0x8a4a2a,sleeve:0x8a4a2a,bottom:0x4a3a2a,shoes:0x3a2a1a,boots:1,belt:0x2a1a10,hat:'cap',hatC:0x2a7a4a,belly:1,eye:0x4a3020}},
+  zauberer:{n:'Zauberer',npc:1,cute:true,r:0,el:'licht',names:['Zauberer Merlinus'],d:'',b:{t:'human',H:1.8,build:.9,skinC:0xf2d8c4,hair:{s:'long',c:0xe8e8f0},beard:0xe8e8f0,top:0x2a3a9a,robe:0x2a3a9a,hat:'witch',hatC:0x2a3a9a,eye:0x3a7ad0,orbs:0x9fd0ff}}});
+let VIS=null;
+const RIDDLES=[['Es hat Zähne, aber beißt nicht. Was ist es?',['Ein Kamm','Ein Hai','Ein Krokodil']],['Je mehr man davon wegnimmt, desto größer wird es. Was ist es?',['Ein Loch','Ein Kuchen','Ein Berg']],
+  ['Was läuft, hat aber keine Beine?',['Wasser','Ein Stuhl','Ein Pferd']],['Was wird nass, während es trocknet?',['Ein Handtuch','Die Sonne','Ein Feuer']],['Ich habe viele Blätter, bin aber kein Baum. Was bin ich?',['Ein Buch','Eine Eiche','Eine Tanne']],
+  ['Was hat einen Kopf und einen Fuß, aber keine Beine?',['Ein Bett','Eine Schlange','Ein Fisch']],['Was kann man fangen, aber nicht werfen?',['Einen Schnupfen','Einen Ball','Einen Stein']],['Was hat Hände, kann aber nicht klatschen?',['Eine Uhr','Ein Affe','Ein Kind']],
+  ['Welches Fabelwesen wird aus seiner eigenen Asche wiedergeboren?',['Der Phönix','Der Greif','Der Troll']],['Was ist voller Löcher und hält trotzdem Wasser?',['Ein Schwamm','Ein Sieb','Ein Netz']],
+  ['Wie viele Köpfe hat der Zerberus, wenn er uralt ist?',['Drei','Zwei','Sieben']],['Was gehört dir, wird aber von anderen viel öfter benutzt?',['Dein Name','Dein Bett','Dein Ei']]];
+function spawnVisitor(force){if(VIS||BATTLE||GAME||!S.creatures.length)return;const type=force||pick(['haendler','zauberer','baby']);let c;
+  if(type==='baby'){const sp=pick(EGG_IDS.filter(i=>SPECIES[i].r<=1));c={id:-7,sp,name:SPECIES[sp].n,lv:1,hunger:30,happy:20,energy:100}}
+  else c={id:-6,sp:type,name:SPECIES[type].names[0],lv:30,hunger:80,happy:80,energy:100};
+  const a=rnd(0,6.3);const T_=makeTemp(c,V(Math.cos(a)*9,0,Math.sin(a)*9));T_.w.b.root.userData.pick={k:'visitor'};VIS={...T_,type,until:now()+4*60000};
+  if(type==='haendler'){const pool=[{k:'mondstein',n:'🌙 Mondstein',d:'Verwandelt ein uraltes Wesen in seine Endform.',p:7000},{k:'shinyegg',n:'✨ Schimmer-Ei',d:'Ein Waldei, aus dem garantiert ein schimmerndes Wesen schlüpft.',p:5000},
+    {k:'sternei',n:'🥚 Sternenei (40 % billiger)',d:'Mindestens episch!',p:2700},{k:'wachs3',n:'🌟 3 Wachstumselixiere',d:'Halbes Level Erfahrung, dreimal.',p:1000},{k:'energie3',n:'🧪 3 Energietränke',d:'Volle Energie, dreimal.',p:280}];
+    VIS.offers=pool.sort(()=>Math.random()-.5).slice(0,3);if(!VIS.offers.find(o=>o.k==='mondstein')&&Math.random()<.5)VIS.offers[0]=pool[0]}
+  if(type==='zauberer')VIS.riddle=pick(RIDDLES);
+  toast(type==='haendler'?'🧳 Ein reisender Händler ist im Wald! Tippe ihn an.':type==='zauberer'?'🧙 Ein Zauberer ist erschienen und hat ein Rätsel für dich!':`😢 Ein verirrtes ${c.name}-Baby weint im Wald. Hilf ihm!`);sfx('pop')}
+function leaveVisitor(msg){if(!VIS)return;killTemp(VIS);VIS=null;S.nextVisit=now()+rnd(7,12)*60000;if(msg)toast(msg)}
+function updVisitor(){if(VIS&&now()>VIS.until)leaveVisitor(VIS.type==='baby'?'🏠 Die Eltern des Babys haben es gefunden.':'💨 Der Besucher ist weitergezogen.');
+  if(VIS&&VIS.type==='baby'&&Math.random()<.08)burst('😢',VIS.w.pos.clone().add(new V3(0,VIS.w.b.h+.2,0)),1,{size:.35,spd:.3,up:.6})}
+function visitorTap(){if(!VIS)return;const V_=VIS;S.inv=S.inv||{};
+  if(V_.type==='haendler'){const draw=()=>{modal(`<h2 style="margin-top:0">🧳 Reisender Händler</h2><p style="color:var(--muted);font-size:13px">„Seltene Waren aus fernen Ländern! Nur heute!“</p>
+      ${V_.offers.length?V_.offers.map((o,i)=>`<div class="task" style="text-align:left"><div class="i"><b>${o.n}</b><span>${o.d}</span></div><button class="btn y" data-of="${i}" ${S.gold<o.p?'disabled':''}>${fmt(o.p)} 💰</button></div>`).join(''):'<p>Ausverkauft!</p>'}
+      <button class="btn gr" style="width:100%" id="vX">Tschüss!</button>`);
+    $('#vX').onclick=closeModal;$('#mbox').querySelectorAll('[data-of]').forEach(b=>b.onclick=()=>{const o=V_.offers[+b.dataset.of];if(S.gold<o.p)return;
+      if((o.k==='shinyegg'||o.k==='sternei')&&S.eggs.length>=S.nests)return toast('🪺 Alle Nester sind belegt!');S.gold-=o.p;sfx('buy');
+      if(o.k==='mondstein')S.inv.mondstein=(S.inv.mondstein||0)+1;if(o.k==='wachs3')S.inv.wachstum=(S.inv.wachstum||0)+3;if(o.k==='energie3')S.inv.energie=(S.inv.energie||0)+3;
+      if(o.k==='shinyegg')S.eggs.push({id:S.nextId++,type:'wald',sp:pick(EGG_IDS.filter(i=>SPECIES[i].r<=1)),end:now()+40000,sh:true});
+      if(o.k==='sternei')S.eggs.push({id:S.nextId++,type:'stern',sp:pick(EGG_IDS.filter(i=>SPECIES[i].r>=2)),end:now()+180000,sh:Math.random()<SHINY_P});
+      V_.offers.splice(+b.dataset.of,1);syncWorld();refresh();toast(`🧳 ${o.n} gekauft!`);draw()})};draw()}
+  if(V_.type==='zauberer'){const[q,opts]=V_.riddle,right=opts[0],sh=[...opts].sort(()=>Math.random()-.5);
+    modal(`<h2 style="margin-top:0">🧙 Das Rätsel des Zauberers</h2><p>„${q}“</p>${sh.map(o=>`<button class="btn b" style="width:100%;margin-bottom:6px" data-rd="${esc(o)}">${esc(o)}</button>`).join('')}`);
+    $('#mbox').querySelectorAll('[data-rd]').forEach(b=>b.onclick=()=>{closeModal();if(b.dataset.rd===right){S.riddles=(S.riddles||0)+1;sfx('gold');let txt;const r=Math.random();
+      if(r<.35){S.inv.mondstein=(S.inv.mondstein||0)+1;txt='🌙 einen Mondstein'}else if(r<.65){S.inv.wachstum=(S.inv.wachstum||0)+2;txt='🌟 zwei Wachstumselixiere'}else{const g=Math.round(500+avgLv()*40);S.gold+=g;txt=fmt(g)+' 💰'}
+      burst('✨',V_.w.pos.clone().add(new V3(0,2,0)),14,{size:.4,spd:2.5,up:3});leaveVisitor();modal(`<h2 style="margin-top:0">🧙 Richtig!</h2><p>„Sehr klug! Zur Belohnung schenke ich dir ${txt}.“</p><button class="btn" style="width:100%" onclick="closeModal()">Danke!</button>`);refresh()}
+      else{sfx('crack');leaveVisitor(`🧙 „Leider falsch! Die Antwort war: ${right}.“ Puff – weg ist er.`)}})}
+  if(V_.type==='baby'){const sp=SPECIES[V_.c.sp];
+    modal(`<h2 style="margin-top:0">😢 Ein verirrtes Baby</h2><img class="big" src="${thumbC(V_.c)}" style="width:110px;height:110px"><p>Ein kleines ${sp.n} hat sich im Wald verlaufen und weint. Was möchtest du tun?</p>
+      <button class="btn y" style="width:100%;margin-bottom:6px" id="bbHome">🏠 Nach Hause bringen<br><small>Gold & gute Laune für alle</small></button><button class="btn" style="width:100%;margin-bottom:6px" id="bbAdopt">💖 Adoptieren<br><small>Es wird Teil deiner Familie</small></button><button class="btn gr" style="width:100%" onclick="closeModal()">Später</button>`);
+    $('#bbHome').onclick=()=>{closeModal();const g=Math.round(150+avgLv()*20);S.gold+=g;S.creatures.forEach(c=>c.happy=Math.min(100,c.happy+10));S.helped=(S.helped||0)+1;burst('💖',V_.w.pos.clone().add(new V3(0,1,0)),10,{size:.4});sfx('gold');
+      leaveVisitor(`🏠 Das Baby ist wieder bei seiner Familie. +${fmt(g)} 💰 und alle Wesen freuen sich!`);refresh()};
+    $('#bbAdopt').onclick=()=>{closeModal();if(S.creatures.length>=S.slots)return toast('🌲 Kein Platz mehr im Wald!');const c={id:S.nextId++,sp:V_.c.sp,name:pick(sp.names),lv:1,xp:0,hunger:60,energy:100,happy:90,task:null,petAt:0,born:now(),home:S.world||'wald',trait:pick(TRAIT_IDS)};
+      const isNew=S.seen[c.sp]===undefined;S.seen[c.sp]=Math.max(S.seen[c.sp]??0,0);S.creatures.push(c);S.helped=(S.helped||0)+1;const pos=V_.w.pos.clone();killTemp(VIS);VIS=null;S.nextVisit=now()+rnd(7,12)*60000;spawnCreature(c,pos,true);syncWorld();refresh();setTimeout(()=>nameModal(c,isNew),300)}}}
+
+/* ================== Schlafen und Träume ================== */
+const FAV_E={Waldbeeren:'🍓',Honigbrot:'🍯',Äpfel:'🍎',Karotten:'🥕',Nektar:'🌺',Kekse:'🍪',Sternfrüchte:'⭐',Kleeblätter:'🍀',Knochen:'🦴','Rohes Fleisch':'🥩',Schattenbeeren:'🫐',Spinnen:'🕷️','Glühende Kohlen':'🔥',Giftpilze:'🍄',Fledermausflügel:'🦇',Krötenschleim:'🐸'};
+const DREAMS={verfressen:['🍰🍗','🍩🍕','🍖🍖🍖'],verspielt:['⚽🎈','🛝😄','🎠'],mutig:['⚔️🏆','🐉💥'],neugierig:['🗺️💎','🏔️✨'],vertraeumt:['☁️🦄','🌙⭐','🌈🦋'],frech:['😜🎉','🤡'],faul:['🛏️💤','🛋️'],aengstlich:['🌸🐇']};
+function dreamOf(c){const t=traitOf(c),fr=bestRel(c,1),o=[FAV_E[favOf(c)]||'🍓','🦋','⭐🌙',...(DREAMS[t]||[])];if(fr)o.push('💞 '+fr.name);return pick(o)}
+function sleepSpot(c,w){if(w.st<=1){const p=pick(NEST_POS.slice(0,S.nests));return V(p[0]+rnd(-1.4,1.4),0,p[1]+rnd(-1.4,1.4))}const a=rnd(0,6.3),d=rnd(8.8,10.3);return V(Math.cos(a)*d,0,Math.sin(a)*d)}
+function wantsSleep(c){const sp=spOf(c),t=traitOf(c);if(c.task)return 0;if(sp.cute&&DN.night>.55)return 1;if(t==='faul'&&Math.random()<.12)return 2;if(t==='vertraeumt'&&Math.random()<.07)return 2;return 0}
+function updSleep(w,c,dt){w.dreamT=(w.dreamT??rnd(6,12))-dt;if(w.dreamT<=0){if(w.dream){if(w.nightmare){w.shake=.6;burst('😱',w.pos.clone().add(new V3(0,w.b.h,0)),2,{size:.45})}w.dream=null;w.nightmare=0;w.dreamT=rnd(10,22)}
+  else{w.nightmare=traitOf(c)==='aengstlich'&&Math.random()<.35;w.dream=w.nightmare?'👻😨':dreamOf(c);w.dreamT=6;S.dreams=(S.dreams||0)+1}}
+  if(Math.random()<dt*.5)burst('💤',w.pos.clone().add(new V3(rnd(-.2,.2),w.b.h*.7,0)),1,{size:.35,spd:.25,up:.7,g:0,life:1.6})}
+
+/* ================== Tutorial mit Fee Lilly ================== */
+const TUT=[{t:'Hallo, ich bin <b>Fee Lilly</b>! 🧚 Willkommen im Zauberwald. Ich zeige dir kurz, wie alles funktioniert.'},
+  {t:'Siehst du das Ei im Nest? <b>Tippe es mehrmals an</b>, um es zu wärmen. Wenn „Schlüpfen!“ erscheint, tippe noch einmal darauf!',w:()=>S.hatched>=1&&!$('#modal').classList.contains('open')},
+  {t:'Juhu, dein erstes Fabelwesen! 🎉 <b>Tippe es an</b> (oder unten seine Karte), um sein Menü zu öffnen.',w:()=>selId!==null,hl:'#strip .cc'},
+  {t:'Hier siehst du Hunger, Energie und Laune. <b>Füttere es mit 🍖 Füttern!</b>',w:()=>S.tf?.feed,hl:'[data-a="feed"]'},
+  {t:'Prima! Jetzt verdient es Gold: Tippe auf <b>📋 Aufgaben</b> und dann bei „Beeren sammeln“ auf <b>Los!</b>',w:()=>S.tf?.task,hl:'[data-a="tasks"],[data-t="beeren"]'},
+  {t:'Dein Wesen ist unterwegs. Wenn es zurück ist, tippe auf <b>💰 Abholen</b> über seinem Kopf (oder auf seine Karte).',w:()=>S.tf?.collect,hl:'#strip .cc'},
+  {t:'Mit Gold kaufst du im <b>🥚 Eier-Shop</b> neue Eier, Zaubertränke und Deko, mit der deine Wesen spielen.',hl:'nav [data-p="shop"]'},
+  {t:'Im <b>📖 Fabelbuch</b> siehst du alle Wesen. Mit jedem Level wachsen sie: Baby → Kind → Jugendlich → Erwachsen → Uralt. Uralte Wesen verwandeln sich mit einem <b>🌙 Mondstein</b> in ihre Endform!',hl:'nav [data-p="buch"]'},
+  {t:'Jedes Wesen hat eine <b>Eigenschaft</b> – verspielt, faul, mutig, ängstlich … Nachts schlafen die niedlichen Wesen und träumen 💭, die bösen werden munter.'},
+  {t:'Halte Ausschau nach <b>wilden Wesen ❗</b>, dem täglichen <b>Boss 👑</b> und Besuchern wie dem <b>Händler 🧳</b> oder dem <b>Zauberer 🧙</b>. Bei Gewitter ⛈️, Sternschnuppen 🌠 und Regenbogen 🌈 passiert Besonderes!'},
+  {t:'Das war\'s! Viel Spaß im Zauberwald. 💖 Du findest mich jederzeit wieder im ⚙️ Menü.',last:1}];
+function tutFlag(k){S.tf=S.tf||{};S.tf[k]=1}
+function renderTut(){const el=$('#tut');document.querySelectorAll('.tuthl').forEach(e=>e.classList.remove('tuthl'));if(S.tut===undefined||S.tut<0||S.tut>=TUT.length||PHOTO){el.style.display='none';return}
+  const s=TUT[S.tut];el.style.display='flex';el.innerHTML=`<div style="font-size:40px;line-height:1">🧚</div><div class="grow"><div style="font-size:13px;line-height:1.45">${s.t}</div><div class="row" style="margin-top:6px;gap:6px">
+    ${s.w?'<span style="font-size:11px;color:var(--muted)" class="grow">Ich warte, bis du es probiert hast …</span>':'<span class="grow"></span>'}<button class="btn gr" data-tt="skip" style="padding:5px 10px;font-size:11px">Überspringen</button>${s.w?'':`<button class="btn y" data-tt="next" style="padding:5px 12px">${s.last?'Los geht\'s!':'Weiter'}</button>`}</div></div>`;
+  if(s.hl)document.querySelectorAll(s.hl).forEach(e=>e.classList.add('tuthl'))}
+function tickTut(){if(S.tut===undefined||S.tut<0)return;const s=TUT[S.tut];if(s&&s.w&&s.w()){S.tut++;sfx('pop')}renderTut()}
+function endTut(){S.tut=-1;if(!S.tutDone){S.tutDone=1;S.gold+=300;toast('🧚 Danke fürs Zuhören! Hier sind 300 💰 als Startgeschenk.')}renderTut();refresh()}
+$('#tut').addEventListener('click',e=>{const b=e.target.closest('[data-tt]');if(!b||S.tut<0||!TUT[S.tut])return;if(b.dataset.tt==='skip'||TUT[S.tut].last)return endTut();S.tut++;sfx('pop');renderTut()});
+
 /* ================== Animation ================== */
 let last=performance.now(),T=0;
 // Leerlauf-Aktionen je nach Körperbau
@@ -2164,22 +2352,26 @@ const ACTS={quad:['look','sniff','sit','shake','spin','yawn','jump','wings'],bir
 const ACT_D={look:2.6,sniff:2.2,sit:4.5,shake:1.1,spin:1.6,yawn:2,jump:1.3,wings:1.8,wave:2.2,stretch:2.2};
 function startAct(w,c){const sp=SPECIES[c.sp],bt=sp.b.t;let list=(ACTS[bt]||ACTS.octo).filter(k=>!(k==='wings'&&!w.b.P.wings.length)&&!(k==='spin'&&bt==='quad'&&!w.b.P.tails.length));
   if(c.hunger<25||c.happy<25)list=list.filter(k=>k!=='jump'&&k!=='spin');
+  const tr=traitOf(c),add={faul:['sit','yawn','sit'],verspielt:['jump','spin','jump'],aengstlich:['shake','look'],neugierig:['sniff','look','sniff'],vertraeumt:['yawn','sit'],frech:['jump','spin']}[tr]||[];list=list.concat(add.filter(k=>ACT_D[k]&&(k!=='spin'||list.includes('spin'))));
   if(sp.cute&&c.happy>70&&Math.random()<.3)list=['jump'];const k=pick(list);w.act={k,t:0,d:ACT_D[k]};w.timer=ACT_D[k]+rnd(.8,2.5)}
 function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w.b.P,root=w.b.root,inner=w.b.inner,bt=SPECIES[c.sp].b.t,hum=bt==='human';
   w.timer-=dt;const sel=+id===selId,sp=(.7+w.st*.18)*(c.hunger<25?.6:1);let tgtSpd=0;
   if((w.int||sel)&&w.use)endUse(w,c,0);
+  if(w.sleeping&&(sel||w.int||(w.sleeping===1&&DN.night<.4)||(w.sleeping===2&&(w.napT-=dt)<=0)||c.task)){w.sleeping=0;w.dream=null;if(!w.int){w.act={k:'yawn',t:0,d:ACT_D.yawn};w.timer=2.5}}
+  if(w.goSleep&&(sel||w.int))w.goSleep=0;
   if(w.int){w.act=null}
   else if(w.use){updUse(w,c,dt)}
+  else if(w.sleeping){updSleep(w,c,dt)}
   else if(sel){w.state='idle';w.act=null;const toCam=Math.atan2(camera.position.x-w.pos.x,camera.position.z-w.pos.z);w.yaw=lerpAng(w.yaw,toCam,dt*4)}
-  else if(w.state==='idle'&&w.timer<=0){if(c.id>0&&Math.random()<.4&&tryUse(w,c)){}else if(!w.act&&Math.random()<.5)startAct(w,c);else{w.act=null;w.state='walk';w.tgt=randSpot();w.timer=14;const fr=Math.random()<.4&&bestRel(c,1),fw=fr&&W.cre[fr.id];if(fw)w.tgt=fw.pos.clone().add(V(rnd(-1.5,1.5),0,rnd(-1.5,1.5)));const lk=Math.random()<.3&&likedDeco(c);if(lk)w.tgt=V(lk.x+rnd(-1.2,1.2),0,lk.z+rnd(-1.2,1.2))}}
+  else if(w.state==='idle'&&w.timer<=0){const zz=c.id>0?wantsSleep(c):0;if(zz){w.goSleep=zz;w.napT=rnd(18,35);w.state='walk';w.tgt=sleepSpot(c,w);w.timer=20;w.act=null}else if(c.id>0&&Math.random()<(traitOf(c)==='verspielt'?.6:.4)&&tryUse(w,c)){}else if(!w.act&&Math.random()<.5)startAct(w,c);else{w.act=null;w.state='walk';w.tgt=randSpot();w.timer=14;const fr=Math.random()<.4&&bestRel(c,1),fw=fr&&W.cre[fr.id];if(fw)w.tgt=fw.pos.clone().add(V(rnd(-1.5,1.5),0,rnd(-1.5,1.5)));const lk=Math.random()<.3&&likedDeco(c);if(lk)w.tgt=V(lk.x+rnd(-1.2,1.2),0,lk.z+rnd(-1.2,1.2))}}
   else if(w.state==='walk'){const dx=w.tgt.x-w.pos.x,dz=w.tgt.z-w.pos.z,L=Math.hypot(dx,dz);
-    if(L<.25||w.timer<=0){w.state='idle';w.timer=rnd(1.5,4)}
-    else{tgtSpd=sp*Math.min(1,L/.8);w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*3.5)}}
+    if(L<.25||w.timer<=0){w.state='idle';w.timer=rnd(1.5,4);if(w.goSleep){w.sleeping=w.goSleep;w.goSleep=0;w.dreamT=rnd(4,9)}}
+    else{tgtSpd=sp*Math.min(1,L/.8)*({faul:.72,verspielt:1.18,neugierig:1.1}[traitOf(c)]||1)*(!spOf(c).cute&&DN.night>.5?1.25:1)*(w.goSleep?.7:1);w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*3.5)}}
   // weiches Beschleunigen/Abbremsen
   w.spd=(w.spd||0)+(tgtSpd-(w.spd||0))*Math.min(1,dt*3);
   if(w.use)w.spd=0;
   if(!w.int&&!w.use&&w.spd>.01){const st=w.spd*dt;w.pos.x+=Math.sin(w.yaw)*st;w.pos.z+=Math.cos(w.yaw)*st}
-  const A=w.act;let ae=0;if(A){A.t+=dt;ae=Math.sin(Math.min(1,A.t/A.d)*Math.PI);if(A.t>=A.d)w.act=null}let ak=A&&w.act?A.k:'';if(w.use&&w.useAct){ak=w.useAct;ae=1}
+  const A=w.act;let ae=0;if(A){A.t+=dt;ae=Math.sin(Math.min(1,A.t/A.d)*Math.PI);if(A.t>=A.d)w.act=null}let ak=A&&w.act?A.k:'';if(w.use&&w.useAct){ak=w.useAct;ae=1}if(w.sleeping){ak='sit';ae=1}
   let m=(w.int||w.use)?(w.mv?1:0):clamp(w.spd/sp,0,1);if(ak==='spin'){m=1;w.yaw+=dt*7*ae}
   w.walk+=dt*m*(w.int?13:9)*(w.sneak?.5:1);
   // Kurvenneigung
@@ -2199,7 +2391,7 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
   // Körper: Schwanken, Neigen, Sitzen, Schütteln
   w.sitA=(w.sitA||0)+((ak==='sit'?1:0)-(w.sitA||0))*Math.min(1,dt*4);const sit=w.sitA;
   let roll=Math.sin(w.walk)*(hum?.035:.05)*m+w.lean+(P.hover?Math.sin(T*1.3+ +id)*.07:0);if(ak==='shake')roll+=Math.sin(T*42)*.22*ae;
-  let pitch=(w.useP||0)-sit*.32-(ak==='stretch'?.1*ae:0)+(ak==='yawn'&&!hum?-.08*ae:0);
+  let pitch=(w.useP||0)+(w.sleeping?.12:0)-sit*.32-(ak==='stretch'?.1*ae:0)+(ak==='yawn'&&!hum?-.08*ae:0);
   inner.rotation.set(pitch,0,roll);inner.position.y=(w.b.by0||0)-sit*w.b.h*.1;inner.scale.set(w.b.sc*sxz,w.b.sc*sq,w.b.sc*sxz);
   // Beine und Arme
   P.legs.forEach(l=>{const u=l.userData;let r=Math.sin(w.walk+u.ph)*(u.arm?.45:.6)*m;if(u.hind)r-=sit*1.0;else if(!u.arm)r+=sit*.32;l.rotation.x=r;l.rotation.z=0;
@@ -2214,6 +2406,7 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
   w.lookT=(w.lookT||0)-dt;if(w.lookT<=0){w.lookT=rnd(1.2,3.5);w.thy=m>.3?rnd(-.15,.15):rnd(-.55,.55);w.thz=Math.random()<.3?rnd(-.28,.28):0;w.thp=rnd(-.08,.1)}
   let ty=w.thy||0,tz=w.thz||0,tp=(w.thp||0)+(c.hunger<25?.22:0);
   if(sel){ty=0;tz=Math.sin(T*.8)*.12}
+  if(w.sleeping){ty=0;tz=.22;tp=.42}
   if(ak==='look'){ty=Math.sin((A?A.t:T)*2.4)*.75;tz=0}
   if(ak==='sniff'){tp=.55*ae+Math.sin(T*11)*.07*ae;ty*=.3}
   if(ak==='yawn'){tp=-.45*ae;tz=.15*ae}
@@ -2221,7 +2414,7 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
   w.hy=(w.hy||0)+(ty-(w.hy||0))*Math.min(1,dt*3);w.hz=(w.hz||0)+(tz-(w.hz||0))*Math.min(1,dt*3);w.hp=(w.hp||0)+(tp-(w.hp||0))*Math.min(1,dt*3);
   const nod=Math.sin(w.walk*2)*.05*m;
   P.heads.forEach((h,i)=>{h.rotation.x=(h.userData.px||0)+w.hp+nod+(hum?0:sit*.3);h.rotation.y=(h.userData.ph!==undefined?Math.sin(T*1.1+h.userData.ph)*.2:0)+w.hy*(i?.7:1);h.rotation.z=w.hz});
-  w.blink-=dt;const bl=w.blink<0&&w.blink>-.13;if(w.blink<-.13)w.blink=rnd(2,5);P.eyes.forEach(e=>e.scale.y=bl||(ak==='yawn'&&ae>.5)?.1:1);
+  w.blink-=dt;const bl=w.blink<0&&w.blink>-.13;if(w.blink<-.13)w.blink=rnd(2,5);P.eyes.forEach(e=>e.scale.y=bl||w.sleeping||(ak==='yawn'&&ae>.5)?.1:1);
   if(P.breath){const br=Math.sin(T*1.9+ +id);P.breath.scale.set(1+br*.008,1+br*.006,1+br*.014)}
   P.flames.forEach((f,i)=>{const s=1+Math.sin(T*14+i*2)*.12;f.scale.set(s,1+Math.sin(T*11+i)*.2,s)});
   P.orbit.forEach(o=>{const a=T*o.sp+o.ph;o.m.position.set(Math.cos(a)*o.r,o.h+Math.sin(a*2)*.15,Math.sin(a)*o.r)});
@@ -2234,7 +2427,7 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
 function lerpAng(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*Math.min(1,t)}
 function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
 let fpsN=0,fpsT=0,fpsDone=0,VOFF=0;
-function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;updDay(dt);updGame(dt);updSound(dt);updMusic();waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
+function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/1000);last=ts;T+=dt;if(!fpsDone&&HQ){fpsN++;fpsT+=(ts-last)/1000;if(fpsT>10){fpsDone=1;let set=null;try{set=localStorage.getItem('fabelwesen-q')}catch(e){}if(set===null&&fpsN/fpsT<22)toast('🐢 Ruckelt es? Stelle im Menü die Grafik auf „Schnell“.')}}grassT.value=T;updDay(dt);updEvents(dt);updGame(dt);updSound(dt);updMusic();waterN.offset.set(T*.015,T*.01);cloudSea.forEach((c,i)=>c.rotation.z=T*(i?.006:-.004));if(FL.geo){const a=FL.geo.attributes.position.array;FL.forEach((f,i)=>a[i*3+1]=f.y+Math.sin(T*1.3+f.ph)*.08);FL.geo.attributes.position.needsUpdate=true}if(FF.geo){const ps=FF.geo.attributes.position.array,cs=FF.geo.attributes.color.array;FF.forEach((f,i)=>{ps[i*3]=f.x+Math.sin(T*.5+f.ph)*.8;ps[i*3+1]=f.y+Math.sin(T*.9+f.ph*2)*.35;ps[i*3+2]=f.z+Math.cos(T*.4+f.ph)*.8;const b=.25+.75*Math.max(0,Math.sin(T*2.2+f.ph*3));cs[i*3]=f.c.r*b;cs[i*3+1]=f.c.g*b;cs[i*3+2]=f.c.b*b});FF.geo.attributes.position.needsUpdate=FF.geo.attributes.color.needsUpdate=true}MIST.forEach(m=>{const a=m.a+Math.sin(T*.05+m.ph)*.08;m.s.position.x=Math.cos(a)*m.d;m.s.position.z=Math.sin(a)*m.d});
   updInts(dt);
   for(const id in W.cre)animCreature(id,W.cre[id],dt);TEMPS.forEach(t=>animCreature(t.c.id,t.w,dt,t.c));updProj(dt);updSeason(dt);updPlace();updWorldFX(dt);
   for(const e of S.eggs){const o=W.eggs[e.id];if(!o)continue;const b=o.userData.base;if(!b)continue;o.userData.wob=Math.max(0,(o.userData.wob||0)-dt*2);
@@ -2268,6 +2461,7 @@ function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/10
   S.world=S.world||'wald';S.worlds=S.worlds||{wald:1};(S.deco||[]).filter(d=>(d.w||'wald')==='wald').forEach(placeDecoObj);
   if(S.world!=='wald'){ensureWorld(S.world);for(const k in WG)WG[k].visible=k===S.world;syncWorld();renderStrip()}
   $('#wbtn').onclick=worldsModal;$('#cambtn').onclick=()=>photoMode(true);
+  if(S.tut===undefined)S.tut=S.hatched===0&&S.creatures.length===0?0:-1;renderTut();
   tdbLoad().then(()=>setTimeout(prewarmThumbs,4000));
   setTimeout(dailyCheck,1500);
   $('#tod').onclick=()=>toast(`${todText()} · ${DN.night>.5?'Nacht: böse Wesen +30 % Gold':'Tag: niedliche Wesen +20 % Gold'}${WX.type==='regen'?' · Regen: +20 % Erfahrung':WX.type==='nebel'?' · Nebel: böse Wesen +15 % Gold':''}`);

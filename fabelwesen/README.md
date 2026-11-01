@@ -36,6 +36,13 @@ Selbst bauen: `cd fabelwesen/android && gradle assembleRelease` (benötigt Andro
 - **Foto-Modus:** Kamera frei bewegen, Oberfläche ausblenden, Fotos in der Galerie speichern.
 - **Steckbrief:** Geburtstag, Lieblingsessen, Eltern, bester Freund, Rivale und Lebensgeschichte.
 - **Musik:** Ruhige Melodien, die sich bei Nacht und im Kampf ändern.
+- **Wetter-Ereignisse:** Gewitter mit Blitz und Donner (Licht-Wesen +30 %, Donnervogel +60 % und stärker im Kampf), Sternschnuppennacht (Sternschnuppen antippen und bis zu 3 Wünsche erfüllen lassen) und Regenbogen (ein Regenbogen-Ei mit seltenen Wesen liegt auf der Wiese).
+- **Tagesboss:** Einmal am Tag erscheint ein riesiger Boss (Uralt-Drache, Waldhexe, Riesentroll, Krakenkönig, Schattenkönig, Hydra-Mutter, Dämonenfürst). Er hat viele Lebenspunkte und trifft jede dritte Runde das ganze Team. Belohnung: Mondstein, Sternenei, Elixier und viel Gold.
+- **Charakter-Eigenschaften:** Jedes Wesen ist verspielt, faul, mutig, ängstlich, verfressen, neugierig, verträumt oder frech – das ändert Verhalten, Tempo, Leerlauf-Aktionen und gibt eigene Boni.
+- **Endform:** Uralte Wesen verwandeln sich mit einem 🌙 Mondstein (z. B. Einhorn → Sternen-Einhorn): leuchtender Rand, schwebende Lichter, +50 % Gold, +30 % Kampfkraft.
+- **Besucher:** Reisender Händler mit seltenen Waren (Mondstein, Schimmer-Ei …), Zauberer mit Rätseln und Belohnungen, verirrte Babys, die man nach Hause bringt oder adoptiert.
+- **Schlafen und Träume:** Nachts gehen die niedlichen Wesen schlafen (Babys bei den Nestern), Traumblasen zeigen, wovon sie träumen – Ängstliche haben manchmal Albträume. Böse Wesen sind nachts schneller und streitlustiger. Faule und verträumte Wesen machen auch tagsüber Nickerchen.
+- **Tutorial:** Fee Lilly erklärt neuen Spielern Schritt für Schritt alles (jederzeit im Menü wiederholbar).
 - **Tag & Nacht:** Ein Spieltag dauert 24 Minuten – mit Sonnenauf- und -untergang, Mond und Sternen. Nachts verdienen böse Wesen +30 % Gold, tagsüber niedliche +20 %.
 - **Wetter:** Klar, Regen (+20 % Erfahrung, nasser Boden, Regentropfen) oder Nebel (böse Wesen +15 % Gold).
 - **Minispiel „Glühwürmchen fangen“:** 25 Sekunden lang leuchtende Glühwürmchen antippen – goldene zählen fünffach. Bringt Gold, Erfahrung und gute Laune.

@@ -7,8 +7,8 @@ android {
         applicationId 'de.fabelwesen.app'
         minSdk 24
         targetSdk 34
-        versionCode 17
-        versionName '3.3'
+        versionCode 18
+        versionName '4.0'
     }
     buildTypes {
         release { minifyEnabled false; signingConfig signingConfigs.debug }
