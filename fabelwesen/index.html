@@ -1298,9 +1298,25 @@ const thumbS=new THREE.Scene();thumbS.environment=new THREE.PMREMGenerator(thumb
 const thumbCam=new THREE.PerspectiveCamera(32,1,.1,50);const THUMB={};
 function render1(obj,key){if(THUMB[key])return THUMB[key];thumbS.add(obj);const b=new THREE.Box3().setFromObject(obj);const c=b.getCenter(new V3()),s=b.getSize(new V3());
   const r=Math.max(s.x,s.y,s.z)*.62;const dir=new V3(.55,.32,1).normalize();thumbCam.position.copy(c).addScaledVector(dir,r/Math.tan(16*Math.PI/180));thumbCam.lookAt(c);
-  thumbR.render(thumbS,thumbCam);const u=thumbR.domElement.toDataURL();thumbS.remove(obj);return THUMB[key]=u}
+  thumbR.render(thumbS,thumbCam);let u=thumbR.domElement.toDataURL('image/webp',.9);if(!u.startsWith('data:image/webp'))u=thumbR.domElement.toDataURL();thumbS.remove(obj);tdbPut(key,u);return THUMB[key]=u}
 const thumb=(sp,st,v)=>THUMB[sp+st+vkey(v)]||render1(buildCreature(sp,st,v).root,sp+st+vkey(v));
 const thumbC=c=>thumb(c.sp,stageOf(c.lv),cv(c));
+// Vorschaubilder: dauerhaft auf dem Handy merken (IndexedDB) und nach und nach im Hintergrund erstellen
+const THUMB_VER='t17'+(HQ?'h':'l')+'|';
+const TDB=(()=>{let db=null;const ready=new Promise(res=>{try{const r=indexedDB.open('fabelwesen-thumbs',1);r.onupgradeneeded=()=>r.result.createObjectStore('t');r.onsuccess=()=>{db=r.result;res(db)};r.onerror=()=>res(null)}catch(e){res(null)}});return{ready,get db(){return db}}})();
+function tdbPut(k,u){const db=TDB.db;if(!db)return;try{db.transaction('t','readwrite').objectStore('t').put(u,THUMB_VER+k)}catch(e){}}
+async function tdbLoad(){const db=await TDB.ready;if(!db)return;await new Promise(res=>{try{const rq=db.transaction('t','readwrite').objectStore('t').openCursor();
+  rq.onsuccess=()=>{const c=rq.result;if(!c)return res();const k=String(c.key);if(k.startsWith(THUMB_VER)){const kk=k.slice(THUMB_VER.length);if(!THUMB[kk])THUMB[kk]=c.value}else if(!k.startsWith('t17'))c.delete();c.continue()};rq.onerror=()=>res()}catch(e){res()}})}
+const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+const TQ=[],TPEND={};
+function thumbLazy(sp,st,v,front){const k=sp+st+vkey(v);if(THUMB[k])return`src="${THUMB[k]}"`;
+  if(!TPEND[k]){TPEND[k]={k,sp,st,v};front?TQ.unshift(TPEND[k]):TQ.push(TPEND[k])}else if(front){const i=TQ.indexOf(TPEND[k]);if(i>0){TQ.splice(i,1);TQ.unshift(TPEND[k])}}
+  return`src="${BLANK}" data-tk="${k}" style="background:radial-gradient(circle,#ffffff14 30%,transparent 70%)"`}
+let tqLast=0;
+function updThumbQueue(pageOpen){if(!TQ.length)return;const t0=performance.now();if(!pageOpen&&(t0-tqLast<1500||GAME||BATTLE||DRAG))return;tqLast=t0;
+  do{const j=TQ.shift();if(!j)break;const u=thumb(j.sp,j.st,j.v);delete TPEND[j.k];document.querySelectorAll(`img[data-tk="${j.k}"]`).forEach(i=>{i.src=u;i.removeAttribute('data-tk');i.style.background=''})}
+  while(pageOpen&&TQ.length&&performance.now()-t0<28)}
+function prewarmThumbs(){for(const id of SP_IDS)thumbLazy(id,3);for(const c of S.creatures)thumbLazy(c.sp,stageOf(c.lv),cv(c))}
 const eggThumb=t=>THUMB['egg'+t]||render1(makeEgg(t),'egg'+t);
 
 /* ================== UI: Leiste & Detailblatt ================== */
@@ -1395,18 +1411,18 @@ function renderPage(){const pg=$('#page');let h='';
       ${S.nests<NEST_POS.length?`<div class="card row"><div class="grow"><b>🪺 Nest +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.nests} Nester – mehr Eier gleichzeitig ausbrüten</div></div><button class="btn y" data-up="nest" data-p="${nestPrice()}" ${S.gold<nestPrice()?'disabled':''}>${fmt(nestPrice())} 💰</button></div>`:''}`}
   if(curPage==='buch'){const seen=Object.keys(S.seen).length;
     if(bookSel){const sp=SPECIES[bookSel],mx=S.seen[bookSel];
-      h=`<button class="btn gr" data-bk="" style="margin-bottom:10px">← Zurück</button><div class="card" style="text-align:center"><img src="${thumb(bookSel,mx)}" style="width:170px;height:170px"><h2>${sp.n}</h2>
+      h=`<button class="btn gr" data-bk="" style="margin-bottom:10px">← Zurück</button><div class="card" style="text-align:center"><img ${thumbLazy(bookSel,mx,null,1)} width="170" style="width:170px;height:170px"><h2>${sp.n}</h2>
         <div><span class="tag" style="color:${RAR[sp.r].c}">${RAR[sp.r].n}</span><span class="tag ${sp.cute?'cute':'evil'}">${sp.cute?'💖 niedlich':'😈 böse'}</span></div><p style="color:var(--muted);font-size:13px">${sp.d}</p>
-        <b>Lebensabschnitte</b><div class="stg">${STAGES.map((s,i)=>`<div><img src="${thumb(bookSel,i)}" class="${i>mx?'sil':''}" style="${i>mx?'filter:brightness(0) opacity(.5)':''}"><br>${s.n}<br>Lv ${s.lv}</div>`).join('')}</div></div>`}
+        <b>Lebensabschnitte</b><div class="stg">${STAGES.map((s,i)=>`<div><img ${thumbLazy(bookSel,i,null,1)} class="${i>mx?'sil':''}" style="${i>mx?'filter:brightness(0) opacity(.5)':''}"><br>${s.n}<br>Lv ${s.lv}</div>`).join('')}</div></div>`}
     else{const tabs=`<div class="seg">${['📖 Wesen','✨ Schimmernd','💞 Zucht'].map((n,i)=>`<button data-bt="${i}" class="${bookTab===i?'on':''}">${n}</button>`).join('')}</div>`;
       if(bookTab===0){h=`<h2>📖 Fabelbuch</h2>${tabs}<div class="sub">${EGG_IDS.filter(i=>S.seen[i]!==undefined).length} von ${EGG_IDS.length} Fabelwesen entdeckt</div><div class="book">`;
         for(const id of EGG_IDS){const sp=SPECIES[id],k=S.seen[id]!==undefined;
-          h+=`<div class="be" data-bk="${k?id:''}" style="border-color:${k?RAR[sp.r].c+'88':'var(--line)'}"><img src="${thumb(id,3)}" class="${k?'':'sil'}"><b>${k?sp.n:'???'}</b><span style="font-size:10px;color:${RAR[sp.r].c}">${RAR[sp.r].n}</span></div>`}}
+          h+=`<div class="be" data-bk="${k?id:''}" style="border-color:${k?RAR[sp.r].c+'88':'var(--line)'}"><img ${thumbLazy(id,3,null,1)} class="${k?'':'sil'}"><b>${k?sp.n:'???'}</b><span style="font-size:10px;color:${RAR[sp.r].c}">${RAR[sp.r].n}</span></div>`}}
       if(bookTab===1){const ss=S.shinySeen||{};h=`<h2>✨ Schimmernde Wesen</h2>${tabs}<div class="sub">${Object.keys(ss).length} von ${SP_IDS.length} gefunden · Jedes Ei hat eine kleine Chance (1:40), Herzeier 1:15 und Jahreszeiten-Eier 1:5.</div><div class="book">`;
-        for(const id of SP_IDS){const sp=SPECIES[id],k=ss[id];h+=`<div class="be" style="border-color:${k?'#ffd25e':'var(--line)'}"><img src="${thumb(id,3,{sh:1})}" class="${k?'':'sil'}"><b>${k?'✨ '+sp.n:'???'}</b></div>`}}
+        for(const id of SP_IDS){const sp=SPECIES[id],k=ss[id];h+=`<div class="be" style="border-color:${k?'#ffd25e':'var(--line)'}"><img ${thumbLazy(id,3,{sh:1},1)} class="${k?'':'sil'}"><b>${k?'✨ '+sp.n:'???'}</b></div>`}}
       if(bookTab===2){h=`<h2>💞 Zucht-Wesen</h2>${tabs}<div class="sub">Diese Wesen schlüpfen nur, wenn du zwei bestimmte erwachsene Wesen miteinander züchtest.</div><div class="book">`;
         for(const id of HYB_IDS){const sp=SPECIES[id],k=S.seen[id]!==undefined,pa=sp.par.map(x=>S.seen[x]!==undefined?SPECIES[x].n:'???');
-          h+=`<div class="be" data-bk="${k?id:''}" style="border-color:${k?'#ff9fd6':'var(--line)'}"><img src="${thumb(id,3)}" class="${k?'':'sil'}"><b>${k?sp.n:'???'}</b><span style="font-size:10px;color:var(--muted)">${pa.join(' + ')}</span></div>`}}
+          h+=`<div class="be" data-bk="${k?id:''}" style="border-color:${k?'#ff9fd6':'var(--line)'}"><img ${thumbLazy(id,3,null,1)} class="${k?'':'sil'}"><b>${k?sp.n:'???'}</b><span style="font-size:10px;color:var(--muted)">${pa.join(' + ')}</span></div>`}}
       h+='</div>'}}
   if(curPage==='erfolge')h=achPage();
   if(curPage==='menu'){const best=S.creatures.reduce((a,c)=>Math.max(a,c.lv),0);
@@ -2239,6 +2255,7 @@ function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/10
   const sheetOpen=selId!==null&&curPage==='insel'&&!GAME&&!PHOTO,yOff=0;{const sh=sheetOpen?$('#sheet').offsetHeight:BATTLE?$('#battle').offsetHeight:0;VOFF+=(sh*.5-VOFF)*Math.min(1,dt*6);if(VOFF>1)camera.setViewOffset(innerWidth,innerHeight,0,VOFF,innerWidth,innerHeight);else if(camera.view&&camera.view.enabled)camera.clearViewOffset()}
   camera.position.set(cam.tgt.x+cam.d*Math.sin(cam.ph)*Math.sin(cam.th),cam.tgt.y+cam.d*Math.cos(cam.ph)-yOff,cam.tgt.z+cam.d*Math.sin(cam.ph)*Math.cos(cam.th));
   camera.lookAt(cam.tgt.x,cam.tgt.y-yOff,cam.tgt.z);
+  const pageOpen=curPage!=='insel';updThumbQueue(pageOpen);if(pageOpen)return;
   if(POST)POST();else renderer.render(scene,camera);if(SNAP){SNAP=false;savePhoto(renderer.domElement.toDataURL('image/jpeg',.92))}updLabels()}
 
 /* ================== Start ================== */
@@ -2251,6 +2268,7 @@ function loop(ts){requestAnimationFrame(loop);const dt=Math.min(.05,(ts-last)/10
   S.world=S.world||'wald';S.worlds=S.worlds||{wald:1};(S.deco||[]).filter(d=>(d.w||'wald')==='wald').forEach(placeDecoObj);
   if(S.world!=='wald'){ensureWorld(S.world);for(const k in WG)WG[k].visible=k===S.world;syncWorld();renderStrip()}
   $('#wbtn').onclick=worldsModal;$('#cambtn').onclick=()=>photoMode(true);
+  tdbLoad().then(()=>setTimeout(prewarmThumbs,4000));
   setTimeout(dailyCheck,1500);
   $('#tod').onclick=()=>toast(`${todText()} · ${DN.night>.5?'Nacht: böse Wesen +30 % Gold':'Tag: niedliche Wesen +20 % Gold'}${WX.type==='regen'?' · Regen: +20 % Erfahrung':WX.type==='nebel'?' · Nebel: böse Wesen +15 % Gold':''}`);
   requestAnimationFrame(loop);setInterval(tick,1000);setInterval(save,5000);
