@@ -1,6 +1,8 @@
 package de.kosmosschmiede.app;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.webkit.WebChromeClient;
 import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.WebResourceRequest;
@@ -47,6 +49,14 @@ public class MainActivity extends Activity {
                 }
             }
         });
+        // Kein grauer Platzhalter mit Play-Symbol: transparentes Standard-Poster liefern.
+        web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public Bitmap getDefaultVideoPoster() {
+                return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+            }
+        });
+        web.setBackgroundColor(0xFF090C18);
         setContentView(web);
         if (savedInstanceState != null) web.restoreState(savedInstanceState);
         else web.loadUrl("https://" + HOST + "/www/index.html");

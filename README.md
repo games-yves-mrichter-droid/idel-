@@ -37,10 +37,10 @@ Einfach `kosmos/index.html` im Browser öffnen – läuft offline, Spielstand wi
 **Android-App:** Die fertige APK liegt unter [`release/KosmosSchmiede.apk`](release/KosmosSchmiede.apk) – herunterladen, antippen, installieren (Installation aus dieser Quelle erlauben). Sie läuft neben Onsen Idle als eigene App.
 Selbst bauen: `cd android-kosmos && gradle assembleRelease` (benötigt Android SDK 34).
 
-- 17 kosmische Objekte (Quark, Proton, Atom, Molekül, Sternenstaub, Asteroid, Mond, Planet, Gasriese, Stern, Roter Riese, Neutronenstern, Nebel, Schwarzes Loch, Quasar, Galaxie, Galaxienhaufen), jedes mit eigener animierter Grafik
+- 25 kosmische Objekte vom Quark bis zum Omniversum (u. a. Planet, Stern, Schwarzes Loch, Quasar, Galaxie, Galaxienhaufen, Superhaufen, Kosmisches Netz, Wurmloch, Weißes Loch, Kosmischer String, Universum, Multiversum), jedes mit eigener animierter Grafik
 - Objekte erzeugen in Zyklen Materie; Meilensteine (10/25/50/100 → Tempo ×2, ab 150 → Ertrag ×3)
 - Kaufmengen ×1, ×10, ×100, bis zum nächsten Meilenstein oder Maximum
 - Tippen auf den Himmel bringt Extra-Materie, vorbeifliegende Kometen geben Boni (Materiesturm ×7)
-- 98 Upgrades, Urknall-Prestige mit Singularitäten (+10 % je Stück) und Forschung mit Quantenpunkten (u. a. Auto-Kauf)
+- Über 150 Upgrades, Urknall-Prestige mit Singularitäten und 13 Forschungen mit Quantenpunkten (u. a. Auto-Kauf zum Ein-/Ausschalten, billigere Objekte, stärkerer Materiesturm, mehr Singularitäten)
 - Über 100 Erfolge (+2 % Produktion je Erfolg), Offline-Einnahmen, Export/Import des Spielstands
 - Sound: ruhige Weltraum-Ambientmusik und Effekte für Tippen, Kaufen, Meilensteine, Kometen, Erfolge und Urknall – alles live im Browser erzeugt, Lautstärke im Menü einstellbar, Stumm-Taste am Himmel
