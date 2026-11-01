@@ -289,12 +289,12 @@ const UPMAP=Object.fromEntries(UPS.map(u=>[u.id,u]));
 const RES=[
  {id:'dark',name:'Dunkle Materie',desc:'Alle Objekte +50 % pro Stufe',max:500,cost:l=>Math.ceil(Math.pow(1.3,l))},
  {id:'time',name:'Zeitdehnung',desc:'Alle Zyklen 15 % schneller pro Stufe',max:40,cost:l=>Math.ceil(2*Math.pow(1.6,l))},
- {id:'tap',name:'Gravitationslinse',desc:'Tippen bringt doppelt so viel pro Stufe',max:50,cost:l=>Math.ceil(Math.pow(1.5,l))},
+ {id:'tap',name:'Gravitationslinse',desc:'Tippen bringt +50 % mehr pro Stufe',max:50,cost:l=>Math.ceil(Math.pow(1.5,l))},
  {id:'off',name:'Ereignishorizont',desc:'+2 Stunden Offline-Einnahmen pro Stufe',max:22,cost:l=>1+2*l+Math.floor(Math.pow(1.4,l))},
- {id:'start',name:'Urimpuls',desc:'Nach dem Urknall mit ×100 mehr Startmaterie',max:40,cost:l=>3*(l+1)+Math.floor(Math.pow(1.35,l))},
- {id:'comet',name:'Kometenfänger',desc:'Kometen kommen öfter, Belohnung +50 %',max:20,cost:l=>4*(l+1)+Math.floor(Math.pow(1.5,l))},
+ {id:'start',name:'Urimpuls',desc:'Nach dem Urknall mit ×10 mehr Startmaterie',max:30,cost:l=>3*(l+1)+Math.floor(Math.pow(1.35,l))},
+ {id:'comet',name:'Kometenfänger',desc:'Kometen kommen öfter, Belohnung +25 %',max:20,cost:l=>4*(l+1)+Math.floor(Math.pow(1.5,l))},
  {id:'cheap',name:'Materieverdichtung',desc:'Alle Objekte 4 % billiger pro Stufe',max:20,cost:l=>Math.ceil(5*Math.pow(1.7,l))},
- {id:'storm',name:'Sturmverstärker',desc:'Materiesturm +3 auf den Multiplikator pro Stufe',max:30,cost:l=>Math.ceil(4*Math.pow(1.45,l))},
+ {id:'storm',name:'Sturmverstärker',desc:'Materiesturm +1 auf den Multiplikator pro Stufe',max:30,cost:l=>Math.ceil(4*Math.pow(1.45,l))},
  {id:'sing',name:'Singularitätsresonanz',desc:'Jede Singularität +1 % zusätzlich pro Stufe',max:40,cost:l=>Math.ceil(10*Math.pow(1.6,l))},
  {id:'echo',name:'Urknall-Echo',desc:'+15 % mehr Singularitäten beim Urknall pro Stufe',max:40,cost:l=>Math.ceil(8*Math.pow(1.55,l))},
  {id:'achr',name:'Ruhmeshalle',desc:'Jeder Erfolg +1 % zusätzlich pro Stufe',max:20,cost:l=>Math.ceil(6*Math.pow(1.6,l))},
@@ -334,7 +334,7 @@ const KEY='kosmosSchmiede.v1';
 function fresh(keep){
   const s={v:2,m:5,run:0,life:0,sing:0,qp:0,g:TIERS.map(()=>({n:0,p:0})),up:{},res:{},ach:{},taps:0,bangs:0,comets:0,bm:0,sci:false,autoOn:true,mute:false,sfxVol:.7,musVol:.5,boostUntil:0,last:Date.now(),born:Date.now(),best:0};
   if(keep)for(const k of ['life','sing','qp','res','ach','taps','bangs','comets','bm','sci','autoOn','mute','sfxVol','musVol','born','best'])s[k]=keep[k];
-  if(keep)s.m=5*Math.pow(100,lv('start',s));
+  if(keep)s.m=5*Math.pow(10,Math.min(30,lv('start',s)));
   return s;
 }
 function lv(id,s){return ((s||S).res[id])||0}
@@ -362,13 +362,13 @@ function recalc(){
   M.speed=Math.pow(1.15,lv('time'));
 }
 function boosting(){return Date.now()<S.boostUntil}
-function stormX(){return 7+3*lv('storm')}
+function stormX(){return 7+lv('storm')}
 function disc(){return Math.pow(0.96,lv('cheap'))}
 function cycleT(i){return TIERS[i].time/(msInfo(S.g[i].n).sp*M.speed)}
 function perCycle(i,noBoost){const n=S.g[i].n;return TIERS[i].rev*n*msInfo(n).out*M.tier[i]*M.glob*(boosting()&&!noBoost?stormX():1)}
 function perSec(i,nb){return S.g[i].n?perCycle(i,nb)/cycleT(i):0}
 function totalPS(nb){let s=0;for(let i=0;i<N;i++)s+=perSec(i,nb);return s}
-function tapValue(){return (1+totalPS(true)*(0.01+0.02*M.tapK))*Math.pow(2,lv('tap'))*(boosting()?stormX():1)}
+function tapValue(){return (1+totalPS(true)*(0.01+0.02*M.tapK))*(1+0.5*lv('tap'))*(boosting()?stormX():1)}
 function earn(x){S.m+=x;S.run+=x;S.life+=x}
 function costOf(i,k){const t=TIERS[i],n=S.g[i].n;return disc()*t.cost*Math.pow(t.r,n)*(Math.pow(t.r,k)-1)/(t.r-1)}
 function maxBuy(i){const t=TIERS[i],c=disc()*t.cost*Math.pow(t.r,S.g[i].n);return Math.max(0,Math.floor(Math.log(S.m*(t.r-1)/c+1)/Math.log(t.r)+1e-9))}
@@ -399,12 +399,12 @@ let view='kosmos';
 function toast(h){const d=document.createElement('div');d.innerHTML=h;$('#toast').appendChild(d);setTimeout(()=>d.remove(),2600);while($('#toast').children.length>2)$('#toast').firstChild.remove()}
 function modal(h,btn,fn){$('#modalbody').innerHTML=h+'<button class="btn" id="mok">'+(btn||'Weiter')+'</button>';$('#modal').hidden=false;$('#mok').onclick=()=>{$('#modal').hidden=true;fn&&fn()}}
 function visibleTiers(){let v=1;for(let i=1;i<N;i++){if(S.g[i-1].n||S.g[i].n)v=i+1;else break}return v}
-let rows=[],rowCount=-1;
+let rows=[],rowCount=-99;
 function buildModes(){const w=$('#modes');w.querySelectorAll('.chip').forEach(c=>c.remove());MODES.forEach((m,k)=>{const b=document.createElement('button');b.className='chip'+(S.bm===k?' on':'');b.textContent=MODELBL[k];b.onclick=()=>{S.bm=k;buildModes();updList()};w.appendChild(b)});
   if(lv('auto')){const a=document.createElement('button');a.className='chip auto'+(S.autoOn?' on':'');a.textContent='Auto '+(S.autoOn?'an':'aus');a.setAttribute('aria-pressed',S.autoOn);a.title='Automatischer Kauf ein- oder ausschalten';a.onclick=()=>setAuto(!S.autoOn);w.appendChild(a)}}
 function setAuto(on){S.autoOn=on;SND.play('click');buildModes();if(view==='bang')renderBang();if(view==='opt')renderOpt();toast('Automatischer Kauf '+(on?'eingeschaltet':'ausgeschaltet'))}
 function buildList(){
-  let last=-1;for(let i=0;i<N;i++)if(S.g[i].n)last=i;const cnt=Math.max(1,Math.min(N,last+2));if(cnt===rowCount)return;rowCount=cnt;
+  let last=-1;for(let i=0;i<N;i++)if(S.g[i].n)last=i;const cnt=Math.max(1,Math.min(N,last+2));if(last===rowCount)return;rowCount=last;
   const L=$('#list');L.innerHTML='';rows=[];
   for(let i=0;i<cnt;i++){
     const locked=i>0&&i===cnt-1&&!S.g[i].n;
@@ -457,7 +457,7 @@ function renderBang(){
   const asw=$('#autosw');if(asw)asw.onclick=()=>setAuto(!S.autoOn);
   V.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const r=RES.find(x=>x.id===b.dataset.r),l=lv(r.id),c=r.cost(l);if(l<r.max&&c<=S.qp){S.qp-=c;S.res[r.id]=l+1;if(r.id==='auto')S.autoOn=true;recalc();renderBang();buildModes();SND.play('research');toast(r.name+' → Stufe '+(l+1))}});
 }
-function doBang(){const g=bangGain();bangArm=0;S.sing+=g;S.qp+=g;S.bangs++;S.best=Math.max(S.best,S.run);S=fresh(S);recalc();rowCount=-1;buildList();flash=1.2;SND.play('bang');
+function doBang(){const g=bangGain();bangArm=0;S.sing+=g;S.qp+=g;S.bangs++;S.best=Math.max(S.best,S.run);S=fresh(S);recalc();rowCount=-99;buildList();flash=1.2;SND.play('bang');
   toast('Ein neues Universum entsteht · +'+g+' Singularitäten');checkAch();save();switchView('kosmos')}
 function renderAch(){
   const V=$('#v-ach'),n=achCount();
@@ -482,8 +482,8 @@ function renderOpt(){
   const au=$('#o-auto');if(au)au.onclick=()=>setAuto(!S.autoOn);
   $('#o-exp').onclick=()=>{const t=$('#o-txt');t.value=btoa(unescape(encodeURIComponent(JSON.stringify(S))));t.select();
     try{navigator.clipboard.writeText(t.value).then(()=>toast('Code kopiert'),()=>toast('Code markiert – bitte manuell kopieren'))}catch(e){toast('Code markiert – bitte manuell kopieren')}};
-  $('#o-imp').onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($('#o-txt').value.trim()))));if(!o||!o.g)throw 0;load({save:JSON.stringify(o)});recalc();rowCount=-1;buildList();buildModes();setMute(S.mute);toast('Spielstand geladen');switchView('kosmos')}catch(e){toast('Der Code ist ungültig. Bitte vollständig einfügen.')}};
-  $('#o-reset').onclick=()=>{if(resetArm>Date.now()){resetArm=0;S=fresh();recalc();rowCount=-1;buildList();buildModes();setMute(S.mute);save();toast('Neues Spiel gestartet');switchView('kosmos')}else{resetArm=Date.now()+4000;renderOpt();setTimeout(()=>{if(view==='opt')renderOpt()},4100)}};
+  $('#o-imp').onclick=()=>{try{const o=JSON.parse(decodeURIComponent(escape(atob($('#o-txt').value.trim()))));if(!o||!o.g)throw 0;load({save:JSON.stringify(o)});recalc();rowCount=-99;buildList();buildModes();setMute(S.mute);toast('Spielstand geladen');switchView('kosmos')}catch(e){toast('Der Code ist ungültig. Bitte vollständig einfügen.')}};
+  $('#o-reset').onclick=()=>{if(resetArm>Date.now()){resetArm=0;S=fresh();recalc();rowCount=-99;buildList();buildModes();setMute(S.mute);save();toast('Neues Spiel gestartet');switchView('kosmos')}else{resetArm=Date.now()+4000;renderOpt();setTimeout(()=>{if(view==='opt')renderOpt()},4100)}};
 }
 function switchView(v){if(view!==v)SND.play('click');view=v;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   ['kosmos','ups','bang','ach','opt'].forEach(x=>$('#v-'+x).hidden=x!==v);$('#views').scrollTop=0;
@@ -697,7 +697,7 @@ function spawnComet(){const fromLeft=Math.random()<.5;cometObj={t0:performance.n
 function moveComet(now){if(!cometObj)return;const k=(now-cometObj.t0)/cometObj.dur;if(k>=1){comet.hidden=true;cometObj=null;scheduleComet();return}
   const x=cometObj.l?-50+k*(W+100):W+50-k*(W+100),y=(cometObj.y0+(cometObj.y1-cometObj.y0)*k)*H;const ang=Math.atan2((cometObj.y1-cometObj.y0)*H,cometObj.l?W+100:-(W+100));
   comet.style.transform='translate('+(x-23)+'px,'+(y-23)+'px) rotate('+ang+'rad)'}
-comet.addEventListener('click',()=>{SND.play('comet');comet.hidden=true;cometObj=null;scheduleComet();S.comets++;const f=1+0.5*lv('comet');
+comet.addEventListener('click',()=>{SND.play('comet');comet.hidden=true;cometObj=null;scheduleComet();S.comets++;const f=1+0.25*lv('comet');
   if(Math.random()<.5){S.boostUntil=Math.max(Date.now(),S.boostUntil)+30000*f;toast('Komet eingefangen: <b>Materiesturm</b> ×'+stormX()+' für '+Math.round(30*f)+' s')}
   else{const v=Math.max(50,totalPS(true)*120*f);earn(v);toast('Komet eingefangen: <b>+'+fmt(v)+'</b> Materie')}flash=.35;checkAch()});
 
