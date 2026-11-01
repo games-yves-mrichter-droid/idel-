@@ -55,6 +55,8 @@ Echtzeit-3D mit Three.js:
 
 Dazu kommen Bloom-Leuchten, Vignette und Farbstimmung als Kino-Look, weiche Kontaktschatten unter den Wesen und tanzende Lichtmuster (Kaustik) im Teich.
 
+Die Fabelwesen sind im gleichen weichen, gemalten Stil wie Bäume und Blumen gehalten: matte Oberflächen, aufgehellte Schatten mit sanftem Eigenleuchten und ein zarter Lichtsaum an den Rändern.
+
 Im Menü lässt sich die Grafik zwischen **Hoch** und **Schnell** (für ältere Handys) umschalten.
 
 Der Spielstand wird automatisch gespeichert; Aufgaben und Brutzeiten laufen auch weiter, wenn die App geschlossen ist.
