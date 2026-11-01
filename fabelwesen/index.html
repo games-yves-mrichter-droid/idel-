@@ -1232,7 +1232,7 @@ function pet(c){const t=now();if(t<c.petAt)return;c.petAt=t+20000;c.happy=Math.m
   const w=W.cre[c.id];if(w){w.hop=1;burst(spOf(c).cute?'💖':pick(['😈','🔥','💢']),w.pos.clone().add(new V3(0,w.b.h*.9,0)),7,{size:.45,spd:1.5})}
   addXP(c,1);sfx('pet');refresh()}
 function startTask(c,t){if(c.task)return;if(c.energy<t.en)return toast(`${c.name} ist zu müde. Warte etwas!`);
-  const r=taskReward(c,t);c.energy-=t.en;c.task={id:t.id,start:now(),end:now()+t.t*1000,g:r.g,x:r.x,night:DN.night>.5};sfx('pop');
+  const r=taskReward(c,t);c.energy-=t.en;c.task={id:t.id,start:now(),end:now()+t.t*1000*(hasDeco('bruecke',c.home||'wald')?.9:1),g:r.g,x:r.x,night:DN.night>.5};sfx('pop');
   const w=W.cre[c.id];if(w)burst('💨',w.pos.clone().add(new V3(0,.4,0)),8,{size:.6,spd:2.5,up:1.5,g:0});
   toast(`${t.e} ${c.name}: ${t.n} gestartet`);sheetMode='info';syncWorld();refresh()}
 function collect(c){if(!c.task||c.task.end>now())return;const t=c.task;c.task=null;S.gold+=t.g;S.tasksDone++;if(t.night)S.nightTasks=(S.nightTasks||0)+1;sfx('coin');
@@ -1259,7 +1259,7 @@ function buyEgg(type,natSel){const e=EGG[type];const price=eggPrice(e,natSel);
   const roll=Math.random()*100;let r=0,acc=0;for(let i=0;i<4;i++){acc+=e.odds[i];if(roll<acc){r=i;break}}
   let pool=EGG_IDS.filter(id=>SPECIES[id].r===r&&(natSel===0||(natSel===1)===SPECIES[id].cute));
   if(!pool.length)pool=EGG_IDS.filter(id=>SPECIES[id].r===r);
-  S.eggs.push({id:S.nextId++,type,sp:e.pool?pick(e.pool):pick(pool),end:now()+e.time*1000,sh:Math.random()<(e.pool?.2:SHINY_P)});
+  S.eggs.push({id:S.nextId++,type,sp:e.pool?pick(e.pool):pick(pool),end:now()+e.time*1000*(hasDeco('feenhaus')?.8:1),sh:Math.random()<(e.pool?.2:SHINY_P)});
   syncWorld();save();refresh();toast(`🥚 ${e.n} liegt jetzt im Nest! Tippe es an, um es zu wärmen.`);
   goPage('insel');focusOn(W.eggs[S.eggs[S.eggs.length-1].id].userData.base,9)}
 const eggPrice=(e,n)=>Math.round(e.price*(n?1.3:1));
@@ -1268,9 +1268,9 @@ const nestPrice=()=>Math.round(300*Math.pow(2.4,S.nests-2));
 function release(c){const g=Math.round(25*RAR[spOf(c).r].m*c.lv);S.creatures=S.creatures.filter(x=>x!==c);S.gold+=g;closeSheet();syncWorld();refresh();toast(`👋 ${c.name} wurde freigelassen. +${fmt(g)} 💰`)}
 
 // Werte über Zeit verändern
-function simulate(c,sec){c.energy=Math.min(100,c.energy+sec/4);c.hunger=Math.max(0,c.hunger-sec/30);c.happy=Math.max(0,c.happy-sec/45*(likedDeco(c)?.5:1)*(favWorld(c)?.6:1))}
+function simulate(c,sec){const h=c.home||'wald';c.energy=Math.min(100,c.energy+sec/4*(hasDeco('bank',h)?1.25:1));c.hunger=Math.max(0,c.hunger-sec/30*(hasDeco('brunnen',h)?.75:1));c.happy=Math.max(0,c.happy-sec/45*(likedDeco(c)?.5:1)*(favWorld(c)?.6:1)*(hasDeco('blumenbeet',h)?.75:1))}
 let lastSim=now();
-function tick(){updWeather();if(!S.nextWild)S.nextWild=now()+90000;if(!WILD&&!BATTLE&&!GAME&&now()>S.nextWild){S.nextWild=now()+rnd(3,6)*60000;spawnWild()}updWild();const t=now(),sec=(t-lastSim)/1000;lastSim=t;S.creatures.forEach(c=>simulate(c,sec));syncWorld();refreshTimers()}
+function tick(){updWeather();if(!S.nextWild)S.nextWild=now()+90000;if(!WILD&&!BATTLE&&!GAME&&now()>S.nextWild){S.nextWild=now()+rnd(3,6)*60000*(hasDeco('trampolin')?.55:1);spawnWild()}updWild();const t=now(),sec=(t-lastSim)/1000;lastSim=t;S.creatures.forEach(c=>simulate(c,sec));syncWorld();refreshTimers()}
 
 /* ================== Labels & Texte ================== */
 const fmt=n=>n>=1e9?(n/1e9).toFixed(1)+'Mrd':n>=1e6?(n/1e6).toFixed(1)+'Mio':n>=1e4?(n/1e3).toFixed(1)+'K':String(Math.floor(n));
@@ -1385,8 +1385,9 @@ function renderPage(){const pg=$('#page');let h='';
         <div class="odds">${e.odds.map((o,i)=>o?`<span style="color:${RAR[i].c}">${RAR[i].n} ${o}%</span>`:'').filter(Boolean).join(' · ')} · ⏱ ${fmtT(e.time)}</div>
         <button class="btn y" style="margin-top:6px" data-buy="${e.id}" data-p="${p}" ${S.gold<p?'disabled':''}>Kaufen · ${fmt(p)} 💰</button></div></div>`}
     h+=`<h2 style="margin-top:18px">⚗️ Zaubertränke</h2><div class="sub">Tränke für Energie und Erfahrung landen in deinem Beutel und werden im Wesen-Menü benutzt.</div>`+POTIONS.map(p=>`<div class="card row"><div style="font-size:30px">${p.e}</div><div class="grow"><b>${p.n}</b>${p.use&&(S.inv||{})[p.id]?` <span class="tag">${S.inv[p.id]}× im Beutel</span>`:''}<div style="font-size:12px;color:var(--muted)">${p.d}</div></div><button class="btn y" data-pot="${p.id}" data-p="${potPrice(p)}" ${S.gold<potPrice(p)?'disabled':''}>${fmt(potPrice(p))} 💰</button></div>`).join('');
-    h+=`<h2 style="margin-top:18px">🏡 Deko für ${WORLD_DEF[S.world||'wald'].n}</h2><div class="sub">Stelle Deko auf. Wesen, die eine Deko mögen, haben bessere Laune und verdienen 10 % mehr Gold.</div>
-      <button class="btn b" style="width:100%;margin-bottom:10px" data-deco="_edit">✋ Aufgestellte Deko verschieben</button>`+Object.entries(DECO).map(([k,d])=>`<div class="card row"><div style="font-size:30px">${d.e}</div><div class="grow"><b>${d.n}</b><div style="font-size:12px;color:var(--muted)">Mögen: ${d.like.slice(0,4).map(x=>S.seen[x]!==undefined?SPECIES[x].n:'???').join(', ')}</div></div><button class="btn y" data-deco="${k}" data-p="${d.p}" ${S.gold<d.p?'disabled':''}>${fmt(d.p)} 💰</button></div>`).join('');
+    h+=`<h2 style="margin-top:18px">🏡 Deko für ${WORLD_DEF[S.world||'wald'].n}</h2><div class="sub">Stelle Deko auf – deine Wesen spielen damit (rutschen, schaukeln, hüpfen …) und jede Deko gibt einen Bonus. Wesen, die eine Deko mögen, haben zusätzlich bessere Laune und verdienen 10 % mehr Gold.</div>
+      ${(()=>{const act=Object.keys(DECO).filter(k=>hasDeco(k,S.world||'wald'));return act.length?`<div class="card" style="font-size:12px;line-height:1.6"><b>✅ Aktive Boni hier</b><br>${act.map(k=>DECO[k].e+' '+DECO[k].bonus).join('<br>')}</div>`:''})()}
+      <button class="btn b" style="width:100%;margin-bottom:10px" data-deco="_edit">✋ Aufgestellte Deko verschieben</button>`+Object.entries(DECO).map(([k,d])=>`<div class="card row"><div style="font-size:30px">${d.e}</div><div class="grow"><b>${d.n}</b><div style="font-size:12px;color:#ffd25e">${d.bonus}</div><div style="font-size:12px;color:var(--muted)">Mögen: ${d.like.slice(0,4).map(x=>S.seen[x]!==undefined?SPECIES[x].n:'???').join(', ')}</div></div><button class="btn y" data-deco="${k}" data-p="${d.p}" ${S.gold<d.p?'disabled':''}>${fmt(d.p)} 💰</button></div>`).join('');
     h+=`<h2 style="margin-top:18px">🏗️ Ausbau</h2><div class="sub">Mehr Platz für mehr Fabelwesen.</div>
       <div class="card row"><div class="grow"><b>🌲 Waldplatz +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.slots} Plätze</div></div><button class="btn y" data-up="slot" data-p="${slotPrice()}" ${S.gold<slotPrice()?'disabled':''}>${fmt(slotPrice())} 💰</button></div>
       ${S.nests<NEST_POS.length?`<div class="card row"><div class="grow"><b>🪺 Nest +1</b><div style="font-size:12px;color:var(--muted)">Aktuell ${S.nests} Nester – mehr Eier gleichzeitig ausbrüten</div></div><button class="btn y" data-up="nest" data-p="${nestPrice()}" ${S.gold<nestPrice()?'disabled':''}>${fmt(nestPrice())} 💰</button></div>`:''}`}
@@ -1481,6 +1482,8 @@ function envBonus(c){const sp=spOf(c),r={g:1,x:1,notes:[]};
   if(DN.night<.5&&sp.cute){r.g*=1.2;r.notes.push('☀️ Tag: +20 % Gold für Niedliche')}
   if(WX.type==='regen'){r.x*=1.2;r.notes.push('🌧️ Regen: +20 % Erfahrung')}
   if(WX.type==='nebel'&&!sp.cute){r.g*=1.15;r.notes.push('🌫️ Nebel: +15 % Gold für Böse')}
+  {const h=c.home||'wald';if(hasDeco('grab',h)&&!sp.cute){r.g*=1.1;r.notes.push('🪦 Gruselgrab: +10 % Gold')}if(hasDeco('schaukel',h)&&sp.cute){r.g*=1.1;r.notes.push('🎠 Schaukel: +10 % Gold')}
+   if(hasDeco('feuer',h)&&DN.night>.5){r.g*=1.1;r.notes.push('🔥 Lagerfeuer: +10 % Gold')}if(hasDeco('kristall',h)){r.x*=1.1;r.notes.push('💎 Kristall: +10 % Erfahrung')}if(hasDeco('laterne',h)&&DN.night>.5){r.x*=1.15;r.notes.push('🏮 Laterne: +15 % Erfahrung')}}
   if(likedDeco(c)){r.g*=1.1;r.notes.push('🏡 Lieblingsdeko: +10 % Gold')}if(favWorld(c)){r.g*=1.2;r.notes.push('💖 Lieblingswelt: +20 % Gold')}return r}
 function todText(){const h=Math.floor(DN.h),m=Math.floor((DN.h%1)*60);return`${DN.night>.5?'🌙':DN.e<.25?'🌅':'☀️'} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}${WX_T[WX.type].e?' '+WX_T[WX.type].e:''}`}
 
@@ -1538,7 +1541,7 @@ function updGame(dt){if(!GAME)return;if(GAME.type!=='feuer')return({beeren:updBe
 function gameTap(x,y){if(GAME.type==='rennen')return tapRace();if(GAME.type==='verst')return tapHide(x,y);if(GAME.type==='beeren')return berryDrag(x,y);let best=null,bd=55;for(const s of GAME.orbs){tmpV.copy(s.position).project(camera);const px=(tmpV.x*.5+.5)*innerWidth,py=(-tmpV.y*.5+.5)*innerHeight,d=Math.hypot(px-x,py-y);if(d<bd){bd=d;best=s}}
   if(!best)return;const g=best.userData.gold;GAME.score+=g?5:1;burst(g?'🌟':'✨',best.position,g?8:4,{size:.4,spd:2,up:2});sfx(g?'gold':'catch');scene.remove(best);GAME.orbs.splice(GAME.orbs.indexOf(best),1)}
 function endGame(){const G=GAME;GAME=null;G.orbs.forEach(s=>scene.remove(s));$('#ghud').style.display='none';const c=G.c;
-  const gold=Math.round(G.score*(5+c.lv*1.2)*RAR[spOf(c).r].m),xp=G.score*3;S.gold+=gold;c.happy=Math.min(100,c.happy+20);S.best=Math.max(S.best||0,G.score);
+  const gold=Math.round(G.score*(5+c.lv*1.2)*RAR[spOf(c).r].m*(hasDeco('rutsche')?1.25:1)),xp=G.score*3;S.gold+=gold;c.happy=Math.min(100,c.happy+20);S.best=Math.max(S.best||0,G.score);
   addXP(c,xp);sfx('coin');refresh();
   modal(`<h2 style="margin-top:0">✨ Spiel vorbei!</h2><img class="big" src="${thumbC(c)}"><p>${esc(c.name)} und du habt <b>${G.score}</b> Glühwürmchen gefangen.</p>
     <p style="font-size:18px"><b>+${fmt(gold)} 💰 · +${xp} ✨</b></p><p style="color:var(--muted);font-size:12px">Rekord: ${S.best} · ${esc(c.name)} hat jetzt richtig gute Laune!</p><button class="btn" style="width:100%" id="gOk">Super!</button>`);
@@ -1551,7 +1554,7 @@ const POTIONS=[
   {id:'festmahl',n:'Festmahl',e:'🧺',d:'Macht sofort alle deine Wesen satt und glücklich.',p:220},
   {id:'brut',n:'Brutfeuer',e:'🔥',d:'Alle Eier in den Nestern sind sofort schlupfbereit.',p:300}];
 const POT=Object.fromEntries(POTIONS.map(p=>[p.id,p]));
-const potPrice=p=>Math.round(p.p*(p.id==='festmahl'?Math.max(1,S.creatures.length/3):1));
+const potPrice=p=>Math.round(p.p*(p.id==='festmahl'?Math.max(1,S.creatures.length/3):1)*(hasDeco('kessel')?.8:1));
 function buyPotion(id){const p=POT[id],pr=potPrice(p);if(S.gold<pr)return toast('Nicht genug Gold!');
   if(id==='brut'&&!S.eggs.length)return toast('Es liegen keine Eier in den Nestern.');
   if(id==='festmahl'&&!S.creatures.length)return toast('Du hast noch keine Wesen.');
@@ -1613,7 +1616,7 @@ function dailyCheck(){const today=new Date().toDateString();S.daily=S.daily||{la
 
 /* ================== Begegnungen: Kämpfen, Spielen, Erschrecken, Ärgern ================== */
 const INTS=[];let intT=5;
-function eligible(c){const w=W.cre[c.id];return w&&!w.int&&c.id!==selId&&!c.task&&w.pop>=1}
+function eligible(c){const w=W.cre[c.id];return w&&!w.int&&!w.use&&c.id!==selId&&!c.task&&w.pop>=1}
 function moveW(w,tx,tz,sp,dt){const dx=tx-w.pos.x,dz=tz-w.pos.z,d=Math.hypot(dx,dz);if(d>.05){const st=Math.min(d,sp*dt);w.pos.x+=dx/d*st;w.pos.z+=dz/d*st;w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*8);w.mv=1}else w.mv=0;return d}
 function faceW(w,o,dt){w.yaw=lerpAng(w.yaw,Math.atan2(o.pos.x-w.pos.x,o.pos.z-w.pos.z),dt*8)}
 const overW=(w,y)=>w.pos.clone().add(new V3(0,w.b.h*(y||1),0));
@@ -1694,7 +1697,7 @@ function breedModal(c){const list=S.creatures.filter(o=>o!==c&&canBreed(o));
   $('#mbox').querySelectorAll('[data-br]').forEach(b=>b.onclick=()=>{doBreed(c,crById(+b.dataset.br));closeModal()})}
 function doBreed(a,b){const cost=breedCost(a,b);if(S.gold<cost||S.eggs.length>=S.nests)return;S.gold-=cost;a.breedAt=b.breedAt=now()+15*60000;
   const hy=findHybrid(a.sp,b.sp);let sp,tint;if(hy&&Math.random()<.7)sp=hy;else{const f=Math.random()<.5;sp=(f?a:b).sp;tint=mainColor((f?b:a).sp)}
-  S.eggs.push({id:S.nextId++,type:'zucht',sp,end:now()+120000,sh:Math.random()<1/15,tint,par:[a.name,b.name]});
+  S.eggs.push({id:S.nextId++,type:'zucht',sp,end:now()+120000*(hasDeco('feenhaus')?.8:1),sh:Math.random()<1/15,tint,par:[a.name,b.name]});
   for(const c of[a,b]){c.happy=Math.min(100,c.happy+15);const w=W.cre[c.id];if(w){w.hop=1;burst('💞',w.pos.clone().add(new V3(0,w.b.h,0)),6,{size:.45})}}
   relAdd(a,b,2);sfx('level');syncWorld();save();refresh();toast(`💞 ${a.name} und ${b.name} haben ein Herzei gelegt!`)}
 
@@ -1809,7 +1812,9 @@ const DECO={laterne:{n:'Laterne',e:'🏮',p:400,like:['irrlicht','fee','hexe','p
   bruecke:{n:'Holzbrücke',e:'🌉',p:900,like:['troll','zwerg','kobold']},kessel:{n:'Hexenkessel',e:'🧪',p:1000,like:['hexe','kobold','vampir','nachtfuerst']},
   kristall:{n:'Kristallsäule',e:'💎',p:2000,like:['kristalldrache','engel','qilin','eisgreif','irrlicht']},grab:{n:'Gruselgrab',e:'🪦',p:700,like:['vampir','werwolf','zerberus','rabe','daemon','gefallener','hoellenwolf']},
   bank:{n:'Gartenbank',e:'🪑',p:250,like:['zwerg','waldelfe','meerjungfrau']},feuer:{n:'Lagerfeuer',e:'🔥',p:600,like:['phoenix','hoellendrache','kitsune','daemon','feuerfuchs','sonnendrache','zerberus']},
-  statue:{n:'Drachenstatue',e:'🗿',p:2500,like:['hoellendrache','kristalldrache','lindwurm','gargoyle','sonnendrache']},schaukel:{n:'Baumschaukel',e:'🎠',p:800,like:['einhorn','pegasus','wolpertinger','kitsune','fee']}};
+  statue:{n:'Drachenstatue',e:'🗿',p:2500,like:['hoellendrache','kristalldrache','lindwurm','gargoyle','sonnendrache']},schaukel:{n:'Baumschaukel',e:'🎠',p:800,like:['einhorn','pegasus','wolpertinger','kitsune','fee']},
+  rutsche:{n:'Rutsche',e:'🛝',p:1100,like:['wolpertinger','kitsune','pilzling','fee','zwerg','kobold','irrlicht']},trampolin:{n:'Trampolin',e:'🤸',p:1300,like:['wolpertinger','pegasus','greif','feuerfuchs','pilzfee','kobold','mimic']}};
+Object.entries({laterne:'🌙 Nachts +15 % Erfahrung',feenhaus:'🥚 Eier schlüpfen 20 % schneller',brunnen:'🍖 Wesen werden 25 % langsamer hungrig',blumenbeet:'😊 Laune sinkt 25 % langsamer',bruecke:'⏱ Aufgaben 10 % schneller',kessel:'⚗️ Zaubertränke 20 % billiger',kristall:'✨ +10 % Erfahrung bei Aufgaben',grab:'😈 Böse Wesen +10 % Gold',bank:'⚡ Energie lädt 25 % schneller',feuer:'🌙 Nachts +10 % Gold',statue:'⚔️ +10 % Angriffskraft im Kampf',schaukel:'💖 Niedliche Wesen +10 % Gold',rutsche:'🎮 Minispiele +25 % Belohnung',trampolin:'❗ Wilde Wesen tauchen öfter auf'}).forEach(([k,v])=>DECO[k].bonus=v);
 function makeDeco(t){const g=new THREE.Group(),wood=M(0x8a5a32,{sk:'wood'}),stone=M(0x9a96a0,{sk:'stone'});
   const box=(m,sx,sy,sz,x,y,z)=>{const b=mesh(GEO.box,m);b.scale.set(sx,sy,sz);b.position.set(x,y,z);g.add(b);return b};
   if(t==='laterne'){const p=mesh(GEO.cyl,M(0x2a2a30,{mt:.6,r:.4}));p.scale.set(.06,2,.06);p.position.y=1;g.add(p);box(M(0xffe08a,{em:0xffb040,ei:1.8}),.32,.42,.32,0,2.15,0);g.add(at(cone(0x2a2a30,.3,.25,{mt:.6}),0,2.36,0));g.add(at(glow(0xffc060,3,.7),0,2.15,0))}
@@ -1835,7 +1840,18 @@ function makeDeco(t){const g=new THREE.Group(),wood=M(0x8a5a32,{sk:'wood'}),ston
     const f=flame(1.1);f.position.y=.15;g.add(f);WORLD_FX.fires=(WORLD_FX.fires||[]).concat(f);g.add(at(glow(0xff7a20,3.5,.7),0,.5,0))}
   if(t==='statue'){box(stone,1.2,.6,1.2,0,.3,0);const d=buildCreature('hoellendrache',3);d.root.traverse(o=>{if(o.isMesh)o.material=M(0xa8a4ae,{sk:'stone'});if(o.isSprite)o.visible=false});d.root.scale.setScalar(.75);d.root.position.y=.6;g.add(d.root)}
   if(t==='schaukel'){for(const x of[-.8,.8]){const p=mesh(GEO.cyl,M(0x7a4f33,{sk:'bark'}));p.scale.set(.09,2.4,.09);p.position.set(x,1.2,0);g.add(p)}const b=mesh(GEO.cyl,M(0x7a4f33,{sk:'bark'}));b.scale.set(.08,1.8,.08);b.rotation.z=Math.PI/2;b.position.y=2.35;g.add(b);
-    const sw=new THREE.Group();sw.position.y=2.35;for(const x of[-.3,.3]){const r=mesh(GEO.cyl,M(0xd8c8a0));r.scale.set(.015,1.6,.015);r.position.set(x,-.8,0);sw.add(r)}const st=mesh(GEO.box,wood);st.scale.set(.75,.06,.3);st.position.y=-1.6;sw.add(st);g.add(sw);WORLD_FX.swings=(WORLD_FX.swings||[]).concat(sw)}
+    const sw=new THREE.Group();sw.position.y=2.35;sw.userData.amp=.15;sw.userData.a=.15;g.userData.sw=sw;for(const x of[-.3,.3]){const r=mesh(GEO.cyl,M(0xd8c8a0));r.scale.set(.015,1.6,.015);r.position.set(x,-.8,0);sw.add(r)}const st=mesh(GEO.box,wood);st.scale.set(.75,.06,.3);st.position.y=-1.6;sw.add(st);g.add(sw);WORLD_FX.swings=(WORLD_FX.swings||[]).concat(sw)}
+  if(t==='rutsche'){const red=M(0xe04a3a,{r:.35}),yel=M(0xffd04a,{r:.35}),post=M(0x8a5a32,{sk:'wood'});
+    for(const z of[-.32,.32]){g.add(limb(V(-1.4,0,z),V(-1.05,1.7,z),.05,0x8a5a32));for(let i=1;i<6;i++){const y=i*.3;}}
+    for(let i=1;i<6;i++){const k=i/6,r=mesh(GEO.cyl,post);r.scale.set(.03,.64,.03);r.rotation.x=Math.PI/2;r.position.set(-1.4+.35*k,1.7*k,0);g.add(r)}
+    box(post,.55,.08,.75,-.82,1.66,0);for(const[x,z]of[[-1.05,-.32],[-1.05,.32],[-.6,-.32],[-.6,.32]]){const p2=mesh(GEO.cyl,post);p2.scale.set(.05,1.66,.05);p2.position.set(x,.83,z);g.add(p2)}
+    const sY=x=>{const s=clamp((x+.7)/2.4,0,1);return .2+1.45*(1-s)*(1-s)};
+    for(let i=0;i<12;i++){const x0=-.7+i*.2,x1=x0+.2,y0=sY(x0),y1=sY(x1),seg=mesh(GEO.box,i%2?red:yel),len=Math.hypot(.2,y1-y0);seg.scale.set(len+.02,.05,.6);seg.position.set((x0+x1)/2,(y0+y1)/2-.02,0);seg.rotation.z=Math.atan2(y1-y0,.2);g.add(seg);
+      for(const z of[-.32,.32]){const rl=mesh(GEO.box,red);rl.scale.set(len+.02,.12,.04);rl.position.set((x0+x1)/2,(y0+y1)/2+.05,z);rl.rotation.z=seg.rotation.z;g.add(rl)}}
+    for(const x of[.1,.9])for(const z of[-.3,.3]){const p2=mesh(GEO.cyl,post);const h=sY(x);p2.scale.set(.04,h,.04);p2.position.set(x,h/2,z);g.add(p2)}}
+  if(t==='trampolin'){const fr=mesh(GEO.tor,M(0x3a7ae0,{r:.4}));fr.scale.set(1,1,.6);fr.rotation.x=Math.PI/2;fr.position.y=.42;g.add(fr);
+    const mat=new THREE.Mesh(new THREE.CircleGeometry(.98,32),M(0x2a2a34,{r:.6,ds:1}));mat.rotation.x=-Math.PI/2;mat.position.y=.42;g.add(mat);g.userData.mat=mat;
+    for(let i=0;i<6;i++){const a=i/6*Math.PI*2,l=mesh(GEO.cyl,M(0x9a9aa4,{mt:.7,r:.3}));l.scale.set(.04,.42,.04);l.position.set(Math.cos(a)*.95,.21,Math.sin(a)*.95);g.add(l)}}
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});return g}
 const DECOOBJ={};
 function placeDecoObj(d){const o=makeDeco(d.t);o.position.set(d.x,0,d.z);o.rotation.y=d.r||0;o.userData.deco=d.id;ensureWorld(d.w||'wald').add(o);DECOOBJ[d.id]=o;return o}
@@ -1876,7 +1892,7 @@ function updWild(){if(!WILD||BATTLE)return;if(now()>WILD.until){toast(`💨 Das 
 
 /* ================== Kämpfe ================== */
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-function fighter(c,w){const sp=spOf(c),rm=Math.sqrt(RAR[sp.r].m),max=Math.round((40+c.lv*7)*rm);return{c,w,hp:max,max,atk:(6+c.lv*1.6)*rm,el:sp.el||'natur',cute:sp.cute,uses:{el:3,sp:2},scared:0}}
+function fighter(c,w){const sp=spOf(c),rm=Math.sqrt(RAR[sp.r].m),max=Math.round((40+c.lv*7)*rm);return{c,w,hp:max,max,atk:(6+c.lv*1.6)*rm*(c.id>0&&hasDeco('statue',c.home||'wald')?1.1:1),el:sp.el||'natur',cute:sp.cute,uses:{el:3,sp:2},scared:0}}
 const movesOf=f=>[{k:'basic',n:'Angriff',e:'💥',pow:1},{k:'el',n:ELS[f.el].mv,e:ELS[f.el].e,pow:1.65,el:f.el},{k:'sp',n:f.cute?'Heilen':'Erschrecken',e:f.cute?'💚':'👻'}];
 const typeMult=(a,d)=>!a?1:(STRONG[a]||[]).includes(d)?1.5:(STRONG[d]||[]).includes(a)?.67:1;
 function battleStart(){if(!WILD||BATTLE)return;const ok=S.creatures.filter(c=>W.cre[c.id]&&!c.task&&c.energy>=15).sort((a,b)=>b.lv-a.lv);
@@ -1927,7 +1943,7 @@ async function battleTurn(k){const B=BATTLE;if(!B||B.busy)return;
   if(cur.hp<=0){cur.w.spin=1;B.log=`${esc(cur.c.name)} ist erschöpft!`;renderBattle();await wait(800);const n=B.team.findIndex(f=>f.hp>0);if(n<0)return endBattle('lose');B.act=n;placeBattle();B.log=`Los, ${esc(B.team[n].c.name)}!`}
   B.busy=false;renderBattle()}
 function endBattle(res){const B=BATTLE;if(!B)return;const W_=B.wild,wc=W_.c,wsp=spOf(wc);
-  const finish=()=>{B.team.forEach(f=>{f.w.int=null;f.w.b.root.visible=true;f.w.state='idle';f.w.timer=1});BATTLE=null;$('#battle').classList.remove('open');killTemp(WILD);WILD=null;S.nextWild=now()+rnd(3,6)*60000;closeSheet();renderStrip();refresh()};
+  const finish=()=>{B.team.forEach(f=>{f.w.int=null;f.w.b.root.visible=true;f.w.state='idle';f.w.timer=1});BATTLE=null;$('#battle').classList.remove('open');killTemp(WILD);WILD=null;S.nextWild=now()+rnd(3,6)*60000*(hasDeco('trampolin')?.55:1);closeSheet();renderStrip();refresh()};
   if(res==='flee'){finish();toast('🏃 Du bist geflohen. Das wilde Wesen verschwindet im Wald.');return}
   if(res==='lose'){B.team.forEach(f=>{f.c.happy=Math.max(0,f.c.happy-10);cst(f.c,'losses')});finish();modal(`<h2 style="margin-top:0">😵 Verloren…</h2><p>Das wilde ${wsp.n} war zu stark und ist davongezogen. Trainiere deine Wesen und versuch es nochmal!</p><button class="btn" style="width:100%" onclick="closeModal()">OK</button>`);return}
   const gold=Math.round((20+wc.lv*12)*RAR[wsp.r].m),xp=10+wc.lv*3;S.gold+=gold;B.team.forEach((f,i)=>{addXP(f.c,i===B.act?xp:Math.round(xp*.6));cst(f.c,'wins');f.c.happy=Math.min(100,f.c.happy+8)});
@@ -1950,7 +1966,7 @@ function gameChooser(c){if(!W.cre[c.id])return toast(`${c.name} ist gerade nicht
 function gameBegin(c,type){if(GAME||BATTLE)return;if(c.energy<15)return toast(`${c.name} ist zu müde zum Spielen.`);c.energy-=15;[...INTS].forEach(endInt);const w=W.cre[c.id];
   GAME={type,c,w,t:type==='rennen'?60:type==='verst'?999:30,score:0,objs:[]};selId=null;$('#sheet').classList.remove('open');$('#strip').style.display='none';$('#ghud').style.display='block';
   w.int={game:1};w.mv=0;w.act=null;cst(c,'games');sfx('level');({beeren:startBerry,rennen:startRace,verst:startHide})[type]()}
-function gameFinish(label,score,mult){const G=GAME,c=G.c;GAME=null;$('#ghud').style.display='none';G.objs.forEach(o=>(o.parent||scene).remove(o));if(G.w){G.w.int=null;G.w.b.root.visible=true;G.w.state='idle';G.w.timer=1}
+function gameFinish(label,score,mult){mult=(mult||1)*(hasDeco('rutsche')?1.25:1);const G=GAME,c=G.c;GAME=null;$('#ghud').style.display='none';G.objs.forEach(o=>(o.parent||scene).remove(o));if(G.w){G.w.int=null;G.w.b.root.visible=true;G.w.state='idle';G.w.timer=1}
   if(G.rival)killTemp(G.rival);const gold=Math.max(0,Math.round(score*(5+c.lv*1.2)*RAR[spOf(c).r].m*(mult||1))),xp=Math.max(0,Math.round(score*3*(mult||1)));S.gold+=gold;c.happy=Math.min(100,c.happy+20);addXP(c,xp);sfx('coin');refresh();
   S.best=Math.max(S.best||0,G.type==='feuer'?score:0);
   modal(`<h2 style="margin-top:0">${label}</h2><img class="big" src="${thumbC(c)}"><p style="font-size:18px"><b>+${fmt(gold)} 💰 · +${xp} ✨</b></p><p style="color:var(--muted);font-size:12px">${esc(c.name)} hat jetzt richtig gute Laune!</p><button class="btn" style="width:100%" id="gOk">Super!</button>`);
@@ -2022,7 +2038,58 @@ $('#photo').addEventListener('click',e=>{const b=e.target.closest('[data-ph]');i
 /* ================== Weltenspezifische Bewegung ================== */
 function updWorldFX(dt){if(WORLD_FX.foam)WORLD_FX.foam.material.opacity=.4+.25*Math.sin(T*1.3);if(WORLD_FX.lava)WORLD_FX.lava.emissiveIntensity=.8+.25*Math.sin(T*2);if(WORLD_FX.lavaG)WORLD_FX.lavaG.emissiveIntensity=1.1+.4*Math.sin(T*1.3);
   if(WORLD_FX.embers&&WG.vulkan&&WG.vulkan.visible){const P=WORLD_FX.embers.attributes.position.array;for(let i=0;i<P.length;i+=3){P[i+1]+=dt*(1+(i%7)*.2);P[i]+=Math.sin(T+i)*dt*.3;if(P[i+1]>12)P[i+1]=0}WORLD_FX.embers.attributes.position.needsUpdate=true}
-  (WORLD_FX.fires||[]).forEach((f,i)=>{const s=1+Math.sin(T*13+i)*.15;f.scale.set(s,1+Math.sin(T*9+i)*.25,s)});(WORLD_FX.swings||[]).forEach((s,i)=>s.rotation.x=Math.sin(T*1.6+i)*.35)}
+  (WORLD_FX.fires||[]).forEach((f,i)=>{const s=1+Math.sin(T*13+i)*.15;f.scale.set(s,1+Math.sin(T*9+i)*.25,s)});(WORLD_FX.swings||[]).forEach((s,i)=>{const u=s.userData;u.a=(u.a??.15)+((u.amp??.15)-(u.a??.15))*Math.min(1,dt*1.5);s.rotation.x=Math.sin(T*1.8+i)*u.a})}
+
+/* ================== Wesen benutzen Deko ================== */
+const hasDeco=(t,w)=>(S.deco||[]).some(d=>d.t===t&&(w===undefined||(d.w||'wald')===w));
+const USED={};
+const APPROACH={laterne:[.8,0,.6],feenhaus:[0,0,1.6],brunnen:[1.6,0,0],blumenbeet:[1.4,0,0],bruecke:[-2.2,0,0],kessel:[1.15,0,0],kristall:[1.3,0,0],grab:[0,0,1.3],bank:[0,0,.9],feuer:[1.4,0,.3],statue:[1.5,0,0],schaukel:[0,0,1.1],rutsche:[-1.75,0,0],trampolin:[1.5,0,0]};
+function tryUse(w,c){const home=c.home||'wald',list=(S.deco||[]).filter(d=>(d.w||'wald')===home&&DECOOBJ[d.id]&&!(USED[d.id]&&USED[d.id].use)&&(!PL||PL.d!==d));if(!list.length)return false;
+  const liked=list.filter(d=>DECO[d.t].like.includes(c.sp)),near=list.filter(d=>Math.hypot(d.x-w.pos.x,d.z-w.pos.z)<14);
+  const d=liked.length&&Math.random()<.6?pick(liked):near.length?pick(near):null;if(!d)return false;const o=DECOOBJ[d.id];o.updateMatrixWorld(true);
+  const a=APPROACH[d.t]||[1.3,0,0];w.use={d,o,t:0,ph:'go',ap:o.localToWorld(V(...a)),n:0};USED[d.id]=w;w.act=null;w.state='idle';return true}
+function endUse(w,c,ok){const u=w.use;if(!u)return;w.use=null;w.yOff=0;w.useP=0;w.useAct='';w.hideS=1;if(USED[u.d.id]===w)delete USED[u.d.id];
+  if(u.o.userData.sw)u.o.userData.sw.userData.amp=.15;
+  if(ok&&c){const lk=DECO[u.d.t].like.includes(c.sp),fun=['rutsche','trampolin','schaukel'].includes(u.d.t);c.happy=Math.min(100,c.happy+(fun?15:8)+(lk?10:0));addXP(c,fun?3:2);cst(c,'deco');
+    if(lk)burst('💖',w.pos.clone().add(new V3(0,w.b.h,0)),3,{size:.4,spd:.8,up:1.5})}
+  w.state='idle';w.timer=rnd(1.5,3)}
+const faceTo=(w,p,dt)=>{w.yaw=lerpAng(w.yaw,Math.atan2(p.x-w.pos.x,p.z-w.pos.z),dt*6)};
+const dirYaw=o=>o.rotation.y;
+function updUse(w,c,dt){const u=w.use,o=u.o;if(!o.parent||!o.parent.visible){endUse(w,c,0);return}
+  u.t+=dt;w.yOff=0;w.useP=0;w.useAct='';w.mv=0;const L=(x,y,z)=>o.localToWorld(V(x,y,z)),ctr=L(0,0,0),big=w.b.h>1.9;
+  const ov=(e,n,y)=>{if(Math.random()<dt*(n||2))burst(e,w.pos.clone().add(new V3(rnd(-.2,.2),(y??w.b.h)+w.yOff,rnd(-.2,.2))),1,{size:.35,spd:.6,up:1.2})};
+  if(u.ph==='go'){const d=moveW(w,u.ap.x,u.ap.z,(.8+w.st*.15)*1.15,dt);if(d<.18){u.ph='use';u.t=0;u.p0=w.pos.clone()}else if(u.t>16)endUse(w,c,0);return}
+  const t=u.t,yawX=o.rotation.y+Math.PI/2;
+  switch(u.d.t){
+    case'schaukel':{if(big){faceTo(w,ctr,dt);w.useAct='sit';if(t>4)endUse(w,c,1);break}const sw=o.userData.sw;sw.userData.amp=.7;const seat=sw.localToWorld(V(0,-1.58,0));
+      if(t<.4){w.hop=Math.max(w.hop,.6)}w.pos.set(seat.x,0,seat.z);w.yOff=seat.y-.05;w.yaw=dirYaw(o);w.useAct='sit';w.useP=-sw.rotation.x*.6;ov('🎵',1.2);if(t>6.5){w.pos.copy(u.ap);endUse(w,c,1)}break}
+    case'rutsche':{if(big){faceTo(w,ctr,dt);w.useAct='look';if(t>3)endUse(w,c,1);break}
+      const sY=x=>{const s=clamp((x+.7)/2.4,0,1);return .2+1.45*(1-s)*(1-s)};w.yaw=yawX;
+      if(t<1.3){const k=t/1.3,a=L(-1.35,0,0),b=L(-.95,1.65,0);w.pos.set(a.x+(b.x-a.x)*k,0,a.z+(b.z-a.z)*k);w.yOff=1.65*k;w.mv=1}
+      else if(t<1.7){const p=L(-.85,1.65,0);w.pos.set(p.x,0,p.z);w.yOff=1.67;if(!u.wi){u.wi=1;w.hop=.5}}
+      else if(t<2.6){const s=Math.pow((t-1.7)/.9,1.6),x=-.7+2.4*s,p=L(x,0,0);w.pos.set(p.x,0,p.z);w.yOff=sY(x)+.04;const dd=2*1.45*(1-clamp((x+.7)/2.4,0,1))/2.4;w.useP=Math.atan(dd)*.9;
+        if(!u.wii){u.wii=1;floatAt(w,'Wiii! 🎉','#ffe27a');sfx('pop')}ov('💨',8,.3)}
+      else if(t<3){const k=(t-2.6)/.4,a=L(1.7,0,0),b=L(2.4,0,0);w.pos.set(a.x+(b.x-a.x)*k,0,a.z+(b.z-a.z)*k);w.yOff=.2*(1-k);if(!u.off){u.off=1;w.hop=.8}}
+      else{u.n++;if(u.n<2&&Math.random()<.5){u.ph='go';u.ap=L(-1.75,0,0);u.t=0;u.wi=u.wii=u.off=0}else endUse(w,c,1)}break}
+    case'trampolin':{const top=L(0,0,0);if(t<.45){const k=t/.45;w.pos.set(u.p0.x+(top.x-u.p0.x)*k,0,u.p0.z+(top.z-u.p0.z)*k);w.yOff=.45+Math.sin(k*Math.PI)*.6;w.mv=1}
+      else{w.pos.set(top.x,0,top.z);const b=Math.abs(Math.sin((t-.45)*4.2));w.yOff=.45+b*(big?.7:1.4);o.userData.mat.scale.y=b<.12?.35:1;o.userData.mat.position.y=b<.12?.36:.42;
+        if(b<.08&&!u.bt){u.bt=1;burst('✨',w.pos.clone().add(new V3(0,.5,0)),3,{size:.3,spd:1.5,up:1});sfx('pop');if(Math.random()<.3)w.spin=.6}if(b>.5)u.bt=0}
+      if(t>5){o.userData.mat.scale.y=1;o.userData.mat.position.y=.42;w.pos.copy(u.ap);w.hop=1;endUse(w,c,1)}break}
+    case'bruecke':{const k=Math.min(1,t/3.2),x=-2.1+4.2*k,p=L(x,0,0),xn=x/1.44;w.pos.set(p.x,0,p.z);w.yOff=Math.abs(xn)<1?.15+Math.cos(xn*Math.PI/2)*.55+.05:0;w.yaw=yawX;w.mv=1;if(k>=1)endUse(w,c,1);break}
+    case'feenhaus':{const door=L(0,0,.85);if(t<1){moveW(w,door.x,door.z,1.5,dt)}else if(t<4){w.hideS=Math.max(0,(w.hideS??1)-dt*4);if(t>3.6)w.hideS=1}
+      if(t>=1&&t<1.1&&!u.in){u.in=1;burst('✨',door.clone().add(new V3(0,.4,0)),6,{size:.35,spd:1,up:1.5})}
+      if(t>=4){if(!u.out){u.out=1;w.hideS=1;w.hop=1;burst('✨',door.clone().add(new V3(0,.4,0)),6,{size:.35,spd:1,up:1.5})}moveW(w,u.ap.x,u.ap.z,1.5,dt);if(t>5)endUse(w,c,1)}break}
+    case'brunnen':faceTo(w,ctr,dt);w.useAct='sniff';ov('💧',3,.6);if(t>3.2)endUse(w,c,1);break;
+    case'feuer':faceTo(w,ctr,dt);w.useAct='sit';ov('🔥',.8,.5);if(t>5.5)endUse(w,c,1);break;
+    case'bank':{if(big){faceTo(w,ctr,dt);w.useAct='sit';if(t>4)endUse(w,c,1);break}const seat=L(0,0,.08);w.pos.set(seat.x,0,seat.z);w.yOff=.5;w.yaw=dirYaw(o);w.useAct='sit';ov('😊',.4);if(t>5.5){w.pos.copy(u.ap);endUse(w,c,1)}break}
+    case'laterne':faceTo(w,ctr,dt);w.useAct='look';ov('✨',2.5,w.b.h+.3);if(t>3)endUse(w,c,1);break;
+    case'kessel':faceTo(w,ctr,dt);w.useAct='sniff';ov('🫧',3,.8);if(Math.floor(t)!==Math.floor(t-dt)&&t>.5)w.hop=.6;if(t>3.6)endUse(w,c,1);break;
+    case'blumenbeet':faceTo(w,ctr,dt);w.useAct='sniff';ov('🌸',2.5,.5);if(t>3.2)endUse(w,c,1);break;
+    case'kristall':faceTo(w,ctr,dt);w.yOff=.15+Math.sin(t*3)*.1;ov('✨',4);if(t>3.5)endUse(w,c,1);break;
+    case'grab':faceTo(w,ctr,dt);if(spOf(c).cute){if(t<.1){w.shake=.7;w.hop=1;burst('😱',w.pos.clone().add(new V3(0,w.b.h,0)),2,{size:.45})}if(t>1.6){endUse(w,c,0);w.state='walk';w.tgt=randSpot();w.timer=10}}
+      else{w.useAct='yawn';ov('👻',1.6);if(t>3.2)endUse(w,c,1)}break;
+    case'statue':faceTo(w,ctr,dt);w.useP=t>.4&&t<2.2?.35:0;if(t>.5&&!u.b){u.b=1;burst('✨',w.pos.clone().add(new V3(0,w.b.h,0)),4,{size:.35})}if(t>2.6)endUse(w,c,1);break;
+    default:faceTo(w,ctr,dt);w.useAct='look';if(t>2.5)endUse(w,c,1)}}
 
 /* ================== Animation ================== */
 let last=performance.now(),T=0;
@@ -2035,17 +2102,20 @@ function startAct(w,c){const sp=SPECIES[c.sp],bt=sp.b.t;let list=(ACTS[bt]||ACTS
   if(sp.cute&&c.happy>70&&Math.random()<.3)list=['jump'];const k=pick(list);w.act={k,t:0,d:ACT_D[k]};w.timer=ACT_D[k]+rnd(.8,2.5)}
 function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w.b.P,root=w.b.root,inner=w.b.inner,bt=SPECIES[c.sp].b.t,hum=bt==='human';
   w.timer-=dt;const sel=+id===selId,sp=(.7+w.st*.18)*(c.hunger<25?.6:1);let tgtSpd=0;
+  if((w.int||sel)&&w.use)endUse(w,c,0);
   if(w.int){w.act=null}
+  else if(w.use){updUse(w,c,dt)}
   else if(sel){w.state='idle';w.act=null;const toCam=Math.atan2(camera.position.x-w.pos.x,camera.position.z-w.pos.z);w.yaw=lerpAng(w.yaw,toCam,dt*4)}
-  else if(w.state==='idle'&&w.timer<=0){if(!w.act&&Math.random()<.5)startAct(w,c);else{w.act=null;w.state='walk';w.tgt=randSpot();w.timer=14;const fr=Math.random()<.4&&bestRel(c,1),fw=fr&&W.cre[fr.id];if(fw)w.tgt=fw.pos.clone().add(V(rnd(-1.5,1.5),0,rnd(-1.5,1.5)));const lk=Math.random()<.3&&likedDeco(c);if(lk)w.tgt=V(lk.x+rnd(-1.2,1.2),0,lk.z+rnd(-1.2,1.2))}}
+  else if(w.state==='idle'&&w.timer<=0){if(c.id>0&&Math.random()<.4&&tryUse(w,c)){}else if(!w.act&&Math.random()<.5)startAct(w,c);else{w.act=null;w.state='walk';w.tgt=randSpot();w.timer=14;const fr=Math.random()<.4&&bestRel(c,1),fw=fr&&W.cre[fr.id];if(fw)w.tgt=fw.pos.clone().add(V(rnd(-1.5,1.5),0,rnd(-1.5,1.5)));const lk=Math.random()<.3&&likedDeco(c);if(lk)w.tgt=V(lk.x+rnd(-1.2,1.2),0,lk.z+rnd(-1.2,1.2))}}
   else if(w.state==='walk'){const dx=w.tgt.x-w.pos.x,dz=w.tgt.z-w.pos.z,L=Math.hypot(dx,dz);
     if(L<.25||w.timer<=0){w.state='idle';w.timer=rnd(1.5,4)}
     else{tgtSpd=sp*Math.min(1,L/.8);w.yaw=lerpAng(w.yaw,Math.atan2(dx,dz),dt*3.5)}}
   // weiches Beschleunigen/Abbremsen
   w.spd=(w.spd||0)+(tgtSpd-(w.spd||0))*Math.min(1,dt*3);
-  if(!w.int&&w.spd>.01){const st=w.spd*dt;w.pos.x+=Math.sin(w.yaw)*st;w.pos.z+=Math.cos(w.yaw)*st}
-  const A=w.act;let ae=0;if(A){A.t+=dt;ae=Math.sin(Math.min(1,A.t/A.d)*Math.PI);if(A.t>=A.d)w.act=null}const ak=A&&w.act?A.k:'';
-  let m=w.int?(w.mv?1:0):clamp(w.spd/sp,0,1);if(ak==='spin'){m=1;w.yaw+=dt*7*ae}
+  if(w.use)w.spd=0;
+  if(!w.int&&!w.use&&w.spd>.01){const st=w.spd*dt;w.pos.x+=Math.sin(w.yaw)*st;w.pos.z+=Math.cos(w.yaw)*st}
+  const A=w.act;let ae=0;if(A){A.t+=dt;ae=Math.sin(Math.min(1,A.t/A.d)*Math.PI);if(A.t>=A.d)w.act=null}let ak=A&&w.act?A.k:'';if(w.use&&w.useAct){ak=w.useAct;ae=1}
+  let m=(w.int||w.use)?(w.mv?1:0):clamp(w.spd/sp,0,1);if(ak==='spin'){m=1;w.yaw+=dt*7*ae}
   w.walk+=dt*m*(w.int?13:9)*(w.sneak?.5:1);
   // Kurvenneigung
   const dy=((w.yaw-(w.py??w.yaw)+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;w.py=w.yaw;w.lean=(w.lean||0)+(clamp(-dy/Math.max(dt,1e-3)*.06,-.22,.22)*m-(w.lean||0))*Math.min(1,dt*5);
@@ -2055,16 +2125,16 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
   const ph0=w.hop;w.hop=Math.max(0,w.hop-dt*2);if(ph0>0&&w.hop===0)w.land=.2;w.land=Math.max(0,(w.land||0)-dt);
   const hop=Math.sin(w.hop*Math.PI)*.5;let sq=1;if(w.hop>0)sq=1+.16*Math.sin((1-w.hop)*Math.PI);if(w.land>0)sq=1-.18*(w.land/.2);
   const breathe=Math.sin(T*1.9+ +id)*.012;sq*=1+breathe;const sxz=1/Math.sqrt(sq);
-  root.position.set(w.pos.x,(P.hover?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*(hum?.035:.05)*m+hop,w.pos.z);
+  root.position.set(w.pos.x,(w.yOff||0)+(P.hover&&!w.yOff?.25+Math.sin(T*2+ +id)*.15:0)+Math.abs(Math.sin(w.walk))*(hum?.035:.05)*m+hop,w.pos.z);
   if(w.lunge>0){w.lunge=Math.max(0,w.lunge-dt*3);const l=Math.sin(w.lunge*Math.PI)*.35*Math.max(.6,w.b.w*.5);root.position.x+=Math.sin(w.yaw)*l;root.position.z+=Math.cos(w.yaw)*l}
   if(w.shake>0){w.shake=Math.max(0,w.shake-dt);root.position.x+=Math.sin(T*70)*w.shake*.1}
   if(w.spin>0){w.spin=Math.max(0,w.spin-dt*.7);w.yaw+=dt*14*w.spin}
   w.boo=Math.max(0,(w.boo||0)-dt*2);
-  root.rotation.y=w.yaw;root.scale.set(pop*(1+w.boo*.25),pop*(1+w.boo*.3)*(w.sneak?.88:1),pop*(1+w.boo*.25));if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
+  const hs=w.hideS??1;root.rotation.y=w.yaw;root.scale.set(hs*pop*(1+w.boo*.25),hs*pop*(1+w.boo*.3)*(w.sneak?.88:1),hs*pop*(1+w.boo*.25));if(w.b.cs){w.b.cs.position.y=.02-root.position.y;w.b.cs.material.opacity=.45}
   // Körper: Schwanken, Neigen, Sitzen, Schütteln
   w.sitA=(w.sitA||0)+((ak==='sit'?1:0)-(w.sitA||0))*Math.min(1,dt*4);const sit=w.sitA;
   let roll=Math.sin(w.walk)*(hum?.035:.05)*m+w.lean+(P.hover?Math.sin(T*1.3+ +id)*.07:0);if(ak==='shake')roll+=Math.sin(T*42)*.22*ae;
-  let pitch=-sit*.32-(ak==='stretch'?.1*ae:0)+(ak==='yawn'&&!hum?-.08*ae:0);
+  let pitch=(w.useP||0)-sit*.32-(ak==='stretch'?.1*ae:0)+(ak==='yawn'&&!hum?-.08*ae:0);
   inner.rotation.set(pitch,0,roll);inner.position.y=(w.b.by0||0)-sit*w.b.h*.1;inner.scale.set(w.b.sc*sxz,w.b.sc*sq,w.b.sc*sxz);
   // Beine und Arme
   P.legs.forEach(l=>{const u=l.userData;let r=Math.sin(w.walk+u.ph)*(u.arm?.45:.6)*m;if(u.hind)r-=sit*1.0;else if(!u.arm)r+=sit*.32;l.rotation.x=r;l.rotation.z=0;
@@ -2079,7 +2149,7 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
   w.lookT=(w.lookT||0)-dt;if(w.lookT<=0){w.lookT=rnd(1.2,3.5);w.thy=m>.3?rnd(-.15,.15):rnd(-.55,.55);w.thz=Math.random()<.3?rnd(-.28,.28):0;w.thp=rnd(-.08,.1)}
   let ty=w.thy||0,tz=w.thz||0,tp=(w.thp||0)+(c.hunger<25?.22:0);
   if(sel){ty=0;tz=Math.sin(T*.8)*.12}
-  if(ak==='look'){ty=Math.sin(A.t*2.4)*.75;tz=0}
+  if(ak==='look'){ty=Math.sin((A?A.t:T)*2.4)*.75;tz=0}
   if(ak==='sniff'){tp=.55*ae+Math.sin(T*11)*.07*ae;ty*=.3}
   if(ak==='yawn'){tp=-.45*ae;tz=.15*ae}
   if(ak==='sit')tp-=.15*sit;
@@ -2094,7 +2164,7 @@ function animCreature(id,w,dt,cc){const c=cc||crById(+id);if(!c)return;const P=w
   if(SPECIES[c.sp].b.smoke){w.smoke-=dt;if(w.smoke<0){w.smoke=rnd(1.5,3.5);burst('💨',w.pos.clone().add(new V3(Math.sin(w.yaw)*w.b.sc*1.6,w.b.h*.85,Math.cos(w.yaw)*w.b.sc*1.6)),1,{size:.5,spd:.3,up:.8,g:.3,life:1.5})}}
   if(c.shiny&&Math.random()<dt*1.2)burst('✨',root.position.clone().add(new V3(rnd(-.4,.4),w.b.h*rnd(.3,1),rnd(-.4,.4))),1,{size:.3,spd:.3,up:.6,g:0,life:1});
   if(ak==='shake'&&Math.random()<dt*8)burst('💧',root.position.clone().add(new V3(0,w.b.h*.6,0)),1,{size:.25,spd:2,up:1.5});
-  if(ak==='yawn'&&A.t<dt*1.5)burst('💤',root.position.clone().add(new V3(0,w.b.h,0)),1,{size:.35,spd:.3,up:1})}
+  if(ak==='yawn'&&A&&A.t<dt*1.5)burst('💤',root.position.clone().add(new V3(0,w.b.h,0)),1,{size:.35,spd:.3,up:1})}
 
 function lerpAng(a,b,t){let d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;return a+d*Math.min(1,t)}
 function easeBack(t){const c=1.7;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)}
